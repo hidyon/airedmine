@@ -242,6 +242,23 @@ h3 {
   background: var(--accent-strong);
 }
 
+.text-button {
+  min-height: 34px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  padding: 0 10px;
+  background: var(--panel);
+  color: var(--accent-strong);
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.text-button:hover {
+  border-color: var(--accent);
+  background: #eef6f5;
+}
+
 .metric {
   min-height: 96px;
   border: 1px solid var(--line);
@@ -268,6 +285,11 @@ h3 {
 }
 
 .chat-panel {
+  display: grid;
+  gap: 10px;
+}
+
+.proposal-panel {
   display: grid;
   gap: 10px;
 }
@@ -517,6 +539,84 @@ h3 {
 }
 
 .proposal-checklist ul {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding-left: 18px;
+  color: var(--ink);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.proposal-review-card {
+  display: grid;
+  gap: 14px;
+  border: 1px solid rgba(180, 83, 9, 0.32);
+  border-radius: 8px;
+  padding: 16px;
+  background: #fff7ed;
+  box-shadow: 0 8px 24px rgba(24, 35, 52, 0.04);
+}
+
+.proposal-review-topline {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.proposal-review-topline span,
+.proposal-review-grid span,
+.proposal-review-block span {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.proposal-review-topline h4 {
+  margin: 0;
+  color: var(--warn);
+  font-size: 18px;
+  line-height: 1.25;
+}
+
+.proposal-review-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.proposal-review-grid section,
+.proposal-review-block {
+  border: 1px solid rgba(180, 83, 9, 0.22);
+  border-radius: 8px;
+  padding: 10px;
+  background: #ffffff;
+}
+
+.proposal-review-grid strong {
+  line-height: 1.35;
+}
+
+.proposal-review-block p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.proposal-review-block pre {
+  margin: 0;
+  overflow-x: auto;
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.proposal-review-block ul {
   display: grid;
   gap: 4px;
   margin: 0;
@@ -970,6 +1070,10 @@ select:focus {
   }
 
   .chat-history {
+    grid-template-columns: 1fr;
+  }
+
+  .proposal-review-grid {
     grid-template-columns: 1fr;
   }
 

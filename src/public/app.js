@@ -6,7 +6,8 @@ const state = {
   baseUrl: null,
   config: null,
   issueError: null,
-  chatHistory: []
+  chatHistory: [],
+  pendingProposal: null
 };
 
 const issueList = document.querySelector("#issueList");
@@ -22,6 +23,7 @@ const chatForm = document.querySelector("#chatForm");
 const chatInput = document.querySelector("#chatInput");
 const chatOutput = document.querySelector("#chatOutput");
 const chatHistory = document.querySelector("#chatHistory");
+const proposalReview = document.querySelector("#proposalReview");
 
 searchInput.addEventListener("input", () => {
   state.query = searchInput.value.trim().toLowerCase();
@@ -55,12 +57,24 @@ chatHistory.addEventListener("click", (event) => {
   const entry = state.chatHistory.find((history) => history.id === item.dataset.historyId);
   if (!entry) return;
   renderChatAnswer(entry.question, entry.data);
+  if (entry.data.proposal) {
+    setPendingProposal(entry.data.proposal);
+  }
+});
+
+proposalReview.addEventListener("click", (event) => {
+  const action = event.target.closest("[data-proposal-action]")?.dataset.proposalAction;
+  if (action === "clear") {
+    state.pendingProposal = null;
+    renderProposalReview();
+  }
 });
 
 init();
 
 async function init() {
   renderChatHistory();
+  renderProposalReview();
   await loadConfig();
   await loadIssues();
 }
@@ -130,10 +144,74 @@ async function askChat(question) {
   try {
     renderChatAnswer(trimmed, data);
     addChatHistory(trimmed, data);
+    if (data.proposal) {
+      setPendingProposal(data.proposal);
+    }
   } catch (error) {
     console.error(error);
     chatOutput.innerHTML = `<div class="error-state">回答の表示に失敗しました。${escapeHtml(error.message || "画面を更新してもう一度試してください。")}</div>`;
   }
+}
+
+function setPendingProposal(proposal) {
+  state.pendingProposal = {
+    ...proposal,
+    receivedAt: new Date().toISOString()
+  };
+  renderProposalReview();
+}
+
+function renderProposalReview() {
+  if (!state.pendingProposal) {
+    proposalReview.innerHTML = `<div class="empty-state">Chat で更新案を作ると、ここで確認できます。</div>`;
+    return;
+  }
+
+  const proposal = state.pendingProposal;
+  const checklist = proposal.checklist || [];
+  const target = proposal.targetIssue;
+
+  proposalReview.innerHTML = `
+    <article class="proposal-review-card">
+      <div class="proposal-review-topline">
+        <div>
+          <span>確認待ち</span>
+          <h4>${escapeHtml(proposal.title || "Redmine 更新案")}</h4>
+        </div>
+        <button class="text-button" type="button" data-proposal-action="clear">破棄</button>
+      </div>
+      <div class="proposal-review-grid">
+        <section>
+          <span>対象</span>
+          <strong>${target ? escapeHtml(target.title || `#${target.id}`) : "未指定"}</strong>
+        </section>
+        <section>
+          <span>種別</span>
+          <strong>${escapeHtml(proposal.action || "unknown")}</strong>
+        </section>
+        <section>
+          <span>状態</span>
+          <strong>${escapeHtml(proposal.status || "confirmation_required")}</strong>
+        </section>
+      </div>
+      <section class="proposal-review-block">
+        <span>変更内容</span>
+        <p>${escapeHtml(proposal.changeSummary || "")}</p>
+      </section>
+      <section class="proposal-review-block">
+        <span>下書き</span>
+        <pre>${escapeHtml(proposal.draft || "")}</pre>
+      </section>
+      <section class="proposal-review-block">
+        <span>確認事項</span>
+        ${checklist.length ? `<ul>${checklist.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>` : `<p>確認事項はありません。</p>`}
+      </section>
+      <section class="proposal-review-block">
+        <span>次ステップ</span>
+        <p>${escapeHtml(proposal.nextStep || "")}</p>
+      </section>
+    </article>
+  `;
 }
 
 function addChatHistory(question, data) {
