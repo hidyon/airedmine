@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>AIRedmine</title>
-    <link rel="stylesheet" href="/styles.css?v=20260606-reference">
+    <link rel="stylesheet" href="/styles.css?v=20260606-history">
   </head>
   <body>
     <div class="app-shell">
@@ -60,6 +60,12 @@
           <div class="chat-output" id="chatOutput" aria-live="polite">
             <div class="empty-state">Redmine issue と docs の知識ベースについて質問できます。</div>
           </div>
+          <div class="chat-history-panel" aria-labelledby="chatHistoryTitle">
+            <div class="chat-history-heading">
+              <span id="chatHistoryTitle">質問履歴</span>
+            </div>
+            <div class="chat-history" id="chatHistory"></div>
+          </div>
         </section>
 
         <section class="work-guide-panel" aria-labelledby="workGuideTitle">
@@ -100,6 +106,6 @@
         <section class="issue-list" id="issueList" aria-live="polite"></section>
       </main>
     </div>
-    <script src="/app.js?v=20260606-reference" type="module"></script>
+    <script src="/app.js?v=20260606-history" type="module"></script>
   </body>
 </html>

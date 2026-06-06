@@ -5,7 +5,8 @@ const state = {
   connected: false,
   baseUrl: null,
   config: null,
-  issueError: null
+  issueError: null,
+  chatHistory: []
 };
 
 const issueList = document.querySelector("#issueList");
@@ -20,6 +21,7 @@ const workGuide = document.querySelector("#workGuide");
 const chatForm = document.querySelector("#chatForm");
 const chatInput = document.querySelector("#chatInput");
 const chatOutput = document.querySelector("#chatOutput");
+const chatHistory = document.querySelector("#chatHistory");
 
 searchInput.addEventListener("input", () => {
   state.query = searchInput.value.trim().toLowerCase();
@@ -47,9 +49,18 @@ document.querySelectorAll("[data-question]").forEach((button) => {
   });
 });
 
+chatHistory.addEventListener("click", (event) => {
+  const item = event.target.closest("[data-history-id]");
+  if (!item) return;
+  const entry = state.chatHistory.find((history) => history.id === item.dataset.historyId);
+  if (!entry) return;
+  renderChatAnswer(entry.question, entry.data);
+});
+
 init();
 
 async function init() {
+  renderChatHistory();
   await loadConfig();
   await loadIssues();
 }
@@ -118,10 +129,45 @@ async function askChat(question) {
 
   try {
     renderChatAnswer(trimmed, data);
+    addChatHistory(trimmed, data);
   } catch (error) {
     console.error(error);
     chatOutput.innerHTML = `<div class="error-state">回答の表示に失敗しました。${escapeHtml(error.message || "画面を更新してもう一度試してください。")}</div>`;
   }
+}
+
+function addChatHistory(question, data) {
+  const entry = {
+    id: `chat-${Date.now()}-${state.chatHistory.length}`,
+    question,
+    data,
+    summary: summarizeAnswer(data.answer || ""),
+    referenceCount: data.references?.length || 0,
+    hasProposal: Boolean(data.proposal)
+  };
+
+  state.chatHistory = [entry, ...state.chatHistory].slice(0, 8);
+  renderChatHistory();
+}
+
+function renderChatHistory() {
+  if (!state.chatHistory.length) {
+    chatHistory.innerHTML = `<div class="chat-history-empty">まだ質問はありません。</div>`;
+    return;
+  }
+
+  chatHistory.innerHTML = state.chatHistory.map((entry) => `
+    <button class="chat-history-item" type="button" data-history-id="${escapeHtml(entry.id)}">
+      <strong>${escapeHtml(entry.question)}</strong>
+      <span>${escapeHtml(entry.summary)}</span>
+      <small>根拠 ${entry.referenceCount}${entry.hasProposal ? " / 更新案あり" : ""}</small>
+    </button>
+  `).join("");
+}
+
+function summarizeAnswer(answer) {
+  const compact = answer.replace(/\s+/g, " ").trim();
+  return compact.length > 72 ? `${compact.slice(0, 72)}...` : compact || "回答なし";
 }
 
 function render() {

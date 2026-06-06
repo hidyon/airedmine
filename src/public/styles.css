@@ -338,6 +338,61 @@ h3 {
   min-height: 88px;
 }
 
+.chat-history-panel {
+  display: grid;
+  gap: 8px;
+}
+
+.chat-history-heading span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.chat-history {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.chat-history-item {
+  display: grid;
+  gap: 5px;
+  min-height: 88px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px;
+  background: var(--panel);
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+
+.chat-history-item:hover {
+  border-color: var(--accent);
+  background: #f8fafc;
+}
+
+.chat-history-item strong {
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.chat-history-item span,
+.chat-history-item small,
+.chat-history-empty {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.chat-history-empty {
+  border: 1px dashed var(--line);
+  border-radius: 8px;
+  padding: 12px;
+  background: var(--panel);
+}
+
 .chat-answer {
   display: grid;
   gap: 12px;
@@ -911,6 +966,10 @@ select:focus {
   }
 
   .chat-references {
+    grid-template-columns: 1fr;
+  }
+
+  .chat-history {
     grid-template-columns: 1fr;
   }
 
