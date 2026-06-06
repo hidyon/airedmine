@@ -87,7 +87,7 @@ async function handleChat(req, res) {
     const [issues, knowledge] = await Promise.all([
       redmine.listIssues(new URLSearchParams({
         assigned_to_id: "me",
-        status_id: "open",
+        status_id: "*",
         limit: "100"
       })),
       readKnowledgeBase()
@@ -167,6 +167,10 @@ async function readKnowledgeBase() {
 function buildChatResponse(question, issues, knowledge) {
   const normalized = question.toLowerCase();
   const updateIntent = includesAny(normalized, ["更新", "コメント", "投稿", "クローズ", "close", "ステータス変更", "反映"]);
+  const requestedIssueId = extractIssueId(question);
+  const requestedIssue = requestedIssueId
+    ? issues.find((issue) => issue.id === requestedIssueId)
+    : null;
   const staleIssues = issues.filter((issue) => daysSince(issue.updated_on) >= 5);
   const pmIssues = issues.filter((issue) => includesAny(issue.subject, ["pm判断", "判断待ち", "確認待ち"]));
   const highPriorityIssues = issues.filter(isHighPriority);
@@ -174,7 +178,12 @@ function buildChatResponse(question, issues, knowledge) {
   const references = [];
   let answer = "";
 
-  if (includesAny(normalized, ["今日", "まず", "何から", "優先"])) {
+  if (requestedIssueId && !requestedIssue) {
+    answer = `#${requestedIssueId} に該当する issue は、現在取得できる Redmine issue の中では見つかりませんでした。番号、担当、状態フィルタを確認してください。`;
+  } else if (requestedIssue) {
+    answer = issueSpecificAnswer(question, requestedIssue);
+    references.push(issueReference(requestedIssue));
+  } else if (includesAny(normalized, ["今日", "まず", "何から", "優先"])) {
     const target = rankedIssues[0];
     answer = target
       ? `今日まず見るなら #${target.id}「${target.subject}」です。優先度、更新日、判断待ちや停滞の兆候を合わせると、最初に状況を整理する価値があります。`
@@ -223,6 +232,64 @@ function buildChatResponse(question, issues, knowledge) {
     references: uniqueReferences(references),
     proposal: null
   };
+}
+
+function extractIssueId(question) {
+  const patterns = [
+    /#(\d+)/u,
+    /\bissue\s*(\d+)\b/iu,
+    /\bチケット\s*(\d+)\b/u,
+    /\bissue番号\s*(\d+)\b/iu
+  ];
+
+  for (const pattern of patterns) {
+    const match = question.match(pattern);
+    if (match) return Number(match[1]);
+  }
+
+  return null;
+}
+
+function issueSpecificAnswer(question, issue) {
+  const normalized = question.toLowerCase();
+  const status = issue.status?.name || "Unknown";
+  const priority = issue.priority?.name || "Normal";
+  const updated = daysSince(issue.updated_on);
+  const base = `#${issue.id}「${issue.subject}」は、状態が ${status}、優先度が ${priority}、最終更新が ${updated} 日前の issue です。`;
+
+  if (includesAny(normalized, ["背景", "なぜ", "context", "理由"])) {
+    return `${base}\n\n背景を確認するには、Redmine の説明、コメント履歴、関連 docs を見る必要があります。現時点では、件名と状態から作業上の意味を整理すると「${issueIntent(issue)}」です。`;
+  }
+
+  if (includesAny(normalized, ["次", "アクション", "どうする", "何を"])) {
+    return `${base}\n\n次アクションは「${nextIssueAction(issue)}」です。判断や仕様確認が含まれる場合は、実装より先に人間が確認する項目を明確にしてください。`;
+  }
+
+  if (includesAny(normalized, ["クローズ", "close", "完了", "閉じ"])) {
+    return `${base}\n\nクローズ可否は、完了条件、テスト結果、残リスク、Redmine コメントが揃っているかで判断してください。AIRedmine は直接クローズせず、確認待ちの更新案として扱います。`;
+  }
+
+  return `${base}\n\nこの issue について、背景、次アクション、クローズ可否のどれを確認したいかを指定すると、さらに絞って回答できます。`;
+}
+
+function issueIntent(issue) {
+  const subject = issue.subject || "";
+  if (includesAny(subject, ["pm判断", "判断待ち"])) return "PM の判断が後続作業を左右する issue";
+  if (includesAny(subject, ["仕様", "確認待ち", "承認"])) return "仕様や承認境界を揃える必要がある issue";
+  if (includesAny(subject, ["停滞", "リスク"])) return "停滞理由を確認して再度動かす必要がある issue";
+  if (includesAny(subject, ["クローズ候補", "完了"])) return "完了条件とテスト結果を確認する issue";
+  if (isHighPriority(issue)) return "優先度が高く、早めに着手条件を確認したい issue";
+  return "内容を確認して次の作業またはコメント更新に進む issue";
+}
+
+function nextIssueAction(issue) {
+  const subject = issue.subject || "";
+  if (includesAny(subject, ["pm判断", "判断待ち"])) return "判断材料を整理し、PM が決める選択肢を明確にする";
+  if (includesAny(subject, ["仕様", "確認待ち", "承認"])) return "要求仕様、機能仕様、テスト仕様の未確定点を洗い出す";
+  if (includesAny(subject, ["停滞", "リスク"])) return "止まっている理由と次に動かす担当を確認する";
+  if (includesAny(subject, ["クローズ候補", "完了"])) return "テスト結果と完了条件を照合し、クローズ可否を判定する";
+  if (isHighPriority(issue)) return "着手条件とブロッカーを確認し、今日の作業に入れるか判断する";
+  return "内容と最新コメントを確認し、実装またはコメント更新に進む";
 }
 
 function findKnowledgeReferences(question, knowledge) {

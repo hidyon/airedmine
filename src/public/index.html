@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>AIRedmine</title>
-    <link rel="stylesheet" href="/styles.css?v=20260606-chatfix">
+    <link rel="stylesheet" href="/styles.css?v=20260606-issueid">
   </head>
   <body>
     <div class="app-shell">
@@ -52,6 +52,7 @@
           </form>
           <div class="quick-questions" aria-label="質問例">
             <button type="button" data-question="今日まず何からやればいい？">今日の作業</button>
+            <button type="button" data-question="#1 の次アクションは？">#1</button>
             <button type="button" data-question="今週のリスクを教えて">リスク</button>
             <button type="button" data-question="次の定例で話すべきことをまとめて">定例</button>
             <button type="button" data-question="この実装が終わったのでRedmineコメント案を書いて">更新案</button>
@@ -99,6 +100,6 @@
         <section class="issue-list" id="issueList" aria-live="polite"></section>
       </main>
     </div>
-    <script src="/app.js?v=20260606-chatfix" type="module"></script>
+    <script src="/app.js?v=20260606-issueid" type="module"></script>
   </body>
 </html>

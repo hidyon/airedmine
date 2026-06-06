@@ -272,7 +272,7 @@ Priority: High
 
 ### ISS-021: issue 番号指定の質問に対応する
 
-Status: Open
+Status: Closed
 Priority: High
 
 要求仕様:
@@ -285,12 +285,26 @@ Priority: High
 - Chat API が質問文から issue 番号を抽出する。
 - 該当 issue がある場合、その issue を優先して回答と根拠に使う。
 - 該当 issue がない場合は、見つからないことを明示する。
+- `#1`, `issue 1`, `チケット1` の表記を扱う。
+- 背景、次アクション、クローズ可否の質問種別に応じて回答を変える。
 
 テスト仕様:
 
 - `#1 の背景を教えて` に対して #1 を根拠に回答することを確認する。
 - 存在しない issue 番号に対して、見つからない旨を返すことを確認する。
 - 更新系の質問でも直接更新せず確認待ちの更新案になることを確認する。
+
+テスト結果:
+
+- `POST /api/chat` で `#1 の背景を教えて` が #1 を根拠に回答することを確認した。
+- `POST /api/chat` で `#1 の次アクションは？` が #1 の次アクションを返すことを確認した。
+- `POST /api/chat` で `#999 の背景を教えて` が該当 issue なしを返すことを確認した。
+- `POST /api/chat` で `#1 をクローズしていい？` が直接更新せず `confirmation_required` の更新案を返すことを確認した。
+- `node --check src/server/index.js` と `node --check src/public/app.js` が成功した。
+
+クローズ判定:
+
+- 要求仕様、機能仕様、テスト仕様を満たすため Closed とする。
 
 ### ISS-022: Chat の質問履歴を表示する
 
