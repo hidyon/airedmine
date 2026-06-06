@@ -226,23 +226,42 @@ Priority: Medium
 
 ### ISS-008: Redmine issue 取得 API を Connector として分離する
 
-Status: Open
+Status: Closed
 Priority: Medium
 
 要求仕様:
 
 - 今後 journal、project、wiki などを増やせるように Redmine 連携を整理する。
+- HTTP サーバーの責務と Redmine / モックデータ取得の責務を分ける。
 
 機能仕様:
 
 - `src/server/index.js` から Redmine API 呼び出しを Redmine Connector に分離する。
 - issue 取得をアプリ内の共通モデルに変換する。
 - モックデータも同じ形で扱えるようにする。
+- Redmine 未接続時は Connector がモックデータを返す。
+- Redmine API エラー時は HTTP ステータスと本文を UI 側へ返せるようにする。
 
 テスト仕様:
 
 - モック時と Redmine 接続時で `/api/issues` のレスポンス互換性を確認する。
 - 既存 UI のチケット一覧、検索、状態フィルタが壊れないことを確認する。
+- `node --check src/server/index.js`、`src/server/redmineConnector.js`、`src/server/mockRedmine.js` で構文エラーがないことを確認する。
+- モック時に `/api/config` と `/api/issues` が従来と互換のレスポンスを返すことを確認する。
+
+テスト結果:
+
+- `node --check src/server/index.js` が成功した。
+- `node --check src/server/redmineConnector.js` が成功した。
+- `node --check src/server/mockRedmine.js` が成功した。
+- `GET /api/config` がモックモード、未設定項目、セットアップ手順を返した。
+- `GET /api/issues?status_id=open` が未完了 issue 6 件を返した。
+- `GET /api/issues?status_id=closed` が完了 issue 2 件を返した。
+- `GET /` が HTML を返した。
+
+クローズ判定:
+
+- 要求仕様、機能仕様、テスト仕様を満たすため Closed とする。
 
 ### ISS-009: PM が全体状態をざっくり把握できるサマリを追加する
 
