@@ -53,7 +53,7 @@ const server = createServer(async (req, res) => {
 });
 
 server.listen(port, () => {
-  console.log(`Airedmaine is running at http://localhost:${port}`);
+  console.log(`AIRedmine is running at http://localhost:${port}`);
   if (redmine.getConfig().mode === "mock") {
     console.log("REDMINE_BASE_URL or REDMINE_API_KEY is not set. Using mock data.");
   }

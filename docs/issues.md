@@ -1,6 +1,6 @@
 # Issues
 
-このファイルでは Airedmaine の開発 issue を管理する。
+このファイルでは AIRedmine の開発 issue を管理する。
 各 issue は、要求仕様、機能仕様、テスト仕様を決めてから実装する。
 
 ## Status
@@ -19,7 +19,7 @@ Priority: High
 
 要求仕様:
 
-- Airedmaine が何を体験させるアプリなのかを README に明記する。
+- AIRedmine が何を体験させるアプリなのかを README に明記する。
 - 今後の開発で参照するロードマップ、issue 管理、検討ログの置き場を作る。
 - `agent.md` の共同開発ルールと整合する形にする。
 
@@ -90,7 +90,7 @@ Priority: Medium
 
 要求仕様:
 
-- `.env` 未設定でも、Airedmaine の狙いが伝わる Redmine プロジェクト体験を再現できる。
+- `.env` 未設定でも、AIRedmine の狙いが伝わる Redmine プロジェクト体験を再現できる。
 
 機能仕様:
 
@@ -209,20 +209,20 @@ Priority: Medium
 
 要求仕様:
 
-- 開発者や PM がローカルで Airedmaine と無料で利用できる OSS 版 Redmine を試せる。
+- 開発者や PM がローカルで AIRedmine と無料で利用できる OSS 版 Redmine を試せる。
 - Redmine API 連携を実データに近い形で検証できる。
 
 機能仕様:
 
 - devcontainer または Docker Compose の構成を追加する。
 - OSS 版 Redmine と database を起動できる。
-- Airedmaine からローカル Redmine に接続する `.env` 設定例を用意する。
+- AIRedmine からローカル Redmine に接続する `.env` 設定例を用意する。
 
 テスト仕様:
 
 - Docker Compose または devcontainer で環境が起動することを確認する。
 - Redmine にログインし、REST API を有効化できることを確認する。
-- Airedmaine がローカル Redmine の issue を取得できることを確認する。
+- AIRedmine がローカル Redmine の issue を取得できることを確認する。
 
 ### ISS-008: Redmine issue 取得 API を Connector として分離する
 
