@@ -700,6 +700,133 @@ Priority: Medium
 
 - 要求仕様、機能仕様、テスト仕様を満たすため Closed とする。
 
+### ISS-031: Docker Compose 起動ヘルスチェックを追加する
+
+Status: Open
+Priority: High
+
+要求仕様:
+
+- 新しい開発者や PM が、Docker Compose 環境の起動状態を迷わず確認できる。
+- AIRedmine、Redmine、PostgreSQL のどこで詰まっているか切り分けられる。
+
+機能仕様:
+
+- AIRedmine app の HTTP 応答を確認する。
+- Redmine の HTTP 応答を確認する。
+- Redmine API への app 経由疎通を確認する。
+- README に確認コマンドと期待結果を記載する。
+
+テスト仕様:
+
+- `docker-compose ps` で各 service が Up になることを確認する。
+- AIRedmine app と Redmine の HTTP 応答を確認する。
+- `/api/config` または `/api/issues` で app 側の接続状態を確認する。
+
+### ISS-032: 初回セットアップ確認スクリプトを追加する
+
+Status: Open
+Priority: High
+
+要求仕様:
+
+- 初回セットアップ時に、必要な設定が揃っているか一度に確認できる。
+- `.env`、Redmine API キー、REST API 有効化、app 接続の不足を分かりやすく表示する。
+
+機能仕様:
+
+- `npm run doctor` 相当の確認コマンドを追加する。
+- `.env` の必須項目を確認する。
+- AIRedmine app の `/api/config` と `/api/issues` を確認する。
+- 失敗時は次に確認すべき操作を表示する。
+
+テスト仕様:
+
+- `.env` が揃っている場合に成功結果が表示されることを確認する。
+- 必須項目がない場合に不足項目が表示されることを確認する。
+
+### ISS-033: Redmine デモデータ投入をワンコマンド化する
+
+Status: Open
+Priority: Medium
+
+要求仕様:
+
+- AIRedmine の体験確認に必要な Redmine project と issue を、迷わず投入できる。
+- PM判断待ち、仕様確認、停滞リスク、クローズ候補などのサンプル issue を再現できる。
+
+機能仕様:
+
+- 既存の Redmine seed スクリプトを Docker Compose 経由で実行しやすくする。
+- README にデモデータ投入、再投入、確認の手順を記載する。
+- 既存データがある場合の扱いを明記する。
+
+テスト仕様:
+
+- Compose 環境で seed スクリプトを実行できることを確認する。
+- AIRedmine UI にデモ issue が表示されることを確認する。
+
+### ISS-034: Docker Compose 開発用 override を追加する
+
+Status: Open
+Priority: Medium
+
+要求仕様:
+
+- 開発中にソース変更をすぐ確認できる Docker 環境を用意する。
+- 本番寄り app image 起動と、開発用ホットリロード起動を使い分けられる。
+
+機能仕様:
+
+- 開発用 Compose override または別 compose ファイルを追加する。
+- app service でソースをマウントし、開発サーバーを起動できるようにする。
+- README に通常起動と開発起動の違いを記載する。
+
+テスト仕様:
+
+- 開発用 Compose で AIRedmine app が起動することを確認する。
+- ソース変更後に再ビルドなしで画面または API に反映されることを確認する。
+
+### ISS-035: Redmine 接続トラブルシュート画面を強化する
+
+Status: Open
+Priority: Medium
+
+要求仕様:
+
+- Redmine 接続に失敗したとき、ユーザーが原因と次の行動を画面上で判断できる。
+
+機能仕様:
+
+- API キー未設定、REST API 無効、Redmine 停止、権限不足を区別して表示する。
+- `/api/config` と `/api/issues` の結果をもとに、確認すべき手順を出す。
+- README のトラブルシュート手順と表示内容を対応させる。
+
+テスト仕様:
+
+- `.env` 未設定時に不足項目が表示されることを確認する。
+- Redmine API エラー時にステータスに応じた表示が出ることを確認する。
+
+### ISS-036: devcontainer 対応を追加する
+
+Status: Open
+Priority: Low
+
+要求仕様:
+
+- VS Code devcontainer から AIRedmine の開発と Docker Compose 検証環境を始められる。
+
+機能仕様:
+
+- `.devcontainer/devcontainer.json` を追加する。
+- 必要に応じて Docker Compose service と連携する。
+- README に devcontainer での起動手順を記載する。
+
+テスト仕様:
+
+- devcontainer 設定ファイルが妥当な JSON であることを確認する。
+- README に devcontainer 起動手順があることを確認する。
+
 ### ISS-008: Redmine issue 取得 API を Connector として分離する
 
 Status: Closed
