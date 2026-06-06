@@ -442,6 +442,7 @@ function referenceTemplate(reference) {
     <div class="chat-reference doc-reference">
       <span class="reference-kind">Knowledge doc</span>
       <strong>${escapeHtml(reference.title || reference.id || "doc")}</strong>
+      ${reference.heading ? `<span>${escapeHtml(reference.heading)}</span>` : ""}
       <span>${escapeHtml(reference.source || "docs")}</span>
       <span>${escapeHtml(reference.excerpt || "")}</span>
     </div>

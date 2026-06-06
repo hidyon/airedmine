@@ -166,7 +166,7 @@ async function readKnowledgeBase() {
 
 function buildChatResponse(question, issues, knowledge) {
   const normalized = question.toLowerCase();
-  const updateIntent = includesAny(normalized, ["更新", "コメント", "投稿", "クローズ", "close", "ステータス変更", "反映"]);
+  const updateIntent = isUpdateRequest(normalized);
   const requestedIssueId = extractIssueId(question);
   const requestedIssue = requestedIssueId
     ? issues.find((issue) => issue.id === requestedIssueId)
@@ -243,6 +243,14 @@ function extractIssueId(question) {
   }
 
   return null;
+}
+
+function isUpdateRequest(normalized) {
+  if (includesAny(normalized, ["クローズして", "close", "閉じて"])) return true;
+  if (includesAny(normalized, ["コメント案", "コメントを書", "投稿して"])) return true;
+  if (includesAny(normalized, ["ステータス変更案", "ステータスを", "状態を変更"])) return true;
+  if (includesAny(normalized, ["更新案", "反映して", "下書き", "作って"])) return true;
+  return false;
 }
 
 function issueSpecificAnswer(question, issue) {
@@ -393,15 +401,60 @@ function findKnowledgeReferences(question, knowledge) {
   const words = queryTerms(question);
 
   return knowledge
-    .map((entry) => ({
-      type: "doc",
-      id: entry.path,
-      title: entry.path,
-      source: "docs",
-      excerpt: excerptFor(entry.content, words)
+    .flatMap((entry) => docSections(entry).map((section) => {
+      const score = sectionScore(section, words);
+      return {
+        type: "doc",
+        id: `${entry.path}#${section.heading}`,
+        title: entry.path,
+        source: "docs",
+        heading: section.heading,
+        excerpt: sectionExcerpt(section, words),
+        score
+      };
     }))
-    .filter((entry) => entry.excerpt)
+    .filter((entry) => entry.score > 0 && entry.excerpt)
+    .sort((a, b) => b.score - a.score)
     .slice(0, 3);
+}
+
+function docSections(entry) {
+  const sections = [];
+  let current = {
+    heading: entry.path,
+    lines: []
+  };
+
+  for (const line of entry.content.split(/\r?\n/)) {
+    const heading = line.match(/^(#{1,4})\s+(.+)$/);
+    if (heading) {
+      if (current.lines.length) sections.push(current);
+      current = {
+        heading: heading[2].trim(),
+        lines: [line]
+      };
+      continue;
+    }
+
+    current.lines.push(line);
+  }
+
+  if (current.lines.length) sections.push(current);
+  return sections.map((section) => ({
+    ...section,
+    body: section.lines.filter(Boolean).join("\n")
+  }));
+}
+
+function sectionScore(section, words) {
+  const heading = section.heading.toLowerCase();
+  const body = section.body.toLowerCase();
+  return words.reduce((score, word) => {
+    const normalized = word.toLowerCase();
+    if (heading.includes(normalized)) score += 5;
+    if (body.includes(normalized)) score += 2;
+    return score;
+  }, 0);
 }
 
 function queryTerms(question) {
@@ -418,8 +471,11 @@ function queryTerms(question) {
     "redmine",
     "知識ベース",
     "更新",
+    "更新確認",
     "確認",
     "承認",
+    "下書き",
+    "根拠",
     "pm",
     "開発者"
   ];
@@ -431,13 +487,13 @@ function queryTerms(question) {
   return [...new Set(terms)];
 }
 
-function excerptFor(content, words) {
-  const lines = content.split(/\r?\n/).filter(Boolean);
+function sectionExcerpt(section, words) {
+  const lines = section.body.split(/\r?\n/).filter(Boolean);
   const matched = lines.find((line) => {
     const normalized = line.toLowerCase();
     return words.some((word) => normalized.includes(word));
   });
-  return matched ? matched.slice(0, 160) : "";
+  return (matched || lines[0] || "").slice(0, 180);
 }
 
 function uniqueReferences(references) {

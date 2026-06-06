@@ -356,7 +356,7 @@ Priority: Medium
 
 ### ISS-023: docs 知識ベース検索の精度を改善する
 
-Status: Open
+Status: Closed
 Priority: Medium
 
 要求仕様:
@@ -369,12 +369,25 @@ Priority: Medium
 - docs を見出し単位で分割して検索する。
 - 質問語と見出し、本文の一致度で根拠候補を並べる。
 - 返す根拠にはファイル名、見出し、抜粋を含める。
+- 見出し一致を本文一致より高く評価する。
 
 テスト仕様:
 
 - 「ロードマップ」「自然言語対話」「更新確認」などの質問で関連 docs が返ることを確認する。
 - 無関係な docs が上位に出すぎないことを確認する。
 - Docker image 上でも docs 検索が動くことを確認する。
+
+テスト結果:
+
+- docs を見出し単位で分割し、見出しと本文の一致度で score を付けるようにした。
+- docs 根拠にファイル名、見出し、抜粋、score を含めるようにした。
+- 「ロードマップ」「自然言語対話」「更新確認」で関連 docs が返ることを確認した。
+- Docker image 上でも docs 検索が動くことを確認した。
+- `node --check src/server/index.js` と `node --check src/public/app.js` が成功した。
+
+クローズ判定:
+
+- 要求仕様、機能仕様、テスト仕様を満たすため Closed とする。
 
 ### ISS-024: Chat 回答から Redmine 更新案の詳細下書きを作る
 
