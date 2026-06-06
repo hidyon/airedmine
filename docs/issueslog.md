@@ -365,3 +365,45 @@ AIRedmine app を Docker イメージとして build し、Docker Compose で起
 
 - `agent.md` に上記 3 点が記載されていることを確認した。
 - `docs/issues.md` にISS-015のクローズ判定を記録した。
+
+## 2026-06-06: Milestone 2 着手
+
+Milestone 1 は、Docker Compose、実 Redmine 接続、デモデータ投入、AIRedmine app の Docker 化まで完了したため Completed とする。
+
+Milestone 2 では、Redmine issue を「読む」だけでなく、AI エージェント視点で作業判断に変換する体験を作る。
+ユーザーからまとめて進めてよいと共有されたため、`ISS-002` を軸に次の補助 issue も同時に扱う。
+
+- `ISS-016`: issue ごとの AI 要約カードを追加する。
+- `ISS-017`: 次アクション判定ルールを実装する。
+- `ISS-018`: AI判断と人間確認の境界をUIで分ける。
+
+方針:
+
+- 実 AI モデル連携はまだ入れず、Redmine issue の subject、status、priority、updated_on に基づくルールベースで体験を作る。
+- 最初の成果物は `今日の作業候補` パネルにする。
+- 各 issue カードにも AI 要約、次アクション、人間が確認すべき点を表示する。
+- AI の根拠と人間の確認責任をUI上で分ける。
+
+## 2026-06-06: ISS-002 / ISS-016 / ISS-017 / ISS-018 クローズ
+
+開発者向けの AI エージェント作業ビューの初版を追加した。
+
+実装内容:
+
+- `今日の作業候補` パネルを追加した。
+- Redmine issue を分析する `analyzeIssue` を追加した。
+- PM判断待ち、仕様確認、停滞リスク、クローズ候補、高優先度を判定するルールを追加した。
+- 最優先候補に AI の根拠、次アクション、人間が確認すべき点を表示した。
+- 各 issue カードに AI 要約、次アクション、人間確認を追加した。
+
+確認結果:
+
+- 実 Redmine のサンプル issue で作業候補が表示されることを確認した。
+- `GET /api/issues?status_id=open` が未完了サンプル issue 6 件を返した。
+- `node --check src/public/app.js` が成功した。
+- Docker image を rebuild し、app service が起動することを確認した。
+
+保留事項:
+
+- 現在の AI 表示はルールベースである。
+- 後続で自然言語対話や知識ベース連携を入れると、要約と根拠の精度を高められる。

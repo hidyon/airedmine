@@ -16,6 +16,7 @@ const refreshButton = document.querySelector("#refreshButton");
 const connectionStatus = document.querySelector("#connectionStatus");
 const setupPanel = document.querySelector("#setupPanel");
 const pmOverview = document.querySelector("#pmOverview");
+const workGuide = document.querySelector("#workGuide");
 
 searchInput.addEventListener("input", () => {
   state.query = searchInput.value.trim().toLowerCase();
@@ -91,6 +92,7 @@ function render() {
 
   renderMetrics(filteredIssues);
   renderConnection();
+  renderWorkGuide(filteredIssues);
   renderPmOverview(filteredIssues);
   renderIssues(filteredIssues);
 }
@@ -210,6 +212,54 @@ function renderPmOverview(issues) {
   pmOverview.innerHTML = observations.join("");
 }
 
+function renderWorkGuide(issues) {
+  const openIssues = issues.filter((issue) => !issue.status?.is_closed);
+  const analyses = openIssues.map(analyzeIssue).sort((a, b) => b.score - a.score);
+  const recommended = analyses[0];
+  const nextCandidates = analyses.slice(1, 4);
+
+  if (!recommended) {
+    workGuide.innerHTML = `
+      <div class="empty-state">現在の条件では作業候補がありません。</div>
+    `;
+    return;
+  }
+
+  workGuide.innerHTML = `
+    <article class="guide-primary">
+      <div class="guide-rank">1</div>
+      <div class="guide-content">
+        <p class="guide-label">${escapeHtml(recommended.category)}</p>
+        <h4>${issueLink(recommended.issue)}</h4>
+        <p>${escapeHtml(recommended.nextAction)}</p>
+        <div class="guide-split">
+          <div>
+            <span>AIの根拠</span>
+            <p>${escapeHtml(recommended.reason)}</p>
+          </div>
+          <div>
+            <span>人間が確認</span>
+            <p>${escapeHtml(recommended.humanCheck)}</p>
+          </div>
+        </div>
+      </div>
+    </article>
+    <div class="guide-secondary">
+      ${nextCandidates.map(candidateTemplate).join("")}
+    </div>
+  `;
+}
+
+function candidateTemplate(candidate) {
+  return `
+    <article class="guide-candidate">
+      <span>${escapeHtml(candidate.category)}</span>
+      <strong>#${candidate.issue.id} ${escapeHtml(candidate.issue.subject)}</strong>
+      <p>${escapeHtml(candidate.nextAction)}</p>
+    </article>
+  `;
+}
+
 function observationTemplate({ label, count, description, issues }) {
   const topIssues = issues.slice(0, 2);
   const issueList = topIssues.length
@@ -235,6 +285,7 @@ function renderIssues(issues) {
   }
 
   issueList.innerHTML = issues.map((issue) => {
+    const analysis = analyzeIssue(issue);
     const issueUrl = state.baseUrl ? `${state.baseUrl}/issues/${issue.id}` : null;
     const title = escapeHtml(issue.subject || "No subject");
     const heading = issueUrl
@@ -254,9 +305,96 @@ function renderIssues(issues) {
           </div>
         </div>
         <span class="pill">${escapeHtml(issue.status?.name || "Unknown")}</span>
+        <div class="issue-agent">
+          <div>
+            <span>AI要約</span>
+            <p>${escapeHtml(analysis.summary)}</p>
+          </div>
+          <div>
+            <span>次アクション</span>
+            <p>${escapeHtml(analysis.nextAction)}</p>
+          </div>
+          <div>
+            <span>人間が確認</span>
+            <p>${escapeHtml(analysis.humanCheck)}</p>
+          </div>
+        </div>
       </article>
     `;
   }).join("");
+}
+
+function analyzeIssue(issue) {
+  const subject = issue.subject || "";
+  const status = issue.status?.name || "Unknown";
+  const priority = issue.priority?.name || "Normal";
+  const staleDays = daysSince(issue.updated_on);
+  const closed = Boolean(issue.status?.is_closed);
+  let score = 10;
+  let category = "作業候補";
+  let summary = `${status} の ${priority} issue です。`;
+  let nextAction = "内容を確認し、必要なら実装またはコメント更新に進みます。";
+  let humanCheck = "完了条件と最新コメントを確認してください。";
+  let reason = `状態は ${status}、優先度は ${priority}、更新は ${formatRelative(issue.updated_on)} です。`;
+
+  if (closed) {
+    return {
+      issue,
+      score: 0,
+      category: "完了済み",
+      summary: "完了済みとして扱えます。",
+      nextAction: "必要なら完了理由や関連ドキュメントを確認します。",
+      humanCheck: "再オープン条件がないかだけ確認してください。",
+      reason
+    };
+  }
+
+  if (isHighPriority(issue)) score += 28;
+  if (staleDays >= 5) score += 22;
+  if (includesAny(subject, ["pm判断", "判断待ち"])) {
+    score += 34;
+    category = "PM判断待ち";
+    summary = "後続作業を止めやすい判断待ち issue です。";
+    nextAction = "判断材料を整理し、PMが決めるべき選択肢を明確にします。";
+    humanCheck = "リリース方針、優先順位、影響範囲の判断を確認してください。";
+    reason = "件名にPM判断待ちが含まれ、高優先度または停滞の可能性があります。";
+  } else if (includesAny(subject, ["仕様", "確認待ち", "承認境界"])) {
+    score += 26;
+    category = "仕様確認";
+    summary = "実装前に仕様や確認境界を揃える必要がある issue です。";
+    nextAction = "要求仕様、機能仕様、テスト仕様の未確定点を洗い出します。";
+    humanCheck = "仕様の決定者と、Redmineへ反映すべき内容を確認してください。";
+    reason = "件名に仕様または確認待ちが含まれています。";
+  } else if (includesAny(subject, ["停滞", "リスク"]) || staleDays >= 7) {
+    score += 24;
+    category = "停滞リスク";
+    summary = "更新が古く、放置すると作業計画に影響しそうな issue です。";
+    nextAction = "止まっている理由を特定し、次に動かす人か判断を明確にします。";
+    humanCheck = "本当に止まっているのか、Redmine外で進んでいないか確認してください。";
+    reason = `更新が ${staleDays} 日前で、停滞検知の対象です。`;
+  } else if (includesAny(subject, ["クローズ候補", "完了"]) || status.toLowerCase().includes("resolved")) {
+    score += 18;
+    category = "クローズ候補";
+    summary = "完了に近く、クローズ判定に進めそうな issue です。";
+    nextAction = "テスト結果と完了条件を照合し、クローズ可否を判定します。";
+    humanCheck = "テスト結果、残リスク、Redmineコメントが揃っているか確認してください。";
+    reason = "状態または件名から完了確認に近いと判断しました。";
+  } else if (isHighPriority(issue)) {
+    category = "高優先度";
+    summary = "優先度が高く、早めに次アクションを決めたい issue です。";
+    nextAction = "着手条件とブロッカーを確認し、今日の作業に入れるか判断します。";
+    humanCheck = "他の高優先度 issue との順序を確認してください。";
+    reason = `優先度が ${priority} です。`;
+  }
+
+  return { issue, score, category, summary, nextAction, humanCheck, reason };
+}
+
+function issueLink(issue) {
+  const title = `#${issue.id} ${escapeHtml(issue.subject || "No subject")}`;
+  if (!state.baseUrl) return title;
+  const url = `${state.baseUrl}/issues/${issue.id}`;
+  return `<a href="${url}" target="_blank" rel="noreferrer">${title}</a>`;
 }
 
 function metricTemplate(label, value) {

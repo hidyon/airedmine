@@ -247,6 +247,11 @@ h3 {
   gap: 10px;
 }
 
+.work-guide-panel {
+  display: grid;
+  gap: 10px;
+}
+
 .section-heading {
   display: flex;
   align-items: end;
@@ -258,6 +263,114 @@ h3 {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
+}
+
+.work-guide {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.8fr);
+  gap: 12px;
+}
+
+.guide-primary,
+.guide-candidate {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  box-shadow: 0 8px 24px rgba(24, 35, 52, 0.04);
+}
+
+.guide-primary {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  gap: 14px;
+  padding: 16px;
+}
+
+.guide-rank {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 8px;
+  background: #0f766e;
+  color: #ffffff;
+  font-size: 20px;
+  font-weight: 900;
+}
+
+.guide-content {
+  display: grid;
+  gap: 10px;
+}
+
+.guide-label {
+  margin: 0;
+  color: var(--accent-strong);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.guide-content h4 {
+  margin: 0;
+  font-size: 19px;
+  line-height: 1.25;
+}
+
+.guide-content h4 a {
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.guide-content h4 a:hover {
+  color: var(--accent-strong);
+}
+
+.guide-content > p,
+.guide-split p,
+.guide-candidate p,
+.issue-agent p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.guide-split {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.guide-split div,
+.issue-agent div {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px;
+  background: #f8fafc;
+}
+
+.guide-split span,
+.guide-candidate span,
+.issue-agent span {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.guide-secondary {
+  display: grid;
+  gap: 10px;
+}
+
+.guide-candidate {
+  display: grid;
+  gap: 7px;
+  padding: 14px;
+}
+
+.guide-candidate strong {
+  line-height: 1.3;
 }
 
 .observation {
@@ -357,6 +470,14 @@ select:focus {
   box-shadow: 0 8px 24px rgba(24, 35, 52, 0.04);
 }
 
+.issue-agent {
+  display: grid;
+  grid-column: 2 / 4;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 2px;
+}
+
 .issue-id {
   color: var(--accent-strong);
   font-weight: 800;
@@ -432,6 +553,12 @@ select:focus {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .work-guide,
+  .guide-split,
+  .issue-agent {
+    grid-template-columns: 1fr;
+  }
+
   .setup-content {
     grid-template-columns: 1fr;
   }
@@ -446,6 +573,10 @@ select:focus {
 
   .issue-card {
     grid-template-columns: 1fr;
+  }
+
+  .issue-agent {
+    grid-column: auto;
   }
 }
 
