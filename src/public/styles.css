@@ -208,6 +208,12 @@ h3 {
   font-size: 13px;
 }
 
+.setup-actions {
+  display: grid;
+  gap: 8px;
+  justify-items: end;
+}
+
 .text-link {
   display: inline-flex;
   align-items: center;

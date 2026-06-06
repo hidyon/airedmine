@@ -739,7 +739,7 @@ Priority: High
 
 ### ISS-032: 初回セットアップ確認スクリプトを追加する
 
-Status: Open
+Status: Closed
 Priority: High
 
 要求仕様:
@@ -759,9 +759,20 @@ Priority: High
 - `.env` が揃っている場合に成功結果が表示されることを確認する。
 - 必須項目がない場合に不足項目が表示されることを確認する。
 
+テスト結果:
+
+- `scripts/doctor.mjs` を追加した。
+- `package.json` に `npm run doctor` を追加した。
+- Node.js、Docker Compose コマンド、`.env`、Compose service、AIRedmine config API、issue API を確認するようにした。
+- `npm run doctor` が成功し、Compose v1 環境では v2 推奨の警告を出すことを確認した。
+
+クローズ判定:
+
+- 初回セットアップ不足をワンコマンドで確認できるため Closed とする。
+
 ### ISS-033: Redmine デモデータ投入をワンコマンド化する
 
-Status: Open
+Status: Closed
 Priority: Medium
 
 要求仕様:
@@ -780,9 +791,21 @@ Priority: Medium
 - Compose 環境で seed スクリプトを実行できることを確認する。
 - AIRedmine UI にデモ issue が表示されることを確認する。
 
+テスト結果:
+
+- `scripts/seed-demo.mjs` を追加した。
+- `package.json` に `npm run seed:demo` を追加した。
+- 既存の Redmine seed runner を Compose 経由で実行できるようにした。
+- seed 実行時の `api_key` 表示は `***` にマスクするようにした。
+- `npm run seed:demo` が成功し、デモ issue が投入済みであることを確認した。
+
+クローズ判定:
+
+- デモデータ投入をワンコマンドで再現できるため Closed とする。
+
 ### ISS-034: Docker Compose 開発用 override を追加する
 
-Status: Open
+Status: Closed
 Priority: Medium
 
 要求仕様:
@@ -801,9 +824,20 @@ Priority: Medium
 - 開発用 Compose で AIRedmine app が起動することを確認する。
 - ソース変更後に再ビルドなしで画面または API に反映されることを確認する。
 
+テスト結果:
+
+- `docker-compose.dev.yml` を追加した。
+- app service にソースをマウントし、`npm run dev` で起動する構成にした。
+- `npm run compose:dev` と `npm run compose -- ...` の入口を追加した。
+- `docker-compose -f docker-compose.yml -f docker-compose.dev.yml config` が成功した。
+
+クローズ判定:
+
+- 通常起動と開発起動を使い分ける構成ができたため Closed とする。
+
 ### ISS-035: Redmine 接続トラブルシュート画面を強化する
 
-Status: Open
+Status: Closed
 Priority: Medium
 
 要求仕様:
@@ -821,9 +855,21 @@ Priority: Medium
 - `.env` 未設定時に不足項目が表示されることを確認する。
 - Redmine API エラー時にステータスに応じた表示が出ることを確認する。
 
+テスト結果:
+
+- `/api/config` に `diagnostics` を追加した。
+- Redmine issue 取得失敗時に `auth`, `not_found`, `validation`, `rate_limit`, `server`, `connection`, `unknown` の分類と次アクションを返すようにした。
+- UI の接続エラー表示で分類、HTTP status、次アクションを表示するようにした。
+- `GET /api/config` で `diagnostics.category=ready` が返ることを確認した。
+- 配信 JS に新しい接続診断表示が含まれることを確認した。
+
+クローズ判定:
+
+- 接続失敗時の原因分類と次の行動が UI / API で確認できるため Closed とする。
+
 ### ISS-036: devcontainer 対応を追加する
 
-Status: Open
+Status: Closed
 Priority: Low
 
 要求仕様:
@@ -840,6 +886,49 @@ Priority: Low
 
 - devcontainer 設定ファイルが妥当な JSON であることを確認する。
 - README に devcontainer 起動手順があることを確認する。
+
+テスト結果:
+
+- `.devcontainer/devcontainer.json` を追加した。
+- `docker-compose.yml` と `docker-compose.dev.yml` を使って app service に接続する構成にした。
+- `node -e` で devcontainer 設定が妥当な JSON であることを確認した。
+- README に devcontainer の起動手順を追加した。
+
+クローズ判定:
+
+- VS Code devcontainer から開発環境を始める入口ができたため Closed とする。
+
+### ISS-037: Docker Compose v2 への移行準備を行う
+
+Status: Closed
+Priority: Medium
+
+要求仕様:
+
+- Compose v2 の `docker compose` を優先しつつ、既存の `docker-compose` v1 環境でも動く。
+- 今後 v2 へ移行するときに、README と scripts の変更範囲を小さくする。
+
+機能仕様:
+
+- Compose 実行は `docker compose` を先に試し、失敗したら `docker-compose` にフォールバックする。
+- README に Compose v2 推奨と v1 fallback の方針を記載する。
+- `docker compose config` / `docker-compose config` の出力に秘密値が含まれうる注意を記載する。
+
+テスト仕様:
+
+- 現環境の `docker-compose` v1 で scripts が動くことを確認する。
+- Compose v2 がない場合に fallback できることを確認する。
+
+テスト結果:
+
+- `scripts/compose-utils.mjs` と `scripts/compose-run.mjs` を追加した。
+- `npm run healthcheck`, `npm run doctor`, `npm run seed:demo`, `npm run compose:*` が共通の Compose 検出を使うようにした。
+- 現環境では `docker compose` が未導入で、`docker-compose` v1 に fallback することを確認した。
+- README に Compose v2 推奨、v1 fallback、config 出力時の秘密値注意を追加した。
+
+クローズ判定:
+
+- Compose v2 へ寄せる準備と v1 互換の両方を満たしたため Closed とする。
 
 ### ISS-008: Redmine issue 取得 API を Connector として分離する
 

@@ -4,8 +4,12 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "compose": "node scripts/compose-run.mjs",
+    "compose:dev": "node scripts/compose-run.mjs -f docker-compose.yml -f docker-compose.dev.yml up app",
     "dev": "node src/server/index.js",
+    "doctor": "node scripts/doctor.mjs",
     "healthcheck": "node scripts/healthcheck.mjs",
+    "seed:demo": "node scripts/seed-demo.mjs",
     "start": "node src/server/index.js"
   },
   "engines": {

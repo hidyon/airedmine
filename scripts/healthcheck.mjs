@@ -1,7 +1,4 @@
-import { execFile } from "node:child_process";
-import { promisify } from "node:util";
-
-const execFileAsync = promisify(execFile);
+import { detectCompose, getRunningComposeServices } from "./compose-utils.mjs";
 
 const appUrl = trimTrailingSlash(process.env.AIREDMINE_APP_URL || "http://localhost:5173");
 const redmineUrl = trimTrailingSlash(process.env.REDMINE_PUBLIC_URL || "http://localhost:3000");
@@ -26,13 +23,8 @@ if (results.some((result) => !result.ok)) {
 
 async function checkComposeServices() {
   try {
-    const { stdout } = await execFileAsync("docker-compose", [
-      "ps",
-      "--services",
-      "--filter",
-      "status=running"
-    ]);
-    const running = new Set(stdout.split(/\r?\n/).map((line) => line.trim()).filter(Boolean));
+    const compose = await detectCompose();
+    const running = new Set(await getRunningComposeServices());
     const missing = requiredServices.filter((service) => !running.has(service));
 
     addResult({
@@ -40,7 +32,7 @@ async function checkComposeServices() {
       ok: missing.length === 0,
       detail: missing.length
         ? `Not running: ${missing.join(", ")}`
-        : `Running: ${requiredServices.join(", ")}`
+        : `${compose.label}: running ${requiredServices.join(", ")}`
     });
   } catch (error) {
     addResult({

@@ -193,6 +193,7 @@ docker compose up
 ```
 
 `docker compose` が使えない環境では、`docker-compose up` を使います。
+このリポジトリの npm scripts は、`docker compose` が使える場合は Compose v2 を優先し、使えない場合は `docker-compose` にフォールバックします。
 
 app image だけを build する場合:
 
@@ -252,12 +253,21 @@ curl "http://localhost:5173/api/issues?status_id=open"
 AIREDMINE_APP_URL=http://localhost:5173 REDMINE_PUBLIC_URL=http://localhost:3000 npm run healthcheck
 ```
 
+初回セットアップをまとめて確認する場合:
+
+```bash
+npm run doctor
+```
+
+`doctor` は Node.js、Docker Compose コマンド、`.env`、Compose service、AIRedmine config API、issue API を確認します。
+失敗した項目には、次に確認する操作が表示されます。
+
 ### サンプルデータを投入する
 
 ローカル Redmine に、AIRedmine の体験確認用プロジェクトと issue を投入できます。
 
 ```bash
-docker-compose exec -T redmine bundle exec rails runner /demo-scripts/seed-demo.rb
+npm run seed:demo
 docker-compose up -d app
 ```
 
@@ -270,6 +280,52 @@ docker-compose up -d app
 
 API キーはコマンド出力の `api_key` を `.env` の `REDMINE_API_KEY` に設定します。
 すでに `.env` 設定済みの場合は、app コンテナの再起動だけで実 Redmine の issue が表示されます。
+
+既存のデモ project / issue がある場合、seed は同じ subject の issue を更新します。
+体験確認データを再投入したいときにも同じコマンドを使えます。
+
+### Docker Compose 開発起動
+
+通常の `docker compose up` は AIRedmine app image を build して起動します。
+開発中にソース変更をすぐ反映したい場合は、開発用 Compose override を使います。
+
+```bash
+npm run compose:dev
+```
+
+これは `docker-compose.dev.yml` を重ねて、app service にソースをマウントし、`npm run dev` で起動します。
+Compose コマンドを直接指定したい場合:
+
+```bash
+npm run compose -- -f docker-compose.yml -f docker-compose.dev.yml up app
+```
+
+### devcontainer
+
+VS Code Dev Containers を使う場合は、リポジトリを開いて `Reopen in Container` を選びます。
+`.devcontainer/devcontainer.json` は `docker-compose.yml` と `docker-compose.dev.yml` を使い、app service に接続します。
+
+起動後は次を確認します。
+
+```bash
+npm run doctor
+npm run healthcheck
+```
+
+### Docker Compose v2 への移行準備
+
+推奨は Compose v2 の `docker compose` です。
+この環境では古い `docker-compose` v1 でも動くようにフォールバックを残していますが、新しい環境では `docker compose` を優先してください。
+
+確認コマンド:
+
+```bash
+docker compose version
+docker-compose --version
+```
+
+`docker compose version` が成功すれば Compose v2 を利用できます。
+`docker compose config` や `docker-compose config` は `.env` の値を展開して表示するため、出力を共有するときは API キーなどの秘密値を含めないよう注意してください。
 
 ## Redmine と接続する
 

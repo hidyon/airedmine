@@ -32,8 +32,10 @@ const server = createServer(async (req, res) => {
     const url = new URL(req.url || "/", `http://${req.headers.host}`);
 
     if (url.pathname === "/api/config") {
+      const config = redmine.getConfig();
       return sendJson(res, {
-        ...redmine.getConfig(),
+        ...config,
+        diagnostics: connectionDiagnostics(config),
         setup: [
           ".env に REDMINE_BASE_URL を設定する",
           ".env に REDMINE_API_KEY を設定する",
@@ -80,8 +82,7 @@ async function handleIssues(url, res) {
     return sendJson(res, await redmine.listIssues(url.searchParams));
   } catch (error) {
     if (error instanceof RedmineApiError) {
-      res.writeHead(error.status, { "Content-Type": error.contentType });
-      return res.end(error.body);
+      return sendJson(res, redmineErrorPayload(error, "Redmine issues fetch failed"), error.status);
     }
     throw error;
   }
@@ -108,8 +109,7 @@ async function handleChat(req, res) {
     return sendJson(res, buildChatResponse(question, issues.issues || [], knowledge));
   } catch (error) {
     if (error instanceof RedmineApiError) {
-      res.writeHead(error.status, { "Content-Type": error.contentType });
-      return res.end(error.body);
+      return sendJson(res, redmineErrorPayload(error, "Redmine chat context fetch failed"), error.status);
     }
     throw error;
   }
@@ -169,22 +169,45 @@ async function handleCommentProposal(req, res) {
   }
 }
 
+function connectionDiagnostics(config) {
+  if (!config.connected) {
+    return {
+      category: "missing_config",
+      message: "Redmine 接続に必要な環境変数が不足しています。",
+      nextActions: [
+        ".env に REDMINE_API_KEY を設定する",
+        "Redmine で REST API を有効にする",
+        "app service を再起動する"
+      ]
+    };
+  }
+
+  return {
+    category: "ready",
+    message: "Redmine 接続設定は読み込まれています。",
+    nextActions: [
+      "チケットが取得できない場合は API キー権限と REST API 有効化を確認する"
+    ]
+  };
+}
+
 function recordUpdateLog(entry) {
   updateLogs.unshift(entry);
   if (updateLogs.length > 50) updateLogs.length = 50;
   return entry;
 }
 
-function redmineErrorPayload(error) {
+function redmineErrorPayload(error, errorLabel = "Redmine update failed") {
   const body = String(error.body || "");
   const category = errorCategory(error.status, body);
   return {
-    error: "Redmine update failed",
+    error: errorLabel,
     message: errorMessageForCategory(category, error.status),
     category,
     retryable: ["connection", "server", "rate_limit"].includes(category),
     status: error.status,
-    detail: body.slice(0, 240)
+    detail: body.slice(0, 240),
+    nextActions: nextActionsForError(category)
   };
 }
 
@@ -206,6 +229,45 @@ function errorMessageForCategory(category, status) {
   if (category === "server") return "Redmine サーバー側でエラーが発生しました。状態を確認して再試行してください。";
   if (category === "connection") return "Redmine に接続できません。アプリサーバーと Redmine の状態を確認してください。";
   return `Redmine 更新に失敗しました。HTTP ${status} を確認してください。`;
+}
+
+function nextActionsForError(category) {
+  if (category === "auth") {
+    return [
+      ".env の REDMINE_API_KEY を確認する",
+      "API キーのユーザーが対象 project を参照できるか確認する",
+      "Redmine の REST API が有効か確認する"
+    ];
+  }
+  if (category === "not_found") {
+    return [
+      "対象 issue または project が存在するか確認する",
+      "API キーのユーザーに参照権限があるか確認する"
+    ];
+  }
+  if (category === "validation") {
+    return [
+      "送信内容の必須項目や形式を確認する",
+      "Redmine のワークフロー制約を確認する"
+    ];
+  }
+  if (category === "connection") {
+    return [
+      "Redmine service が起動しているか確認する",
+      "REDMINE_BASE_URL が app コンテナから到達できる URL か確認する",
+      "npm run healthcheck を実行する"
+    ];
+  }
+  if (category === "server") {
+    return [
+      "Redmine のログを確認する",
+      "少し待って再試行する"
+    ];
+  }
+  return [
+    "HTTP ステータスと Redmine のログを確認する",
+    "npm run doctor を実行する"
+  ];
 }
 
 async function serveStatic(pathname, res) {

@@ -111,7 +111,10 @@ async function loadIssues() {
     });
     const response = await fetch(`/api/issues?${params.toString()}`);
     if (!response.ok) {
-      throw new Error(`Redmine API error: ${response.status}`);
+      const body = await readResponseBody(response);
+      const error = new Error(body.message || `Redmine API error: ${response.status}`);
+      error.detail = body;
+      throw error;
     }
     const data = await response.json();
     state.issues = data.issues || [];
@@ -119,9 +122,12 @@ async function loadIssues() {
     render();
   } catch (error) {
     console.error(error);
-    state.issueError = error;
+    state.issueError = {
+      message: error.message || "Redmine API error",
+      detail: error.detail || null
+    };
     renderConnection();
-    issueList.innerHTML = `<div class="error-state">チケットを取得できませんでした。Redmine の URL、API キー、REST API 設定を確認してください。</div>`;
+    issueList.innerHTML = `<div class="error-state">チケットを取得できませんでした。${escapeHtml(error.message || "Redmine の URL、API キー、REST API 設定を確認してください。")}</div>`;
   }
 }
 
@@ -508,15 +514,27 @@ function renderConnection() {
   }
 
   if (state.issueError) {
+    const detail = state.issueError.detail || {};
+    const actions = detail.nextActions || [
+      "Redmine の URL を確認する",
+      "API キーと REST API 有効化を確認する",
+      "npm run doctor を実行する"
+    ];
     connectionStatus.textContent = "Redmine API エラー";
     setupPanel.innerHTML = `
       <div class="setup-content setup-error">
         <div>
           <p class="eyebrow">Connection</p>
           <h3>Redmine からチケットを取得できません</h3>
-          <p>接続先 URL、API キー、Redmine の REST API 設定を確認してください。</p>
+          <p>${escapeHtml(state.issueError.message || "接続先 URL、API キー、Redmine の REST API 設定を確認してください。")}</p>
+          ${detail.category ? `<p>分類: <code>${escapeHtml(detail.category)}</code>${detail.status ? ` / HTTP ${escapeHtml(detail.status)}` : ""}</p>` : ""}
         </div>
-        ${state.baseUrl ? `<a class="text-link" href="${escapeHtml(state.baseUrl)}" target="_blank" rel="noreferrer">Redmine を開く</a>` : ""}
+        <div class="setup-actions">
+          ${state.baseUrl ? `<a class="text-link" href="${escapeHtml(state.baseUrl)}" target="_blank" rel="noreferrer">Redmine を開く</a>` : ""}
+          <ol class="setup-steps">
+            ${actions.map((action) => `<li>${escapeHtml(action)}</li>`).join("")}
+          </ol>
+        </div>
       </div>
     `;
     return;
@@ -542,15 +560,16 @@ function renderConnection() {
     : "なし";
 
   connectionStatus.textContent = "モックデータ表示中";
+  const diagnostics = state.config.diagnostics;
   setupPanel.innerHTML = `
     <div class="setup-content setup-mock">
       <div>
         <p class="eyebrow">Connection</p>
         <h3>モックデータで体験中</h3>
-        <p>実 Redmine に接続するには .env に ${missing} を設定し、Redmine 側で REST API を有効にしてください。</p>
+        <p>${escapeHtml(diagnostics?.message || "実 Redmine に接続するには .env と Redmine 側の REST API 設定が必要です。")} 不足: ${missing}</p>
       </div>
       <ol class="setup-steps">
-        ${(state.config.setup || []).map((step) => `<li>${escapeHtml(step)}</li>`).join("")}
+        ${(diagnostics?.nextActions || state.config.setup || []).map((step) => `<li>${escapeHtml(step)}</li>`).join("")}
       </ol>
     </div>
   `;

@@ -767,3 +767,47 @@ Docker Compose 起動後に、AIRedmine、Redmine、PostgreSQL、app 経由 API 
 クローズ判定:
 
 - Docker Compose 検証環境が起動できているかを、新しい開発者や PM がワンコマンドで確認できるため `ISS-031` を Closed とする。
+
+## 2026-06-07: Milestone 5 残り issue クローズ
+
+Compose v2 移行準備を `ISS-037` として追加し、Milestone 5 の残り issue をまとめて対応した。
+
+対象 issue:
+
+- `ISS-032`: 初回セットアップ確認スクリプトを追加する。
+- `ISS-033`: Redmine デモデータ投入をワンコマンド化する。
+- `ISS-034`: Docker Compose 開発用 override を追加する。
+- `ISS-035`: Redmine 接続トラブルシュート画面を強化する。
+- `ISS-036`: devcontainer 対応を追加する。
+- `ISS-037`: Docker Compose v2 への移行準備を行う。
+
+実装内容:
+
+- `scripts/compose-utils.mjs` を追加し、`docker compose` 優先、`docker-compose` fallback の共通処理を作った。
+- `scripts/compose-run.mjs` を追加し、任意の Compose コマンドを fallback 付きで実行できるようにした。
+- `scripts/doctor.mjs` と `npm run doctor` を追加した。
+- `scripts/seed-demo.mjs` と `npm run seed:demo` を追加した。
+- seed 出力の `api_key` を `***` にマスクするようにした。
+- `docker-compose.dev.yml` を追加し、開発時はソースマウントと `npm run dev` で起動できるようにした。
+- `.devcontainer/devcontainer.json` を追加した。
+- `/api/config` に `diagnostics` を追加した。
+- Redmine issue 取得失敗時に分類と次アクションを返すようにした。
+- UI の接続エラー表示で分類、HTTP status、次アクションを表示するようにした。
+- README に doctor、seed、開発用 Compose、devcontainer、Compose v2 移行準備を追記した。
+
+確認結果:
+
+- `node --check` で追加 scripts と変更した server / public JS の構文を確認した。
+- devcontainer 設定が妥当な JSON であることを確認した。
+- `docker-compose -f docker-compose.yml -f docker-compose.dev.yml config` が成功した。
+- `npm run doctor` が成功し、Compose v1 環境では v2 推奨の warning が出ることを確認した。
+- `npm run seed:demo` が成功し、API キーがマスク表示されることを確認した。
+- Docker image を rebuild し、app service を再起動した。
+- `npm run healthcheck` が成功した。
+- `/api/config` が接続診断情報を返すことを確認した。
+- 配信 HTML / JS に最新 cache key と接続診断表示が含まれることを確認した。
+
+クローズ判定:
+
+- 初回設定、起動確認、デモデータ投入、開発起動、devcontainer、Compose v2 移行準備が一通り揃った。
+- 新しい開発者や PM がローカルで AIRedmine と Redmine を試す導線が整ったため、`ISS-032` から `ISS-037` を Closed とし、Milestone 5 を Completed とする。

@@ -32,12 +32,22 @@ export function createRedmineConnector({ baseUrl, apiKey }) {
       }
 
       const redmineUrl = `${redmineBaseUrl}/issues.json?${toRedmineSearchParams(params).toString()}`;
-      const response = await fetch(redmineUrl, {
-        headers: {
-          "Accept": "application/json",
-          "X-Redmine-API-Key": redmineApiKey
-        }
-      });
+      let response;
+
+      try {
+        response = await fetch(redmineUrl, {
+          headers: {
+            "Accept": "application/json",
+            "X-Redmine-API-Key": redmineApiKey
+          }
+        });
+      } catch (error) {
+        throw new RedmineApiError("Redmine connection error", {
+          status: 503,
+          body: error.message || "Failed to fetch Redmine",
+          contentType: "text/plain; charset=utf-8"
+        });
+      }
 
       if (!response.ok) {
         throw new RedmineApiError(`Redmine API error: ${response.status}`, {
