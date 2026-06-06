@@ -181,6 +181,14 @@ function renderPmOverview(issues) {
   const highPriorityIssues = issues.filter((issue) => isHighPriority(issue));
   const pmDecisionIssues = issues.filter((issue) => includesAny(issue.subject, ["pm判断", "判断待ち", "確認待ち"]));
   const specQualityIssues = issues.filter((issue) => includesAny(issue.subject, ["仕様", "ズレ", "未記載", "クローズ候補"]));
+  const riskIssues = issues
+    .map(analyzeIssue)
+    .filter((analysis) => ["PM判断待ち", "停滞リスク", "仕様確認", "高優先度"].includes(analysis.category))
+    .sort((a, b) => b.score - a.score);
+  const workload = Object.entries(countBy(issues, (issue) => issue.assigned_to?.name || "未割り当て"))
+    .sort((a, b) => b[1] - a[1]);
+  const priorities = Object.entries(countBy(issues, (issue) => issue.priority?.name || "Normal"))
+    .sort((a, b) => b[1] - a[1]);
 
   const observations = [
     observationTemplate({
@@ -209,7 +217,42 @@ function renderPmOverview(issues) {
     })
   ];
 
-  pmOverview.innerHTML = observations.join("");
+  pmOverview.innerHTML = `
+    <div class="pm-observations">
+      ${observations.join("")}
+    </div>
+    <div class="pm-decision-board">
+      <article class="pm-focus">
+        <div class="pm-focus-heading">
+          <div>
+            <p class="eyebrow">Decision queue</p>
+            <h4>PMが今日確認すること</h4>
+          </div>
+          <strong>${riskIssues.length}</strong>
+        </div>
+        ${riskIssues.length ? riskIssues.slice(0, 4).map(pmRiskTemplate).join("") : `<p class="pm-empty">確認すべきリスク候補はありません。</p>`}
+      </article>
+      <div class="pm-side-panels">
+        <article class="pm-breakdown">
+          <h4>担当者負荷</h4>
+          ${workload.length ? workload.map(([label, count]) => barTemplate(label, count, issues.length)).join("") : `<p class="pm-empty">表示対象がありません。</p>`}
+        </article>
+        <article class="pm-breakdown">
+          <h4>優先度の偏り</h4>
+          ${priorities.length ? priorities.map(([label, count]) => barTemplate(label, count, issues.length)).join("") : `<p class="pm-empty">表示対象がありません。</p>`}
+        </article>
+      </div>
+    </div>
+    <article class="pm-stale-list">
+      <div>
+        <p class="eyebrow">Stale issues</p>
+        <h4>未更新 issue</h4>
+      </div>
+      <div class="pm-stale-items">
+        ${staleIssues.length ? staleIssues.slice(0, 5).map(staleTemplate).join("") : `<p class="pm-empty">5日以上更新されていない issue はありません。</p>`}
+      </div>
+    </article>
+  `;
 }
 
 function renderWorkGuide(issues) {
@@ -275,6 +318,42 @@ function observationTemplate({ label, count, description, issues }) {
       <p>${escapeHtml(description)}</p>
       <ul>${issueList}</ul>
     </article>
+  `;
+}
+
+function pmRiskTemplate(analysis) {
+  return `
+    <section class="pm-risk-item">
+      <div>
+        <span>${escapeHtml(analysis.category)}</span>
+        <strong>${issueLink(analysis.issue)}</strong>
+      </div>
+      <p>${escapeHtml(analysis.humanCheck)}</p>
+    </section>
+  `;
+}
+
+function barTemplate(label, count, total) {
+  const ratio = total ? Math.round((count / total) * 100) : 0;
+  return `
+    <div class="pm-bar-row">
+      <div class="pm-bar-label">
+        <span>${escapeHtml(label)}</span>
+        <strong>${count}</strong>
+      </div>
+      <div class="pm-bar-track" aria-label="${escapeHtml(label)} ${count}件">
+        <div style="width: ${ratio}%"></div>
+      </div>
+    </div>
+  `;
+}
+
+function staleTemplate(issue) {
+  return `
+    <section class="pm-stale-item">
+      <strong>${issueLink(issue)}</strong>
+      <span>${daysSince(issue.updated_on)}日未更新 / ${escapeHtml(issue.assigned_to?.name || "未割り当て")}</span>
+    </section>
   `;
 }
 
