@@ -83,6 +83,42 @@ Priority: High
 
 - 要求仕様、機能仕様、テスト仕様を満たすため Closed とする。
 
+### ISS-010: モックデータを体験説明用に拡充する
+
+Status: Closed
+Priority: Medium
+
+要求仕様:
+
+- `.env` 未設定でも、Airedmaine の狙いが伝わる Redmine プロジェクト体験を再現できる。
+
+機能仕様:
+
+- 開発者向け、PM 向け、停滞 issue、仕様確認待ち、高優先度 issue などを含むモックデータにする。
+- モックデータで検索、状態フィルタ、サマリの体験を確認できるようにする。
+- `/api/issues` の `status_id` に応じて、モックデータも `open`、`closed`、`*` を絞り込む。
+
+テスト仕様:
+
+- モック表示で検索、状態フィルタ、サマリが破綻しないことを確認する。
+- 体験説明に必要な状態の issue が含まれることを確認する。
+- `GET /api/issues?status_id=open` が未完了 issue を返すことを確認する。
+- `GET /api/issues?status_id=closed` が完了 issue を返すことを確認する。
+- `GET /api/issues?status_id=*` が全 issue を返すことを確認する。
+
+テスト結果:
+
+- `node --check src/server/index.js` が成功した。
+- `GET /api/issues?status_id=open` が未完了 issue 6 件を返した。
+- `GET /api/issues?status_id=closed` が完了 issue 2 件を返した。
+- `GET /api/issues?status_id=*` が全 issue 8 件を返した。
+- `GET /` が HTML を返した。
+- モックデータに仕様確認待ち、PM 判断待ち、停滞リスク、クローズ候補、完了済み issue を含めた。
+
+クローズ判定:
+
+- 要求仕様、機能仕様、テスト仕様を満たすため Closed とする。
+
 ## Open
 
 ### ISS-002: 開発者向けの AI エージェント作業ビューを設計する
@@ -226,25 +262,6 @@ Priority: High
 
 - モックデータで件数と停滞候補が期待通り表示されることを確認する。
 - 検索や状態フィルタと矛盾しない表示になることを確認する。
-
-### ISS-010: モックデータを体験説明用に拡充する
-
-Status: Open
-Priority: Medium
-
-要求仕様:
-
-- `.env` 未設定でも、Airedmaine の狙いが伝わる Redmine プロジェクト体験を再現できる。
-
-機能仕様:
-
-- 開発者向け、PM 向け、停滞 issue、仕様確認待ち、高優先度 issue などを含むモックデータにする。
-- モックデータで検索、状態フィルタ、サマリの体験を確認できるようにする。
-
-テスト仕様:
-
-- モック表示で検索、状態フィルタ、サマリが破綻しないことを確認する。
-- 体験説明に必要な状態の issue が含まれることを確認する。
 
 ### ISS-011: README にローカル Redmine 接続手順を追加する
 
