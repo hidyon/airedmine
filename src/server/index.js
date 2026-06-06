@@ -115,12 +115,16 @@ async function serveStatic(pathname, res) {
   try {
     const content = await readFile(filePath);
     res.writeHead(200, {
-      "Content-Type": mimeTypes[extname(filePath)] || "application/octet-stream"
+      "Content-Type": mimeTypes[extname(filePath)] || "application/octet-stream",
+      "Cache-Control": "no-store"
     });
     return res.end(content);
   } catch {
     const content = await readFile(join(publicDir, "index.html"));
-    res.writeHead(200, { "Content-Type": mimeTypes[".html"] });
+    res.writeHead(200, {
+      "Content-Type": mimeTypes[".html"],
+      "Cache-Control": "no-store"
+    });
     return res.end(content);
   }
 }

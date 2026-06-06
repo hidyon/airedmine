@@ -596,3 +596,37 @@ Priority: High
 クローズ判定:
 
 - 要求仕様、機能仕様、テスト仕様を満たすため Closed とする。
+
+### ISS-019: Chat UI の回答取得エラー表示を改善する
+
+Status: Closed
+Priority: High
+
+要求仕様:
+
+- Chat UI で回答取得に失敗したように見える場合、原因の切り分けができる。
+- ブラウザーが古い `app.js` を保持していても、更新後に新しいファイルを取得しやすい。
+
+機能仕様:
+
+- Chat API の通信失敗と回答描画失敗を別々に表示する。
+- 通信失敗時は HTTP ステータスやエラーメッセージを表示する。
+- 静的ファイルに `Cache-Control: no-store` を付ける。
+- `index.html` の CSS / JS 参照にバージョンを付ける。
+
+テスト仕様:
+
+- `POST /api/chat` が 200 を返すことを確認する。
+- `/app.js` が `Cache-Control: no-store` を返すことを確認する。
+- `node --check src/server/index.js` と `node --check src/public/app.js` で構文エラーがないことを確認する。
+
+テスト結果:
+
+- `POST /api/chat` が「今日まず何からやればいい？」に対して 200 と回答を返した。
+- `/app.js` が `Cache-Control: no-store` を返した。
+- Chat UI の catch 範囲を通信と描画に分けた。
+- `node --check src/server/index.js` と `node --check src/public/app.js` が成功した。
+
+クローズ判定:
+
+- 要求仕様、機能仕様、テスト仕様を満たすため Closed とする。

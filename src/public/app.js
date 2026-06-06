@@ -93,6 +93,7 @@ async function askChat(question) {
   if (!trimmed) return;
 
   chatOutput.innerHTML = `<div class="empty-state">考えています...</div>`;
+  let data;
 
   try {
     const response = await fetch("/api/chat", {
@@ -104,14 +105,22 @@ async function askChat(question) {
     });
 
     if (!response.ok) {
-      throw new Error(`Chat API error: ${response.status}`);
+      const body = await response.text();
+      throw new Error(`Chat API error: ${response.status} ${body.slice(0, 120)}`);
     }
 
-    const data = await response.json();
+    data = await response.json();
+  } catch (error) {
+    console.error(error);
+    chatOutput.innerHTML = `<div class="error-state">回答を取得できませんでした。${escapeHtml(error.message || "Redmine 接続とアプリサーバーの状態を確認してください。")}</div>`;
+    return;
+  }
+
+  try {
     renderChatAnswer(trimmed, data);
   } catch (error) {
     console.error(error);
-    chatOutput.innerHTML = `<div class="error-state">回答を取得できませんでした。Redmine 接続とアプリサーバーの状態を確認してください。</div>`;
+    chatOutput.innerHTML = `<div class="error-state">回答の表示に失敗しました。${escapeHtml(error.message || "画面を更新してもう一度試してください。")}</div>`;
   }
 }
 
