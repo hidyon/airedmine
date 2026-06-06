@@ -59,7 +59,8 @@ select {
 }
 
 h1,
-h2 {
+h2,
+h3 {
   margin: 0;
   line-height: 1.1;
   letter-spacing: 0;
@@ -71,6 +72,10 @@ h1 {
 
 h2 {
   font-size: 30px;
+}
+
+h3 {
+  font-size: 20px;
 }
 
 .nav-list {
@@ -237,6 +242,71 @@ h2 {
   line-height: 1;
 }
 
+.pm-panel {
+  display: grid;
+  gap: 10px;
+}
+
+.section-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.pm-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.observation {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  min-height: 176px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 16px;
+  background: var(--panel);
+}
+
+.observation-topline {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.observation-topline span {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.observation-topline strong {
+  color: var(--accent-strong);
+  font-size: 28px;
+  line-height: 1;
+}
+
+.observation p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.observation ul {
+  display: grid;
+  gap: 5px;
+  margin: 0;
+  padding-left: 17px;
+  color: var(--ink);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
 .toolbar {
   display: grid;
   grid-template-columns: minmax(220px, 1fr) 180px;
@@ -358,6 +428,10 @@ select:focus {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .pm-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .setup-content {
     grid-template-columns: 1fr;
   }
@@ -377,6 +451,10 @@ select:focus {
 
 @media (max-width: 480px) {
   .metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .pm-grid {
     grid-template-columns: 1fr;
   }
 

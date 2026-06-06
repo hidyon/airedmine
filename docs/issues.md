@@ -246,22 +246,37 @@ Priority: Medium
 
 ### ISS-009: PM が全体状態をざっくり把握できるサマリを追加する
 
-Status: Open
+Status: Closed
 Priority: High
 
 要求仕様:
 
 - PM がプロジェクト全体の未完了数、優先度、停滞候補を一目で把握できる。
+- PM が確認すべき issue と観点を、チケット一覧を読む前に把握できる。
 
 機能仕様:
 
 - ステータス別件数、優先度別件数、更新が古い issue 数を表示する。
 - PM が確認すべき観点を短く表示する。
+- モックデータでは、PM 判断待ち、停滞リスク、仕様ズレ、クローズ候補を観測項目として表示する。
 
 テスト仕様:
 
 - モックデータで件数と停滞候補が期待通り表示されることを確認する。
 - 検索や状態フィルタと矛盾しない表示になることを確認する。
+- `node --check src/public/app.js` で構文エラーがないことを確認する。
+
+テスト結果:
+
+- `node --check src/public/app.js` が成功した。
+- `node --check src/server/index.js` が成功した。
+- `GET /` が PM 観測パネルを含む HTML を返した。
+- `GET /app.js` が `renderPmOverview` を含む JavaScript を返した。
+- `GET /api/issues?status_id=open` が PM 判断待ち、停滞リスク、仕様ズレ、クローズ候補を含むモック issue を返した。
+
+クローズ判定:
+
+- 要求仕様、機能仕様、テスト仕様を満たすため Closed とする。
 
 ### ISS-011: README にローカル Redmine 接続手順を追加する
 

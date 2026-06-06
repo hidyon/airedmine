@@ -15,6 +15,7 @@ const statusFilter = document.querySelector("#statusFilter");
 const refreshButton = document.querySelector("#refreshButton");
 const connectionStatus = document.querySelector("#connectionStatus");
 const setupPanel = document.querySelector("#setupPanel");
+const pmOverview = document.querySelector("#pmOverview");
 
 searchInput.addEventListener("input", () => {
   state.query = searchInput.value.trim().toLowerCase();
@@ -90,6 +91,7 @@ function render() {
 
   renderMetrics(filteredIssues);
   renderConnection();
+  renderPmOverview(filteredIssues);
   renderIssues(filteredIssues);
 }
 
@@ -172,6 +174,60 @@ function renderMetrics(issues) {
   ].join("");
 }
 
+function renderPmOverview(issues) {
+  const staleIssues = issues.filter((issue) => daysSince(issue.updated_on) >= 5);
+  const highPriorityIssues = issues.filter((issue) => isHighPriority(issue));
+  const pmDecisionIssues = issues.filter((issue) => includesAny(issue.subject, ["pm判断", "判断待ち", "確認待ち"]));
+  const specQualityIssues = issues.filter((issue) => includesAny(issue.subject, ["仕様", "ズレ", "未記載", "クローズ候補"]));
+
+  const observations = [
+    observationTemplate({
+      label: "PM判断待ち",
+      count: pmDecisionIssues.length,
+      description: "判断が止まると後続作業に影響します。",
+      issues: pmDecisionIssues
+    }),
+    observationTemplate({
+      label: "停滞候補",
+      count: staleIssues.length,
+      description: "5日以上更新がない issue です。",
+      issues: staleIssues
+    }),
+    observationTemplate({
+      label: "高優先度",
+      count: highPriorityIssues.length,
+      description: "優先度が High 以上の issue です。",
+      issues: highPriorityIssues
+    }),
+    observationTemplate({
+      label: "情報品質",
+      count: specQualityIssues.length,
+      description: "仕様ズレやテスト未記載など確認が必要です。",
+      issues: specQualityIssues
+    })
+  ];
+
+  pmOverview.innerHTML = observations.join("");
+}
+
+function observationTemplate({ label, count, description, issues }) {
+  const topIssues = issues.slice(0, 2);
+  const issueList = topIssues.length
+    ? topIssues.map((issue) => `<li>#${issue.id} ${escapeHtml(issue.subject)}</li>`).join("")
+    : "<li>該当なし</li>";
+
+  return `
+    <article class="observation">
+      <div class="observation-topline">
+        <span>${escapeHtml(label)}</span>
+        <strong>${count}</strong>
+      </div>
+      <p>${escapeHtml(description)}</p>
+      <ul>${issueList}</ul>
+    </article>
+  `;
+}
+
 function renderIssues(issues) {
   if (issues.length === 0) {
     issueList.innerHTML = `<div class="empty-state">条件に一致するチケットはありません。</div>`;
@@ -218,6 +274,22 @@ function countBy(items, getKey) {
     counts[key] = (counts[key] || 0) + 1;
     return counts;
   }, {});
+}
+
+function isHighPriority(issue) {
+  const priority = issue.priority?.name?.toLowerCase() || "";
+  return priority.includes("high") || priority.includes("urgent") || priority.includes("immediate");
+}
+
+function includesAny(value, keywords) {
+  const normalized = String(value || "").toLowerCase();
+  return keywords.some((keyword) => normalized.includes(keyword.toLowerCase()));
+}
+
+function daysSince(value) {
+  if (!value) return 0;
+  const date = new Date(value);
+  return Math.floor((Date.now() - date.getTime()) / 86400000);
 }
 
 function formatRelative(value) {
