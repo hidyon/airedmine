@@ -299,3 +299,38 @@ Docker Compose で OSS 版 Redmine 検証環境を起動できる構成を追加
 保留事項:
 
 - seed 実行時に Redmine のメールジョブログが出るため、必要なら後続で通知設定を抑制する。
+
+## 2026-06-06: ISS-014 着手
+
+ユーザーから、AIRedmine app 自体も Docker で動かすようにしたいと共有された。
+これまでは Compose の app service が `node:20-bookworm` にリポジトリをマウントして `npm run dev` していたため、アプリイメージとしての境界が曖昧だった。
+
+方針:
+
+- AIRedmine app 用の `Dockerfile` を追加する。
+- Compose の app service は `build` で AIRedmine app image を作って起動する。
+- `.dockerignore` で `.env`、`.git`、docs、scripts など実行に不要なものを build context から除外する。
+- Redmine 接続用の環境変数は従来通り Compose から渡す。
+
+## 2026-06-06: ISS-014 クローズ
+
+AIRedmine app を Docker イメージとして build し、Docker Compose で起動する構成へ変更した。
+
+実装内容:
+
+- `Dockerfile` を追加した。
+- `.dockerignore` を追加した。
+- Compose の app service を `build` 指定と `airedmine-app:local` image 指定に変更した。
+- README に app image の build 手順を追加した。
+
+確認結果:
+
+- `docker-compose build app` が成功した。
+- `docker-compose up -d app` が成功した。
+- `docker-compose images` で app が `airedmine-app:local` を使っていることを確認した。
+- `GET /api/config` が `mode: redmine` を返した。
+- `GET /api/issues?status_id=open` が実 Redmine の未完了サンプル issue 6 件を返した。
+
+保留事項:
+
+- 開発中にホットリロードやソースマウントが必要になった場合は、後続で development 用 override Compose を検討する。

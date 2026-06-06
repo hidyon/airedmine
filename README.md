@@ -181,12 +181,21 @@ npm run dev
 ## Docker Compose でローカル Redmine と起動する
 
 AIRedmine、OSS 版 Redmine、PostgreSQL をまとめて起動できます。
+AIRedmine app server は `Dockerfile` から Docker イメージとして build されます。
 
 ```bash
 docker compose up
 ```
 
 `docker compose` が使えない環境では、`docker-compose up` を使います。
+
+app image だけを build する場合:
+
+```bash
+docker compose build app
+```
+
+`docker compose` が使えない環境では、`docker-compose build app` を使います。
 
 起動後に開く画面:
 

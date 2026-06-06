@@ -398,3 +398,40 @@ Priority: Medium
 クローズ判定:
 
 - 要求仕様、機能仕様、テスト仕様を満たすため Closed とする。
+
+### ISS-014: AIRedmine app を Docker イメージとして起動する
+
+Status: Closed
+Priority: Medium
+
+要求仕様:
+
+- AIRedmine app server を、ホストの Node.js 実行環境に依存せず Docker で起動できる。
+- Docker Compose の app service が、汎用 Node イメージへのソースマウントではなく、AIRedmine app のイメージとして起動する。
+- 既存の Redmine / PostgreSQL 検証環境と一緒に動く。
+
+機能仕様:
+
+- AIRedmine app 用の `Dockerfile` を追加する。
+- Docker build context から不要なファイルや秘密情報を除外する `.dockerignore` を追加する。
+- `docker-compose.yml` の app service を `build` 指定に変更する。
+- README に app image の build / 起動手順を記載する。
+
+テスト仕様:
+
+- `docker-compose build app` が成功することを確認する。
+- `docker-compose up -d app` で app service が起動することを確認する。
+- `GET /api/config` が応答することを確認する。
+- `GET /api/issues?status_id=open` が Redmine 接続時の issue を返すことを確認する。
+
+テスト結果:
+
+- `docker-compose build app` が成功し、`airedmine-app:local` が作成された。
+- `docker-compose up -d app` が成功し、app service が再作成された。
+- `docker-compose ps` で app service が `npm start` で起動していることを確認した。
+- `GET /api/config` が `connected: true`、`mode: redmine` を返した。
+- `GET /api/issues?status_id=open` が実 Redmine の未完了サンプル issue 6 件を返した。
+
+クローズ判定:
+
+- 要求仕様、機能仕様、テスト仕様を満たすため Closed とする。
