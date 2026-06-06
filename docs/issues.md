@@ -209,25 +209,44 @@ Priority: Medium
 
 ### ISS-005: 自然言語対話の入口を設計する
 
-Status: Open
+Status: Closed
 Priority: High
 
 要求仕様:
 
 - 開発者や PM が Redmine と知識ベースについて自然言語で質問できる。
 - 対話で得た回答から、根拠確認や Redmine 更新案の確認に進める。
+- Redmine 更新系の依頼は直接実行せず、人間の確認待ちとして扱う。
 
 機能仕様:
 
 - Browser UI とは別に Chat UI または対話入力欄を用意する。
 - 対話は Redmine issue と `docs/` 配下の知識ベースを参照できる。
 - Redmine 更新は対話から直接実行せず、更新案として作成する。
+- `POST /api/chat` を追加し、質問、回答、根拠、確認待ちの更新案を返す。
+- Chat UI に質問例、回答、参照 issue / docs、確認待ちの更新案を表示する。
 
 テスト仕様:
 
 - モックデータで「今日まず何からやればいい？」に回答できることを確認する。
 - 回答に根拠となる issue または docs の参照が含まれることを確認する。
 - 更新系の依頼が直接実行されず、確認待ちの提案になることを確認する。
+- 実 Redmine 接続時に `POST /api/chat` が未完了 issue を参照できることを確認する。
+- `node --check src/server/index.js` と `node --check src/public/app.js` で構文エラーがないことを確認する。
+
+テスト結果:
+
+- Browser UI に `AIRedmine に聞く` セクションを追加した。
+- `POST /api/chat` を追加し、Redmine issue と `README.md`, `docs/roadmap.md`, `docs/issues.md`, `docs/issueslog.md` を参照するようにした。
+- 「今日まず何からやればいい？」への回答に Redmine issue の根拠が含まれることを確認した。
+- 更新系の質問では Redmine を直接更新せず、`confirmation_required` の更新案を返すことを確認した。
+- 「自然言語対話の方針を教えて」への回答に `README.md`, `docs/roadmap.md`, `docs/issues.md` の参照が含まれることを確認した。
+- Docker image に `README.md` と `docs/` を含め、コンテナ上でも知識ベース参照が動くことを確認した。
+- `node --check src/server/index.js` と `node --check src/public/app.js` が成功した。
+
+クローズ判定:
+
+- 要求仕様、機能仕様、テスト仕様を満たすため Closed とする。
 
 ### ISS-006: devcontainer / Docker Compose で OSS 版 Redmine 検証環境を作る
 

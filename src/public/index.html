@@ -36,6 +36,31 @@
 
         <section class="metrics" id="metrics"></section>
 
+        <section class="chat-panel" aria-labelledby="chatTitle">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Natural language</p>
+              <h3 id="chatTitle">AIRedmine に聞く</h3>
+            </div>
+          </div>
+          <form class="chat-form" id="chatForm">
+            <label class="chat-input">
+              <span>質問</span>
+              <input id="chatInput" type="text" placeholder="今日まず何からやればいい？">
+            </label>
+            <button class="primary-button" type="submit">聞く</button>
+          </form>
+          <div class="quick-questions" aria-label="質問例">
+            <button type="button" data-question="今日まず何からやればいい？">今日の作業</button>
+            <button type="button" data-question="今週のリスクを教えて">リスク</button>
+            <button type="button" data-question="次の定例で話すべきことをまとめて">定例</button>
+            <button type="button" data-question="この実装が終わったのでRedmineコメント案を書いて">更新案</button>
+          </div>
+          <div class="chat-output" id="chatOutput" aria-live="polite">
+            <div class="empty-state">Redmine issue と docs の知識ベースについて質問できます。</div>
+          </div>
+        </section>
+
         <section class="work-guide-panel" aria-labelledby="workGuideTitle">
           <div class="section-heading">
             <div>

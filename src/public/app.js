@@ -17,6 +17,9 @@ const connectionStatus = document.querySelector("#connectionStatus");
 const setupPanel = document.querySelector("#setupPanel");
 const pmOverview = document.querySelector("#pmOverview");
 const workGuide = document.querySelector("#workGuide");
+const chatForm = document.querySelector("#chatForm");
+const chatInput = document.querySelector("#chatInput");
+const chatOutput = document.querySelector("#chatOutput");
 
 searchInput.addEventListener("input", () => {
   state.query = searchInput.value.trim().toLowerCase();
@@ -30,6 +33,18 @@ statusFilter.addEventListener("change", () => {
 
 refreshButton.addEventListener("click", () => {
   loadIssues();
+});
+
+chatForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  askChat(chatInput.value);
+});
+
+document.querySelectorAll("[data-question]").forEach((button) => {
+  button.addEventListener("click", () => {
+    chatInput.value = button.dataset.question || "";
+    askChat(chatInput.value);
+  });
 });
 
 init();
@@ -70,6 +85,33 @@ async function loadIssues() {
     state.issueError = error;
     renderConnection();
     issueList.innerHTML = `<div class="error-state">チケットを取得できませんでした。Redmine の URL、API キー、REST API 設定を確認してください。</div>`;
+  }
+}
+
+async function askChat(question) {
+  const trimmed = question.trim();
+  if (!trimmed) return;
+
+  chatOutput.innerHTML = `<div class="empty-state">考えています...</div>`;
+
+  try {
+    const response = await fetch("/api/chat", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ question: trimmed })
+    });
+
+    if (!response.ok) {
+      throw new Error(`Chat API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    renderChatAnswer(trimmed, data);
+  } catch (error) {
+    console.error(error);
+    chatOutput.innerHTML = `<div class="error-state">回答を取得できませんでした。Redmine 接続とアプリサーバーの状態を確認してください。</div>`;
   }
 }
 
@@ -300,6 +342,60 @@ function candidateTemplate(candidate) {
       <strong>#${candidate.issue.id} ${escapeHtml(candidate.issue.subject)}</strong>
       <p>${escapeHtml(candidate.nextAction)}</p>
     </article>
+  `;
+}
+
+function renderChatAnswer(question, data) {
+  const references = data.references || [];
+  const proposal = data.proposal;
+
+  chatOutput.innerHTML = `
+    <article class="chat-answer">
+      <div class="chat-question">
+        <span>質問</span>
+        <strong>${escapeHtml(question)}</strong>
+      </div>
+      <div class="chat-response">
+        <span>回答</span>
+        <p>${escapeHtml(data.answer || "回答はありません。")}</p>
+      </div>
+      <div class="chat-references">
+        <span>根拠</span>
+        ${references.length ? references.map(referenceTemplate).join("") : `<p>参照候補はありません。</p>`}
+      </div>
+      ${proposal ? proposalTemplate(proposal) : ""}
+    </article>
+  `;
+}
+
+function referenceTemplate(reference) {
+  if (reference.type === "issue") {
+    const url = state.baseUrl ? `${state.baseUrl}/issues/${reference.id}` : null;
+    const title = escapeHtml(reference.title || `#${reference.id}`);
+    return `
+      <a class="chat-reference" href="${url || "#"}" ${url ? `target="_blank" rel="noreferrer"` : ""}>
+        <strong>${title}</strong>
+        <span>${escapeHtml(reference.status || "Unknown")} / ${escapeHtml(reference.priority || "Normal")}</span>
+      </a>
+    `;
+  }
+
+  return `
+    <div class="chat-reference">
+      <strong>${escapeHtml(reference.title || reference.id || "doc")}</strong>
+      <span>${escapeHtml(reference.excerpt || "")}</span>
+    </div>
+  `;
+}
+
+function proposalTemplate(proposal) {
+  return `
+    <div class="chat-proposal">
+      <span>確認待ちの更新案</span>
+      <strong>${escapeHtml(proposal.title || "Redmine 更新案")}</strong>
+      <p>${escapeHtml(proposal.reason || "")}</p>
+      <p>${escapeHtml(proposal.nextStep || "")}</p>
+    </div>
   `;
 }
 

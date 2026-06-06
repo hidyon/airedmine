@@ -4,6 +4,4 @@ node_modules
 npm-debug.log
 Dockerfile
 docker-compose.yml
-docs
 scripts
-README.md

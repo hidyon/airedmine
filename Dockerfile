@@ -7,6 +7,8 @@ ENV PORT=5173
 
 COPY package.json ./
 COPY src ./src
+COPY README.md ./
+COPY docs ./docs
 
 EXPOSE 5173
 
