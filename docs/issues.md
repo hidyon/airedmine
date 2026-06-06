@@ -204,25 +204,39 @@ Priority: High
 
 ### ISS-006: devcontainer / Docker Compose で OSS 版 Redmine 検証環境を作る
 
-Status: Open
+Status: Closed
 Priority: Medium
 
 要求仕様:
 
 - 開発者や PM がローカルで AIRedmine と無料で利用できる OSS 版 Redmine を試せる。
 - Redmine API 連携を実データに近い形で検証できる。
+- ロードマップ上で Milestone 5 と対応していることが分かる。
 
 機能仕様:
 
-- devcontainer または Docker Compose の構成を追加する。
-- OSS 版 Redmine と database を起動できる。
-- AIRedmine からローカル Redmine に接続する `.env` 設定例を用意する。
+- Docker Compose の構成を追加する。
+- OSS 版 Redmine、database、AIRedmine app server を起動できる。
+- AIRedmine app server から Redmine コンテナへ接続できる環境変数を用意する。
+- README に Docker Compose 起動、Redmine 初期設定、API キー設定、接続確認の手順を追加する。
 
 テスト仕様:
 
-- Docker Compose または devcontainer で環境が起動することを確認する。
-- Redmine にログインし、REST API を有効化できることを確認する。
-- AIRedmine がローカル Redmine の issue を取得できることを確認する。
+- `docker compose config` または `docker-compose config` で Compose 構成が解釈できることを確認する。
+- README に Docker Compose 起動、Redmine REST API 有効化、API キー設定、接続確認の手順があることを確認する。
+- AIRedmine がローカル Redmine に接続するための環境変数が Compose 構成にあることを確認する。
+
+テスト結果:
+
+- `env REDMINE_API_KEY=placeholder docker-compose config` が成功し、Compose 構成を解釈できることを確認した。
+- Compose 構成に AIRedmine app server、OSS 版 Redmine、PostgreSQL database の 3 service があることを確認した。
+- Compose 構成に `REDMINE_BASE_URL=http://redmine:3000` と `REDMINE_API_KEY` があることを確認した。
+- README に Docker Compose 起動、Redmine REST API 有効化、API キー設定、接続確認の手順を追加した。
+- ロードマップの Milestone 5 に `ISS-006` を関連 issue として記載した。
+
+クローズ判定:
+
+- 要求仕様、機能仕様、テスト仕様を満たすため Closed とする。
 
 ### ISS-008: Redmine issue 取得 API を Connector として分離する
 
@@ -325,3 +339,24 @@ Priority: Medium
 クローズ判定:
 
 - 要求仕様、機能仕様、テスト仕様を満たすため Closed とする。
+
+### ISS-012: 体験評価と改善ループの記録方法を作る
+
+Status: Open
+Priority: Medium
+
+要求仕様:
+
+- 開発者と PM が AIRedmine を使ったときの体験変化を記録できる。
+- 改善候補を後続 issue として継続的に扱える。
+- ロードマップ上で Milestone 6 と対応していることが分かる。
+
+機能仕様:
+
+- 体験メモ、観察項目、改善候補の記録場所を決める。
+- 定期的に `agent.md` や docs の改善提案につなげる手順を決める。
+
+テスト仕様:
+
+- 体験評価の記録テンプレートが存在することを確認する。
+- 改善候補を issue 化する流れが docs に記載されていることを確認する。

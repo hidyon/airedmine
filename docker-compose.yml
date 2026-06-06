@@ -1,0 +1,44 @@
+version: "3.3"
+
+services:
+  app:
+    image: node:20-bookworm
+    working_dir: /workspace
+    command: npm run dev
+    volumes:
+      - .:/workspace
+    environment:
+      PORT: 5173
+      REDMINE_BASE_URL: http://redmine:3000
+      REDMINE_API_KEY: ${REDMINE_API_KEY}
+    ports:
+      - "5173:5173"
+    depends_on:
+      - redmine
+
+  redmine:
+    image: redmine:6.0.9-bookworm
+    environment:
+      REDMINE_DB_POSTGRES: redmine-db
+      REDMINE_DB_DATABASE: redmine
+      REDMINE_DB_USERNAME: redmine
+      REDMINE_DB_PASSWORD: redmine
+    ports:
+      - "3000:3000"
+    volumes:
+      - redmine-files:/usr/src/redmine/files
+    depends_on:
+      - redmine-db
+
+  redmine-db:
+    image: postgres:16-bookworm
+    environment:
+      POSTGRES_DB: redmine
+      POSTGRES_USER: redmine
+      POSTGRES_PASSWORD: redmine
+    volumes:
+      - redmine-db-data:/var/lib/postgresql/data
+
+volumes:
+  redmine-files:
+  redmine-db-data:

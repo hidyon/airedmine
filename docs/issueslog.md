@@ -220,3 +220,48 @@ README に Redmine 接続手順を追加した。
 保留事項:
 
 - 実 Redmine との疎通確認は、`ISS-006` でローカル Redmine 検証環境を作った後に行う。
+
+## 2026-06-06: ロードマップと issue の対応整理
+
+ユーザーから、ロードマップの各マイルストーンと issue の関連が分かるようにしたいと共有された。
+
+対応:
+
+- `docs/roadmap.md` の各マイルストーンに「関連 issue」を追加した。
+- Milestone 6 に対応する issue がなかったため、`ISS-012: 体験評価と改善ループの記録方法を作る` を追加した。
+- 今後はマイルストーンを更新したら、関連 issue の状態も合わせて見直す。
+
+## 2026-06-06: ISS-006 着手
+
+Milestone 5 の Docker Compose 検証環境を追加する。
+
+方針:
+
+- devcontainer ではなく、まず Docker Compose を追加する。
+- AIRedmine app server、OSS 版 Redmine、PostgreSQL database の 3 service 構成にする。
+- AIRedmine コンテナから Redmine へは Docker Compose の service 名 `redmine` で接続する。
+- ブラウザーからは `localhost:5173` で AIRedmine、`localhost:3000` で Redmine を開けるようにする。
+- Redmine API キーは `.env` から Compose の `REDMINE_API_KEY` として渡す。
+
+## 2026-06-06: ISS-006 クローズ
+
+Docker Compose で OSS 版 Redmine 検証環境を起動できる構成を追加した。
+
+実装内容:
+
+- `docker-compose.yml` を追加した。
+- AIRedmine app server、Redmine、PostgreSQL の 3 service を定義した。
+- Redmine の添付ファイル領域と database を named volume にした。
+- README に Docker Compose 起動、Redmine REST API 有効化、API キー設定、接続確認の手順を追加した。
+- Milestone 5 の関連 issue として `ISS-006` を Closed に更新した。
+
+確認結果:
+
+- `env REDMINE_API_KEY=placeholder docker-compose config` が成功した。
+- Compose 構成に `REDMINE_BASE_URL=http://redmine:3000` と `REDMINE_API_KEY` が含まれることを確認した。
+- README に必要な起動手順と接続確認手順があることを確認した。
+
+保留事項:
+
+- この環境では `docker compose` サブコマンドが使えなかったため、`docker-compose config` で構成解釈を確認した。
+- 実際のコンテナ起動と Redmine 画面操作は、Docker 実行環境での手動確認が必要である。

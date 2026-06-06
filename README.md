@@ -178,10 +178,49 @@ npm run dev
 
 ブラウザで `http://localhost:5173` を開きます。
 
+## Docker Compose でローカル Redmine と起動する
+
+AIRedmine、OSS 版 Redmine、PostgreSQL をまとめて起動できます。
+
+```bash
+docker compose up
+```
+
+`docker compose` が使えない環境では、`docker-compose up` を使います。
+
+起動後に開く画面:
+
+- AIRedmine: `http://localhost:5173`
+- Redmine: `http://localhost:3000`
+
+最初は `REDMINE_API_KEY` が未設定のため、AIRedmine はモックデータで起動します。
+Redmine 側で REST API を有効にし、API キーを取得してから `.env` に設定します。
+
+```bash
+REDMINE_API_KEY=your-redmine-api-key
+```
+
+`.env` を更新したら AIRedmine コンテナを再起動します。
+
+```bash
+docker compose up app
+```
+
+`docker compose` が使えない環境では、`docker-compose up app` を使います。
+
+Docker Compose では、AIRedmine app server から Redmine へ `http://redmine:3000` で接続します。
+ブラウザーから Redmine を見る場合は `http://localhost:3000` を使います。
+
+接続確認:
+
+```bash
+curl http://localhost:5173/api/config
+curl "http://localhost:5173/api/issues?status_id=open"
+```
+
 ## Redmine と接続する
 
-Docker Compose で Redmine を同梱する環境は今後整備します。
-それまでは、外部で利用できる OSS 版 Redmine または手元で起動した Redmine に AIRedmine を接続して試します。
+外部で利用できる OSS 版 Redmine または手元で起動した Redmine に AIRedmine を接続して試すこともできます。
 
 ### Redmine 側の準備
 
