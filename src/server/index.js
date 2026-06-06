@@ -397,6 +397,7 @@ function findKnowledgeReferences(question, knowledge) {
       type: "doc",
       id: entry.path,
       title: entry.path,
+      source: "docs",
       excerpt: excerptFor(entry.content, words)
     }))
     .filter((entry) => entry.excerpt)
@@ -455,8 +456,20 @@ function issueReference(issue) {
     id: issue.id,
     title: `#${issue.id} ${issue.subject}`,
     status: issue.status?.name || "Unknown",
-    priority: issue.priority?.name || "Normal"
+    priority: issue.priority?.name || "Normal",
+    project: issue.project?.name || "No project",
+    assignee: issue.assigned_to?.name || "未割り当て",
+    updated: issue.updated_on || null,
+    updatedLabel: formatReferenceDate(issue.updated_on),
+    reason: issueIntent(issue)
   };
+}
+
+function formatReferenceDate(value) {
+  if (!value) return "更新日不明";
+  const days = daysSince(value);
+  if (days <= 0) return "今日更新";
+  return `${days}日前に更新`;
 }
 
 function issueScore(issue) {

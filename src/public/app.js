@@ -382,16 +382,21 @@ function referenceTemplate(reference) {
     const url = state.baseUrl ? `${state.baseUrl}/issues/${reference.id}` : null;
     const title = escapeHtml(reference.title || `#${reference.id}`);
     return `
-      <a class="chat-reference" href="${url || "#"}" ${url ? `target="_blank" rel="noreferrer"` : ""}>
+      <a class="chat-reference issue-reference" href="${url || "#"}" ${url ? `target="_blank" rel="noreferrer"` : ""}>
+        <span class="reference-kind">Redmine issue</span>
         <strong>${title}</strong>
-        <span>${escapeHtml(reference.status || "Unknown")} / ${escapeHtml(reference.priority || "Normal")}</span>
+        <span>${escapeHtml(reference.project || "No project")} / ${escapeHtml(reference.assignee || "未割り当て")}</span>
+        <span>${escapeHtml(reference.status || "Unknown")} / ${escapeHtml(reference.priority || "Normal")} / ${escapeHtml(reference.updatedLabel || "更新日不明")}</span>
+        <p>${escapeHtml(reference.reason || "")}</p>
       </a>
     `;
   }
 
   return `
-    <div class="chat-reference">
+    <div class="chat-reference doc-reference">
+      <span class="reference-kind">Knowledge doc</span>
       <strong>${escapeHtml(reference.title || reference.id || "doc")}</strong>
+      <span>${escapeHtml(reference.source || "docs")}</span>
       <span>${escapeHtml(reference.excerpt || "")}</span>
     </div>
   `;

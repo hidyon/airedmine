@@ -409,6 +409,28 @@ h3 {
   line-height: 1.4;
 }
 
+.chat-reference p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.reference-kind {
+  width: fit-content;
+  border-radius: 999px;
+  padding: 2px 7px;
+  background: #eef6f5;
+  color: var(--accent-strong) !important;
+  font-size: 11px !important;
+  font-weight: 900;
+}
+
+.doc-reference .reference-kind {
+  background: #eff6ff;
+  color: #1d4ed8 !important;
+}
+
 .chat-proposal {
   border: 1px solid rgba(180, 83, 9, 0.32);
   border-radius: 8px;

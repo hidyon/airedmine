@@ -250,7 +250,7 @@ Priority: High
 
 ### ISS-020: Chat 回答の根拠リンクを詳しく表示する
 
-Status: Open
+Status: Closed
 Priority: High
 
 要求仕様:
@@ -263,12 +263,25 @@ Priority: High
 - Chat 回答の根拠カードに、issue の状態、優先度、更新日、docs の抜粋を表示する。
 - issue 根拠は Redmine の元 issue へ移動できる。
 - docs 根拠はファイル名と抜粋を表示し、将来的な詳細表示に備える。
+- issue 根拠にはプロジェクト、担当者、更新日、回答理由を含める。
+- docs 根拠には種類ラベル、ファイル名、抜粋を含める。
 
 テスト仕様:
 
 - 「今日まず何からやればいい？」で issue 根拠が表示されることを確認する。
 - 「自然言語対話の方針を教えて」で docs 根拠が表示されることを確認する。
 - 根拠カードの表示がモバイル幅でも崩れないことを確認する。
+
+テスト結果:
+
+- `POST /api/chat` の issue 根拠に project, assignee, updatedLabel, reason が含まれることを確認した。
+- `POST /api/chat` の docs 根拠に source と excerpt が含まれることを確認した。
+- Chat UI の根拠カードで `Redmine issue` と `Knowledge doc` のラベルを分けて表示するようにした。
+- `node --check src/server/index.js` と `node --check src/public/app.js` が成功した。
+
+クローズ判定:
+
+- 要求仕様、機能仕様、テスト仕様を満たすため Closed とする。
 
 ### ISS-021: issue 番号指定の質問に対応する
 
