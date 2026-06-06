@@ -702,7 +702,7 @@ Priority: Medium
 
 ### ISS-031: Docker Compose 起動ヘルスチェックを追加する
 
-Status: Open
+Status: Closed
 Priority: High
 
 要求仕様:
@@ -716,12 +716,26 @@ Priority: High
 - Redmine の HTTP 応答を確認する。
 - Redmine API への app 経由疎通を確認する。
 - README に確認コマンドと期待結果を記載する。
+- `npm run healthcheck` でまとめて確認できる。
+- 確認対象 URL は `AIREDMINE_APP_URL` と `REDMINE_PUBLIC_URL` で変更できる。
 
 テスト仕様:
 
 - `docker-compose ps` で各 service が Up になることを確認する。
 - AIRedmine app と Redmine の HTTP 応答を確認する。
 - `/api/config` または `/api/issues` で app 側の接続状態を確認する。
+
+テスト結果:
+
+- `scripts/healthcheck.mjs` を追加した。
+- `package.json` に `npm run healthcheck` を追加した。
+- README にヘルスチェックの実行方法と期待結果を追加した。
+- `node --check scripts/healthcheck.mjs` が成功した。
+- `npm run healthcheck` が成功し、Docker Compose services、AIRedmine HTTP、Redmine HTTP、AIRedmine config API、AIRedmine issues API がすべて `OK` になることを確認した。
+
+クローズ判定:
+
+- Docker Compose 起動後の主要な疎通確認をワンコマンドで実行できるため Closed とする。
 
 ### ISS-032: 初回セットアップ確認スクリプトを追加する
 

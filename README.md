@@ -228,8 +228,28 @@ Docker Compose では、AIRedmine app server から Redmine へ `http://redmine:
 接続確認:
 
 ```bash
+npm run healthcheck
+```
+
+期待する結果:
+
+- `Docker Compose services` が `OK`
+- `AIRedmine HTTP` が `OK`
+- `Redmine HTTP` が `OK`
+- `AIRedmine config API` が `OK`
+- `AIRedmine issues API` が `OK`
+
+個別に確認する場合:
+
+```bash
 curl http://localhost:5173/api/config
 curl "http://localhost:5173/api/issues?status_id=open"
+```
+
+別の URL で確認する場合は、環境変数で指定できます。
+
+```bash
+AIREDMINE_APP_URL=http://localhost:5173 REDMINE_PUBLIC_URL=http://localhost:3000 npm run healthcheck
 ```
 
 ### サンプルデータを投入する

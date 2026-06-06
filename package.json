@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "node src/server/index.js",
+    "healthcheck": "node scripts/healthcheck.mjs",
     "start": "node src/server/index.js"
   },
   "engines": {
