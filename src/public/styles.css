@@ -420,6 +420,35 @@ h3 {
   color: var(--warn);
 }
 
+.chat-proposal pre {
+  margin: 0;
+  overflow-x: auto;
+  border: 1px solid rgba(180, 83, 9, 0.22);
+  border-radius: 8px;
+  padding: 10px;
+  background: #ffffff;
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.proposal-checklist {
+  display: grid;
+  gap: 6px;
+}
+
+.proposal-checklist ul {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding-left: 18px;
+  color: var(--ink);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
 .work-guide {
   display: grid;
   grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.8fr);

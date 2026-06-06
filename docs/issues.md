@@ -352,7 +352,7 @@ Priority: Medium
 
 ### ISS-024: Chat 回答から Redmine 更新案の詳細下書きを作る
 
-Status: Open
+Status: Closed
 Priority: High
 
 要求仕様:
@@ -365,12 +365,26 @@ Priority: High
 - コメント追加、ステータス変更、クローズ候補を更新案の種類として分類する。
 - 更新案には対象 issue、変更内容、理由、確認事項を含める。
 - 実行はまだ行わず、確認待ちとして表示する。
+- 更新案には下書き本文を含める。
+- Chat UI で対象 issue、変更内容、下書き本文、確認事項を表示する。
 
 テスト仕様:
 
 - `この実装が終わったのでRedmineコメント案を書いて` でコメント案が返ることを確認する。
 - `#1 をクローズしていい？` でクローズ候補の確認事項が返ることを確認する。
 - Redmine API への更新リクエストが発生しないことを確認する。
+
+テスト結果:
+
+- `POST /api/chat` で `この実装が終わったのでRedmineコメント案を書いて` がコメント案を返すことを確認した。
+- `POST /api/chat` で `#1 をクローズしていい？` がクローズ確認案と確認事項を返すことを確認した。
+- `POST /api/chat` で `#1 のステータス変更案を作って` がステータス変更案を返すことを確認した。
+- 更新案は `confirmation_required` のままで、Redmine API への更新リクエストを行わないことを確認した。
+- `node --check src/server/index.js` と `node --check src/public/app.js` が成功した。
+
+クローズ判定:
+
+- 要求仕様、機能仕様、テスト仕様を満たすため Closed とする。
 
 ### ISS-006: devcontainer / Docker Compose で OSS 版 Redmine 検証環境を作る
 

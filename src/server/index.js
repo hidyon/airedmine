@@ -214,16 +214,11 @@ function buildChatResponse(question, issues, knowledge) {
   }
 
   if (updateIntent) {
+    const proposal = buildUpdateProposal(question, requestedIssue || references.find((reference) => reference.type === "issue"), issues);
     return {
       answer: `${answer}\n\n更新系の依頼として扱います。AIRedmine はここでは Redmine を直接更新せず、確認待ちの更新案だけを作成します。`,
       references: uniqueReferences(references),
-      proposal: {
-        status: "confirmation_required",
-        title: "Redmine 更新案",
-        action: "comment_or_status_update",
-        reason: "自然言語対話からの更新依頼は、人間の確認後に反映する必要があります。",
-        nextStep: "Milestone 4 の Redmine 更新前確認フローで、差分、理由、影響範囲を確認します。"
-      }
+      proposal
     };
   }
 
@@ -290,6 +285,108 @@ function nextIssueAction(issue) {
   if (includesAny(subject, ["クローズ候補", "完了"])) return "テスト結果と完了条件を照合し、クローズ可否を判定する";
   if (isHighPriority(issue)) return "着手条件とブロッカーを確認し、今日の作業に入れるか判断する";
   return "内容と最新コメントを確認し、実装またはコメント更新に進む";
+}
+
+function buildUpdateProposal(question, target, issues) {
+  const normalized = question.toLowerCase();
+  const targetIssue = resolveProposalIssue(target, issues);
+  const action = classifyUpdateAction(normalized);
+
+  return {
+    status: "confirmation_required",
+    title: proposalTitle(action),
+    action,
+    targetIssue: targetIssue ? issueReference(targetIssue) : null,
+    changeSummary: proposalChangeSummary(action, targetIssue),
+    draft: proposalDraft(action, targetIssue),
+    reason: "自然言語対話からの更新依頼は、人間の確認後に反映する必要があります。",
+    checklist: proposalChecklist(action),
+    nextStep: "Milestone 4 の Redmine 更新前確認フローで、差分、理由、影響範囲を確認します。"
+  };
+}
+
+function resolveProposalIssue(target, issues) {
+  if (!target) return null;
+  if (target.subject) return target;
+  if (target.type === "issue") return issues.find((issue) => issue.id === target.id) || null;
+  return null;
+}
+
+function classifyUpdateAction(normalized) {
+  if (includesAny(normalized, ["クローズ", "close", "完了", "閉じ"])) return "close_candidate";
+  if (includesAny(normalized, ["ステータス", "状態", "進行中", "完了に", "resolved"])) return "status_change";
+  return "comment";
+}
+
+function proposalTitle(action) {
+  if (action === "close_candidate") return "クローズ確認案";
+  if (action === "status_change") return "ステータス変更案";
+  return "Redmine コメント案";
+}
+
+function proposalChangeSummary(action, issue) {
+  const target = issue ? `#${issue.id}「${issue.subject}」` : "対象 issue";
+  if (action === "close_candidate") return `${target} をクローズ候補として確認します。`;
+  if (action === "status_change") return `${target} のステータス変更候補を確認します。`;
+  return `${target} に作業状況コメントを追加する候補です。`;
+}
+
+function proposalDraft(action, issue) {
+  if (!issue) {
+    return "対象 issue を確認したうえで、変更内容、理由、確認済み事項を記載してください。";
+  }
+
+  if (action === "close_candidate") {
+    return [
+      `#${issue.id} のクローズ候補です。`,
+      `確認した完了条件: ${nextIssueAction(issue)}`,
+      "確認したテスト結果: 未記入",
+      "残リスク: 未記入",
+      "クローズ前に、PMまたは担当者の最終確認をお願いします。"
+    ].join("\n");
+  }
+
+  if (action === "status_change") {
+    return [
+      `#${issue.id} のステータス変更候補です。`,
+      `現在の状態: ${issue.status?.name || "Unknown"}`,
+      `変更理由: ${issueIntent(issue)}`,
+      `次アクション: ${nextIssueAction(issue)}`,
+      "変更先ステータスは、Redmine 上で確認してから選択してください。"
+    ].join("\n");
+  }
+
+  return [
+    `#${issue.id} の作業状況コメント案です。`,
+    `現在の見立て: ${issueIntent(issue)}`,
+    `次アクション: ${nextIssueAction(issue)}`,
+    "確認事項: 完了条件、テスト結果、残リスクを追記してください。"
+  ].join("\n");
+}
+
+function proposalChecklist(action) {
+  if (action === "close_candidate") {
+    return [
+      "完了条件を満たしている",
+      "テスト結果が記録されている",
+      "残リスクが許容されている",
+      "関係者の確認が済んでいる"
+    ];
+  }
+
+  if (action === "status_change") {
+    return [
+      "変更先ステータスが正しい",
+      "変更理由が説明できる",
+      "担当者と関係者への影響が確認されている"
+    ];
+  }
+
+  return [
+    "コメント内容が事実に基づいている",
+    "次アクションが明確である",
+    "Redmine に書くべき情報だけが含まれている"
+  ];
 }
 
 function findKnowledgeReferences(question, knowledge) {

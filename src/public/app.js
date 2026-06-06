@@ -398,10 +398,19 @@ function referenceTemplate(reference) {
 }
 
 function proposalTemplate(proposal) {
+  const checklist = proposal.checklist || [];
+  const target = proposal.targetIssue;
   return `
     <div class="chat-proposal">
       <span>確認待ちの更新案</span>
       <strong>${escapeHtml(proposal.title || "Redmine 更新案")}</strong>
+      ${target ? `<p>対象: ${escapeHtml(target.title || `#${target.id}`)}</p>` : `<p>対象 issue: 未指定</p>`}
+      <p>${escapeHtml(proposal.changeSummary || "")}</p>
+      <pre>${escapeHtml(proposal.draft || "")}</pre>
+      <div class="proposal-checklist">
+        <span>確認事項</span>
+        ${checklist.length ? `<ul>${checklist.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>` : `<p>確認事項はありません。</p>`}
+      </div>
       <p>${escapeHtml(proposal.reason || "")}</p>
       <p>${escapeHtml(proposal.nextStep || "")}</p>
     </div>
