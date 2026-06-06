@@ -299,7 +299,7 @@ Priority: High
 
 ### ISS-011: README にローカル Redmine 接続手順を追加する
 
-Status: Open
+Status: Closed
 Priority: Medium
 
 要求仕様:
@@ -315,3 +315,13 @@ Priority: Medium
 
 - README の手順に必要な設定項目が揃っていることを確認する。
 - `.env.example` と README の環境変数名が一致していることを確認する。
+
+テスト結果:
+
+- README に Redmine REST API 有効化、API キー取得、`.env` 設定、再起動、接続確認、トラブルシュートを記載した。
+- README と `.env.example` の環境変数名が `REDMINE_BASE_URL`、`REDMINE_API_KEY`、`PORT` で一致することを確認した。
+- Docker Compose 実装前でも、外部 Redmine または手元の Redmine に接続して試せる手順を記載した。
+
+クローズ判定:
+
+- 要求仕様、機能仕様、テスト仕様を満たすため Closed とする。

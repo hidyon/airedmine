@@ -180,15 +180,65 @@ npm run dev
 
 ## Redmine と接続する
 
+Docker Compose で Redmine を同梱する環境は今後整備します。
+それまでは、外部で利用できる OSS 版 Redmine または手元で起動した Redmine に AIRedmine を接続して試します。
+
+### Redmine 側の準備
+
+Redmine の管理画面で REST API を有効にします。
+
+一般的な流れ:
+
+1. 管理者で Redmine にログインする。
+2. 管理、設定、API の画面を開く。
+3. REST API を有効にする。
+4. 接続確認に使うユーザーでログインし、個人設定から API キーを取得する。
+
+API キーはサーバー側の環境変数として扱い、ブラウザーには直接渡しません。
+
+### AIRedmine 側の設定
+
 `.env.example` を参考に `.env` を作成します。
 
 ```bash
-REDMINE_BASE_URL=https://your-redmine.example.com
-REDMINE_API_KEY=your-api-key
+REDMINE_BASE_URL=http://localhost:3000
+REDMINE_API_KEY=your-redmine-api-key
 PORT=5173
 ```
 
-Redmine 側では管理画面で REST API を有効にしておく必要があります。
+設定項目:
+
+- `REDMINE_BASE_URL`: 接続先 Redmine の URL。末尾の `/` は不要。
+- `REDMINE_API_KEY`: Redmine の個人設定で取得した API キー。
+- `PORT`: AIRedmine の起動ポート。
+
+設定後に AIRedmine を再起動します。
+
+```bash
+npm run dev
+```
+
+### 接続確認
+
+ブラウザーで `http://localhost:5173` を開きます。
+接続状態パネルに「実 Redmine に接続中」と表示されれば、Redmine API を利用しています。
+
+API で確認する場合:
+
+```bash
+curl http://localhost:5173/api/config
+curl "http://localhost:5173/api/issues?status_id=open"
+```
+
+`.env` が未設定、または `REDMINE_BASE_URL` と `REDMINE_API_KEY` のどちらかが未設定の場合、AIRedmine はモックデータで起動します。
+その場合は接続状態パネルにモックデータ表示中であることが表示されます。
+
+### うまく接続できないとき
+
+- モックデータ表示のままになる場合は、`.env` の `REDMINE_BASE_URL` と `REDMINE_API_KEY` が設定されているか確認する。
+- Redmine API エラーになる場合は、Redmine の URL、API キー、REST API 有効化を確認する。
+- `401` または `403` が返る場合は、API キーのユーザー権限と対象プロジェクトへのアクセス権を確認する。
+- issue が空の場合は、Redmine 側に対象 issue が存在するか、担当者やステータス条件に合う issue があるか確認する。
 
 ## 参考
 

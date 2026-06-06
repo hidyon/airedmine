@@ -188,3 +188,35 @@ Redmine issue 取得 API を Connector として分離した。
 
 - 実 Redmine 接続時の疎通確認は `ISS-006` の OSS 版 Redmine 検証環境で行う。
 - journal、wiki、project などの Connector 拡張は後続 issue で扱う。
+
+## 2026-06-06: ISS-011 着手
+
+Docker Compose で OSS 版 Redmine を同梱する前に、外部 Redmine または手元の Redmine へ接続して試せる状態を README に整理する。
+
+方針:
+
+- Redmine 側の REST API 有効化と API キー取得を最初に明記する。
+- AIRedmine 側の `.env` 設定は `.env.example` と同じ環境変数名で説明する。
+- 接続後に UI と API の両方で確認できるようにする。
+- 失敗時に、モックモード、URL、API キー、権限、issue 条件を順に確認できるようにする。
+
+## 2026-06-06: ISS-011 クローズ
+
+README に Redmine 接続手順を追加した。
+
+実装内容:
+
+- Redmine 側の REST API 有効化、API キー取得手順を追加した。
+- AIRedmine 側の `.env` 設定例と環境変数の意味を追加した。
+- ブラウザー UI と `curl` による接続確認手順を追加した。
+- 接続できない場合の確認観点を追加した。
+- Docker Compose 版 Redmine 環境は後続の `ISS-006` で扱うことを明記した。
+
+確認結果:
+
+- README に必要な設定項目が揃っていることを確認した。
+- README と `.env.example` の環境変数名が一致していることを確認した。
+
+保留事項:
+
+- 実 Redmine との疎通確認は、`ISS-006` でローカル Redmine 検証環境を作った後に行う。
