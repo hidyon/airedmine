@@ -242,6 +242,11 @@ h3 {
   background: var(--accent-strong);
 }
 
+.primary-button:disabled {
+  cursor: wait;
+  opacity: 0.72;
+}
+
 .text-button {
   min-height: 34px;
   border: 1px solid var(--line);
@@ -624,6 +629,47 @@ h3 {
   color: var(--ink);
   font-size: 13px;
   line-height: 1.45;
+}
+
+.proposal-review-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.proposal-review-actions p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.proposal-result {
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.proposal-result strong {
+  display: block;
+  margin-bottom: 5px;
+}
+
+.proposal-result p {
+  margin: 0;
+  line-height: 1.45;
+}
+
+.proposal-result-ok {
+  border: 1px solid rgba(15, 118, 110, 0.28);
+  background: #ecfdf5;
+  color: var(--accent-strong);
+}
+
+.proposal-result-error {
+  border: 1px solid rgba(185, 28, 28, 0.28);
+  background: #fef2f2;
+  color: var(--danger);
 }
 
 .work-guide {

@@ -656,3 +656,26 @@ Milestone 4 では、Chat が作成した Redmine 更新案を人間が確認し
 クローズ判定:
 
 - Chat から Redmine 更新案レビューへ移る確認画面の土台ができたため、`ISS-025` を Closed とする。
+
+## 2026-06-06: ISS-026 クローズ
+
+Redmine 更新案レビューから、コメント追加だけを確認後に実行できるようにした。
+
+実装内容:
+
+- Redmine Connector に issue コメント追加を追加した。
+- `POST /api/proposals/comment` を追加した。
+- `comment` 更新案にだけ `確認してコメント追加` ボタンを表示するようにした。
+- 実行中、成功、失敗の表示をレビュー画面に追加した。
+- `status_change` と `close_candidate` はまだ実行できない操作として表示する。
+
+確認結果:
+
+- 実 Redmine に対してコメント追加 API が成功することを確認した。
+- モックモードでは成功相当の結果を返す設計にした。
+- `node --check src/server/index.js` と `node --check src/public/app.js` が成功した。
+- Docker image を rebuild し、app service が起動することを確認した。
+
+クローズ判定:
+
+- コメント追加に限り、確認後に Redmine へ反映する最初の安全な更新フローを試せるようになったため、`ISS-026` を Closed とする。

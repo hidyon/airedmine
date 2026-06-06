@@ -49,6 +49,10 @@ const server = createServer(async (req, res) => {
       return handleChat(req, res);
     }
 
+    if (url.pathname === "/api/proposals/comment" && req.method === "POST") {
+      return handleCommentProposal(req, res);
+    }
+
     return serveStatic(url.pathname, res);
   } catch (error) {
     console.error(error);
@@ -94,6 +98,32 @@ async function handleChat(req, res) {
     ]);
 
     return sendJson(res, buildChatResponse(question, issues.issues || [], knowledge));
+  } catch (error) {
+    if (error instanceof RedmineApiError) {
+      res.writeHead(error.status, { "Content-Type": error.contentType });
+      return res.end(error.body);
+    }
+    throw error;
+  }
+}
+
+async function handleCommentProposal(req, res) {
+  const body = await readJsonBody(req);
+  const issueId = Number(body.issueId || body.targetIssue?.id);
+  const notes = String(body.notes || body.draft || "").trim();
+
+  if (!issueId || !notes) {
+    return sendJson(res, {
+      error: "issueId and notes are required"
+    }, 400);
+  }
+
+  try {
+    const result = await redmine.addIssueComment(issueId, notes);
+    return sendJson(res, {
+      ...result,
+      message: "Redmine コメントを追加しました。"
+    });
   } catch (error) {
     if (error instanceof RedmineApiError) {
       res.writeHead(error.status, { "Content-Type": error.contentType });

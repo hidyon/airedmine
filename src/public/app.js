@@ -7,7 +7,9 @@ const state = {
   config: null,
   issueError: null,
   chatHistory: [],
-  pendingProposal: null
+  pendingProposal: null,
+  proposalResult: null,
+  proposalRunning: false
 };
 
 const issueList = document.querySelector("#issueList");
@@ -66,7 +68,11 @@ proposalReview.addEventListener("click", (event) => {
   const action = event.target.closest("[data-proposal-action]")?.dataset.proposalAction;
   if (action === "clear") {
     state.pendingProposal = null;
+    state.proposalResult = null;
     renderProposalReview();
+  }
+  if (action === "execute-comment") {
+    executeCommentProposal();
   }
 });
 
@@ -158,7 +164,49 @@ function setPendingProposal(proposal) {
     ...proposal,
     receivedAt: new Date().toISOString()
   };
+  state.proposalResult = null;
   renderProposalReview();
+}
+
+async function executeCommentProposal() {
+  const proposal = state.pendingProposal;
+  if (!proposal || proposal.action !== "comment" || !proposal.targetIssue?.id) return;
+
+  state.proposalRunning = true;
+  state.proposalResult = null;
+  renderProposalReview();
+
+  try {
+    const response = await fetch("/api/proposals/comment", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        issueId: proposal.targetIssue.id,
+        notes: proposal.draft
+      })
+    });
+
+    if (!response.ok) {
+      const body = await response.text();
+      throw new Error(`Redmine update error: ${response.status} ${body.slice(0, 160)}`);
+    }
+
+    state.proposalResult = {
+      ok: true,
+      data: await response.json()
+    };
+  } catch (error) {
+    console.error(error);
+    state.proposalResult = {
+      ok: false,
+      message: error.message || "Redmine コメント追加に失敗しました。"
+    };
+  } finally {
+    state.proposalRunning = false;
+    renderProposalReview();
+  }
 }
 
 function renderProposalReview() {
@@ -170,6 +218,7 @@ function renderProposalReview() {
   const proposal = state.pendingProposal;
   const checklist = proposal.checklist || [];
   const target = proposal.targetIssue;
+  const canExecuteComment = proposal.action === "comment" && target?.id;
 
   proposalReview.innerHTML = `
     <article class="proposal-review-card">
@@ -210,7 +259,31 @@ function renderProposalReview() {
         <span>次ステップ</span>
         <p>${escapeHtml(proposal.nextStep || "")}</p>
       </section>
+      <div class="proposal-review-actions">
+        ${canExecuteComment ? `<button class="primary-button" type="button" data-proposal-action="execute-comment" ${state.proposalRunning ? "disabled" : ""}>${state.proposalRunning ? "追加中..." : "確認してコメント追加"}</button>` : ""}
+        ${!canExecuteComment ? `<p>この更新種別はまだ実行できません。後続 issue で確認フローを実装します。</p>` : ""}
+      </div>
+      ${proposalResultTemplate(state.proposalResult)}
     </article>
+  `;
+}
+
+function proposalResultTemplate(result) {
+  if (!result) return "";
+  if (result.ok) {
+    return `
+      <div class="proposal-result proposal-result-ok">
+        <strong>反映済み</strong>
+        <p>${escapeHtml(result.data?.message || "Redmine コメントを追加しました。")}</p>
+      </div>
+    `;
+  }
+
+  return `
+    <div class="proposal-result proposal-result-error">
+      <strong>反映失敗</strong>
+      <p>${escapeHtml(result.message || "Redmine コメント追加に失敗しました。")}</p>
+    </div>
   `;
 }
 

@@ -54,6 +54,46 @@ export function createRedmineConnector({ baseUrl, apiKey }) {
         offset: data.offset || 0,
         limit: data.limit || params.limit
       };
+    },
+
+    async addIssueComment(issueId, notes) {
+      if (!redmineBaseUrl || !redmineApiKey) {
+        return {
+          mode: "mock",
+          issueId,
+          notes,
+          updated: true
+        };
+      }
+
+      const redmineUrl = `${redmineBaseUrl}/issues/${issueId}.json`;
+      const response = await fetch(redmineUrl, {
+        method: "PUT",
+        headers: {
+          "Accept": "application/json",
+          "Content-Type": "application/json",
+          "X-Redmine-API-Key": redmineApiKey
+        },
+        body: JSON.stringify({
+          issue: {
+            notes
+          }
+        })
+      });
+
+      if (!response.ok) {
+        throw new RedmineApiError(`Redmine API error: ${response.status}`, {
+          status: response.status,
+          body: await response.text(),
+          contentType: response.headers.get("content-type") || "text/plain; charset=utf-8"
+        });
+      }
+
+      return {
+        mode: "redmine",
+        issueId,
+        updated: true
+      };
     }
   };
 }

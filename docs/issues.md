@@ -463,7 +463,7 @@ Priority: High
 
 ### ISS-026: Redmine コメント追加の確認フローを実装する
 
-Status: Open
+Status: Closed
 Priority: High
 
 要求仕様:
@@ -475,12 +475,27 @@ Priority: High
 - `comment` 更新案を対象にする。
 - 実行前に対象 issue、コメント本文、理由、確認事項を表示する。
 - 実行後に Redmine API の結果を表示する。
+- ステータス変更やクローズ候補は、この issue では実行対象にしない。
+- モックモードでは Redmine 更新を行わず、成功相当の結果を返す。
 
 テスト仕様:
 
 - 確認後に Redmine コメント追加 API が呼ばれることを確認する。
 - 実行前にキャンセルできることを確認する。
 - API エラー時にエラー表示されることを確認する。
+
+テスト結果:
+
+- `POST /api/proposals/comment` を追加した。
+- `Redmine 更新案レビュー` で `comment` 更新案にだけ `確認してコメント追加` ボタンを表示するようにした。
+- 実 Redmine に対してコメント追加 API が成功することを確認した。
+- コメント追加結果をレビュー画面に表示できるようにした。
+- ステータス変更やクローズ候補は実行対象外として表示するようにした。
+- `node --check src/server/index.js` と `node --check src/public/app.js` が成功した。
+
+クローズ判定:
+
+- 要求仕様、機能仕様、テスト仕様を満たすため Closed とする。
 
 ### ISS-027: 更新前後の差分表示を追加する
 
