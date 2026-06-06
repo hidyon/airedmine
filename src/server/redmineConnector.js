@@ -67,19 +67,29 @@ export function createRedmineConnector({ baseUrl, apiKey }) {
       }
 
       const redmineUrl = `${redmineBaseUrl}/issues/${issueId}.json`;
-      const response = await fetch(redmineUrl, {
-        method: "PUT",
-        headers: {
-          "Accept": "application/json",
-          "Content-Type": "application/json",
-          "X-Redmine-API-Key": redmineApiKey
-        },
-        body: JSON.stringify({
-          issue: {
-            notes
-          }
-        })
-      });
+      let response;
+
+      try {
+        response = await fetch(redmineUrl, {
+          method: "PUT",
+          headers: {
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+            "X-Redmine-API-Key": redmineApiKey
+          },
+          body: JSON.stringify({
+            issue: {
+              notes
+            }
+          })
+        });
+      } catch (error) {
+        throw new RedmineApiError("Redmine connection error", {
+          status: 503,
+          body: error.message || "Failed to fetch Redmine",
+          contentType: "text/plain; charset=utf-8"
+        });
+      }
 
       if (!response.ok) {
         throw new RedmineApiError(`Redmine API error: ${response.status}`, {

@@ -631,6 +631,34 @@ h3 {
   line-height: 1.45;
 }
 
+.proposal-diff {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.proposal-diff div {
+  display: grid;
+  gap: 6px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px;
+  background: #f8fafc;
+}
+
+.proposal-diff strong {
+  font-size: 13px;
+}
+
+.proposal-diff pre {
+  max-height: 180px;
+}
+
+.guarded-action {
+  border-color: rgba(185, 28, 28, 0.28);
+  background: #fffafa;
+}
+
 .proposal-review-actions {
   display: flex;
   flex-wrap: wrap;
@@ -670,6 +698,92 @@ h3 {
   border: 1px solid rgba(185, 28, 28, 0.28);
   background: #fef2f2;
   color: var(--danger);
+}
+
+.proposal-result-error .text-button {
+  margin-top: 8px;
+}
+
+.proposal-log-panel {
+  display: grid;
+  gap: 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px;
+  background: var(--panel);
+}
+
+.proposal-log-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.proposal-log-heading div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.proposal-log-heading span,
+.proposal-log-empty,
+.proposal-log-item span,
+.proposal-log-item small {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.proposal-log-heading span {
+  font-weight: 900;
+}
+
+.proposal-log-heading strong {
+  border-radius: 999px;
+  padding: 2px 7px;
+  background: #eef6f5;
+  color: var(--accent-strong);
+  font-size: 12px;
+}
+
+.proposal-log-empty {
+  margin: 0;
+}
+
+.proposal-log-item {
+  display: grid;
+  gap: 5px;
+  border: 1px solid var(--line);
+  border-left-width: 4px;
+  border-radius: 8px;
+  padding: 10px;
+  background: #f8fafc;
+}
+
+.proposal-log-item div {
+  display: grid;
+  gap: 3px;
+}
+
+.proposal-log-item strong {
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.proposal-log-item p {
+  margin: 0;
+  color: var(--ink);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.proposal-log-success {
+  border-left-color: var(--accent);
+}
+
+.proposal-log-failure {
+  border-left-color: var(--danger);
 }
 
 .work-guide {
@@ -1120,6 +1234,10 @@ select:focus {
   }
 
   .proposal-review-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .proposal-diff {
     grid-template-columns: 1fr;
   }
 

@@ -9,7 +9,9 @@ const state = {
   chatHistory: [],
   pendingProposal: null,
   proposalResult: null,
-  proposalRunning: false
+  proposalRunning: false,
+  proposalLogs: [],
+  proposalLogsLoading: false
 };
 
 const issueList = document.querySelector("#issueList");
@@ -74,6 +76,9 @@ proposalReview.addEventListener("click", (event) => {
   if (action === "execute-comment") {
     executeCommentProposal();
   }
+  if (action === "reload-logs") {
+    loadProposalLogs();
+  }
 });
 
 init();
@@ -83,6 +88,7 @@ async function init() {
   renderProposalReview();
   await loadConfig();
   await loadIssues();
+  await loadProposalLogs();
 }
 
 async function loadConfig() {
@@ -184,13 +190,17 @@ async function executeCommentProposal() {
       },
       body: JSON.stringify({
         issueId: proposal.targetIssue.id,
-        notes: proposal.draft
+        notes: proposal.draft,
+        targetIssue: proposal.targetIssue
       })
     });
 
     if (!response.ok) {
-      const body = await response.text();
-      throw new Error(`Redmine update error: ${response.status} ${body.slice(0, 160)}`);
+      const body = await readResponseBody(response);
+      const message = body.message || body.error || `Redmine update error: ${response.status}`;
+      const error = new Error(message);
+      error.detail = body;
+      throw error;
     }
 
     state.proposalResult = {
@@ -201,17 +211,39 @@ async function executeCommentProposal() {
     console.error(error);
     state.proposalResult = {
       ok: false,
-      message: error.message || "Redmine コメント追加に失敗しました。"
+      message: error.message || "Redmine コメント追加に失敗しました。",
+      detail: error.detail || null
     };
   } finally {
     state.proposalRunning = false;
+    await loadProposalLogs();
+    renderProposalReview();
+  }
+}
+
+async function loadProposalLogs() {
+  state.proposalLogsLoading = true;
+  renderProposalReview();
+
+  try {
+    const response = await fetch("/api/proposals/logs");
+    if (!response.ok) throw new Error(`Proposal log error: ${response.status}`);
+    const data = await response.json();
+    state.proposalLogs = data.logs || [];
+  } catch (error) {
+    console.error(error);
+  } finally {
+    state.proposalLogsLoading = false;
     renderProposalReview();
   }
 }
 
 function renderProposalReview() {
   if (!state.pendingProposal) {
-    proposalReview.innerHTML = `<div class="empty-state">Chat で更新案を作ると、ここで確認できます。</div>`;
+    proposalReview.innerHTML = `
+      <div class="empty-state">Chat で更新案を作ると、ここで確認できます。</div>
+      ${proposalLogsTemplate()}
+    `;
     return;
   }
 
@@ -219,6 +251,7 @@ function renderProposalReview() {
   const checklist = proposal.checklist || [];
   const target = proposal.targetIssue;
   const canExecuteComment = proposal.action === "comment" && target?.id;
+  const guardedAction = ["status_change", "close_candidate"].includes(proposal.action);
 
   proposalReview.innerHTML = `
     <article class="proposal-review-card">
@@ -248,6 +281,10 @@ function renderProposalReview() {
         <p>${escapeHtml(proposal.changeSummary || "")}</p>
       </section>
       <section class="proposal-review-block">
+        <span>更新前後の差分</span>
+        ${proposalDiffTemplate(proposal)}
+      </section>
+      <section class="proposal-review-block">
         <span>下書き</span>
         <pre>${escapeHtml(proposal.draft || "")}</pre>
       </section>
@@ -259,12 +296,87 @@ function renderProposalReview() {
         <span>次ステップ</span>
         <p>${escapeHtml(proposal.nextStep || "")}</p>
       </section>
+      ${guardedAction ? guardedActionTemplate(proposal) : ""}
       <div class="proposal-review-actions">
         ${canExecuteComment ? `<button class="primary-button" type="button" data-proposal-action="execute-comment" ${state.proposalRunning ? "disabled" : ""}>${state.proposalRunning ? "追加中..." : "確認してコメント追加"}</button>` : ""}
-        ${!canExecuteComment ? `<p>この更新種別はまだ実行できません。後続 issue で確認フローを実装します。</p>` : ""}
+        ${!canExecuteComment ? `<p>この更新種別は実行前の安全条件を確認する段階です。AIRedmine はまだ Redmine へ反映しません。</p>` : ""}
       </div>
       ${proposalResultTemplate(state.proposalResult)}
     </article>
+    ${proposalLogsTemplate()}
+  `;
+}
+
+function proposalDiffTemplate(proposal) {
+  const target = proposal.targetIssue;
+  if (proposal.action === "comment") {
+    return `
+      <div class="proposal-diff">
+        <div>
+          <strong>更新前</strong>
+          <p>${target ? `${escapeHtml(target.title || `#${target.id}`)} にコメントを追加しない状態` : "対象 issue 未指定"}</p>
+        </div>
+        <div>
+          <strong>更新後</strong>
+          <p>次のコメントを Redmine の履歴に追加します。</p>
+          <pre>${escapeHtml(proposal.draft || "")}</pre>
+        </div>
+      </div>
+    `;
+  }
+
+  if (proposal.action === "status_change") {
+    return `
+      <div class="proposal-diff">
+        <div>
+          <strong>現在</strong>
+          <p>${escapeHtml(target?.status || "現在ステータス不明")}</p>
+        </div>
+        <div>
+          <strong>候補</strong>
+          <p>変更先ステータスは Redmine 上で人間が選択します。</p>
+        </div>
+      </div>
+    `;
+  }
+
+  if (proposal.action === "close_candidate") {
+    return `
+      <div class="proposal-diff">
+        <div>
+          <strong>現在</strong>
+          <p>${escapeHtml(target?.status || "現在ステータス不明")}</p>
+        </div>
+        <div>
+          <strong>候補</strong>
+          <p>完了条件、テスト結果、残リスクを確認してからクローズ可否を判断します。</p>
+        </div>
+      </div>
+    `;
+  }
+
+  return `<p>この更新種別の差分は未定義です。</p>`;
+}
+
+function guardedActionTemplate(proposal) {
+  const closeCandidate = proposal.action === "close_candidate";
+  const items = closeCandidate
+    ? [
+      "完了条件と受け入れ基準が Redmine または docs に残っている",
+      "テスト結果が確認済みで、失敗や未実施が説明されている",
+      "残リスクとフォローアップ issue の要否を人間が判断している"
+    ]
+    : [
+      "変更先ステータスが Redmine のワークフロー上で妥当である",
+      "次に責任を持つ担当者または確認者が明確である",
+      "状態変更の理由をコメントとして残せる"
+    ];
+
+  return `
+    <section class="proposal-review-block guarded-action">
+      <span>${closeCandidate ? "クローズ安全条件" : "ステータス変更安全条件"}</span>
+      <ul>${items.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>
+    </section>
   `;
 }
 
@@ -283,8 +395,51 @@ function proposalResultTemplate(result) {
     <div class="proposal-result proposal-result-error">
       <strong>反映失敗</strong>
       <p>${escapeHtml(result.message || "Redmine コメント追加に失敗しました。")}</p>
+      ${result.detail?.category ? `<p>分類: ${escapeHtml(result.detail.category)} / ${result.detail.retryable ? "再試行できます" : "内容確認が必要です"}</p>` : ""}
+      <button class="text-button" type="button" data-proposal-action="execute-comment">再試行</button>
     </div>
   `;
+}
+
+function proposalLogsTemplate() {
+  const logs = state.proposalLogs || [];
+  return `
+    <article class="proposal-log-panel">
+      <div class="proposal-log-heading">
+        <div>
+          <span>実行ログ</span>
+          <strong>${logs.length}</strong>
+        </div>
+        <button class="text-button" type="button" data-proposal-action="reload-logs">${state.proposalLogsLoading ? "更新中..." : "再読み込み"}</button>
+      </div>
+      ${logs.length ? logs.slice(0, 5).map(proposalLogTemplate).join("") : `<p class="proposal-log-empty">まだ更新実行ログはありません。</p>`}
+    </article>
+  `;
+}
+
+function proposalLogTemplate(log) {
+  const statusClass = log.result === "success" ? "proposal-log-success" : "proposal-log-failure";
+  return `
+    <section class="proposal-log-item ${statusClass}">
+      <div>
+        <strong>${escapeHtml(log.targetTitle || `#${log.issueId}`)}</strong>
+        <span>${escapeHtml(log.action || "update")} / ${escapeHtml(formatDateTime(log.createdAt))} / ${escapeHtml(log.actor || "unknown")}</span>
+      </div>
+      <p>${escapeHtml(log.message || "")}</p>
+      ${log.result === "failure" ? `<small>${escapeHtml(log.category || "unknown")}${log.retryable ? " / retryable" : ""}</small>` : ""}
+    </section>
+  `;
+}
+
+async function readResponseBody(response) {
+  const text = await response.text();
+  try {
+    return JSON.parse(text);
+  } catch {
+    return {
+      error: text.slice(0, 240)
+    };
+  }
 }
 
 function addChatHistory(question, data) {
@@ -824,6 +979,16 @@ function daysSince(value) {
   if (!value) return 0;
   const date = new Date(value);
   return Math.floor((Date.now() - date.getTime()) / 86400000);
+}
+
+function formatDateTime(value) {
+  if (!value) return "日時不明";
+  return new Intl.DateTimeFormat("ja-JP", {
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit"
+  }).format(new Date(value));
 }
 
 function formatRelative(value) {

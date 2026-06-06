@@ -16,6 +16,8 @@ const redmine = createRedmineConnector({
   baseUrl: process.env.REDMINE_BASE_URL,
   apiKey: process.env.REDMINE_API_KEY
 });
+const updateLogs = [];
+let updateLogSequence = 0;
 
 const mimeTypes = {
   ".html": "text/html; charset=utf-8",
@@ -51,6 +53,12 @@ const server = createServer(async (req, res) => {
 
     if (url.pathname === "/api/proposals/comment" && req.method === "POST") {
       return handleCommentProposal(req, res);
+    }
+
+    if (url.pathname === "/api/proposals/logs") {
+      return sendJson(res, {
+        logs: updateLogs.slice(0, 20)
+      });
     }
 
     return serveStatic(url.pathname, res);
@@ -114,23 +122,90 @@ async function handleCommentProposal(req, res) {
 
   if (!issueId || !notes) {
     return sendJson(res, {
-      error: "issueId and notes are required"
+      error: "issueId and notes are required",
+      category: "validation",
+      retryable: false
     }, 400);
   }
 
+  const logBase = {
+    id: `log-${Date.now()}-${updateLogSequence++}`,
+    createdAt: new Date().toISOString(),
+    actor: "browser-user",
+    issueId,
+    targetTitle: body.targetIssue?.title || `#${issueId}`,
+    action: "comment",
+    draft: notes
+  };
+
   try {
     const result = await redmine.addIssueComment(issueId, notes);
+    const log = recordUpdateLog({
+      ...logBase,
+      result: "success",
+      message: "Redmine コメントを追加しました。"
+    });
     return sendJson(res, {
       ...result,
-      message: "Redmine コメントを追加しました。"
+      message: "Redmine コメントを追加しました。",
+      log
     });
   } catch (error) {
     if (error instanceof RedmineApiError) {
-      res.writeHead(error.status, { "Content-Type": error.contentType });
-      return res.end(error.body);
+      const payload = redmineErrorPayload(error);
+      const log = recordUpdateLog({
+        ...logBase,
+        result: "failure",
+        message: payload.message,
+        category: payload.category,
+        retryable: payload.retryable
+      });
+      return sendJson(res, {
+        ...payload,
+        log
+      }, error.status);
     }
     throw error;
   }
+}
+
+function recordUpdateLog(entry) {
+  updateLogs.unshift(entry);
+  if (updateLogs.length > 50) updateLogs.length = 50;
+  return entry;
+}
+
+function redmineErrorPayload(error) {
+  const body = String(error.body || "");
+  const category = errorCategory(error.status, body);
+  return {
+    error: "Redmine update failed",
+    message: errorMessageForCategory(category, error.status),
+    category,
+    retryable: ["connection", "server", "rate_limit"].includes(category),
+    status: error.status,
+    detail: body.slice(0, 240)
+  };
+}
+
+function errorCategory(status, body) {
+  if (status === 401 || status === 403) return "auth";
+  if (status === 404) return "not_found";
+  if (status === 422) return "validation";
+  if (status === 429) return "rate_limit";
+  if (status >= 500) return "server";
+  if (body.toLowerCase().includes("failed to fetch")) return "connection";
+  return "unknown";
+}
+
+function errorMessageForCategory(category, status) {
+  if (category === "auth") return "Redmine の認証または権限を確認してください。";
+  if (category === "not_found") return "対象 issue が見つかりません。番号や参照権限を確認してください。";
+  if (category === "validation") return "Redmine が更新内容を受け付けませんでした。下書きの内容を確認してください。";
+  if (category === "rate_limit") return "Redmine 側の制限に達した可能性があります。少し待って再試行してください。";
+  if (category === "server") return "Redmine サーバー側でエラーが発生しました。状態を確認して再試行してください。";
+  if (category === "connection") return "Redmine に接続できません。アプリサーバーと Redmine の状態を確認してください。";
+  return `Redmine 更新に失敗しました。HTTP ${status} を確認してください。`;
 }
 
 async function serveStatic(pathname, res) {
