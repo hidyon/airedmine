@@ -27,6 +27,7 @@ services:
       - "3000:3000"
     volumes:
       - redmine-files:/usr/src/redmine/files
+      - ./scripts/redmine:/demo-scripts:ro
     depends_on:
       - redmine-db
 

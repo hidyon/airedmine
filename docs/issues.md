@@ -360,3 +360,41 @@ Priority: Medium
 
 - 体験評価の記録テンプレートが存在することを確認する。
 - 改善候補を issue 化する流れが docs に記載されていることを確認する。
+
+### ISS-013: ローカル Redmine にデモデータを投入する
+
+Status: Closed
+Priority: Medium
+
+要求仕様:
+
+- ローカル Redmine 接続後に、AIRedmine の実データ表示をすぐ試せる。
+- PM 判断待ち、仕様確認待ち、停滞リスク、クローズ候補など、AIRedmine の体験説明に必要な issue が実 Redmine に存在する。
+- サンプルデータ投入を手順化し、再実行しても重複しにくい形にする。
+
+機能仕様:
+
+- Redmine コンテナ内で実行する seed スクリプトを追加する。
+- seed スクリプトは tracker、status、priority、project、issue、API キーを用意する。
+- Docker Compose の Redmine service から seed スクリプトを参照できるようにする。
+- README にサンプルデータ投入手順を追加する。
+
+テスト仕様:
+
+- seed スクリプトを Redmine コンテナ内で実行できることを確認する。
+- `GET /api/config` が `mode: redmine` を返すことを確認する。
+- `GET /api/issues?status_id=*` が実 Redmine のサンプル issue を返すことを確認する。
+- README にサンプルデータ投入手順があることを確認する。
+
+テスト結果:
+
+- `docker-compose exec -T redmine bundle exec rails runner /demo-scripts/seed-demo.rb` が成功した。
+- `GET /api/config` が `connected: true`、`mode: redmine` を返した。
+- `GET /api/issues?status_id=open` が実 Redmine の未完了サンプル issue 6 件を返した。
+- `GET /api/issues?status_id=*` が実 Redmine のサンプル issue 7 件を返した。
+- サンプル issue に PM 判断待ち、仕様確認待ち、停滞リスク、クローズ候補、完了済み issue が含まれることを確認した。
+- README にサンプルデータ投入手順を追加した。
+
+クローズ判定:
+
+- 要求仕様、機能仕様、テスト仕様を満たすため Closed とする。

@@ -218,6 +218,25 @@ curl http://localhost:5173/api/config
 curl "http://localhost:5173/api/issues?status_id=open"
 ```
 
+### サンプルデータを投入する
+
+ローカル Redmine に、AIRedmine の体験確認用プロジェクトと issue を投入できます。
+
+```bash
+docker-compose exec -T redmine bundle exec rails runner /demo-scripts/seed-demo.rb
+docker-compose up -d app
+```
+
+投入される主なデータ:
+
+- `AIRedmine Demo` プロジェクト
+- PM 判断待ち、仕様確認待ち、停滞リスク、クローズ候補を含む issue
+- Redmine の REST API 有効化
+- admin ユーザーの API キー
+
+API キーはコマンド出力の `api_key` を `.env` の `REDMINE_API_KEY` に設定します。
+すでに `.env` 設定済みの場合は、app コンテナの再起動だけで実 Redmine の issue が表示されます。
+
 ## Redmine と接続する
 
 外部で利用できる OSS 版 Redmine または手元で起動した Redmine に AIRedmine を接続して試すこともできます。

@@ -265,3 +265,37 @@ Docker Compose で OSS 版 Redmine 検証環境を起動できる構成を追加
 
 - この環境では `docker compose` サブコマンドが使えなかったため、`docker-compose config` で構成解釈を確認した。
 - 実際のコンテナ起動と Redmine 画面操作は、Docker 実行環境での手動確認が必要である。
+
+## 2026-06-06: ISS-013 着手
+
+実 Redmine 接続はできたが、初期状態では project、tracker、status、issue が存在せず、AIRedmine の実データ体験を確認しづらかった。
+このため、ローカル Redmine に AIRedmine の体験説明用デモデータを投入する仕組みを追加する。
+
+方針:
+
+- Redmine の画面操作に依存せず、Rails runner で再現可能にする。
+- Redmine の初期マスタが空でも動くよう、status、priority、tracker も seed する。
+- issue は PM 判断待ち、仕様確認待ち、停滞リスク、クローズ候補、完了済みを含める。
+- AIRedmine app server から実 Redmine API で取得できることを確認する。
+
+## 2026-06-06: ISS-013 クローズ
+
+ローカル Redmine に AIRedmine の実データ体験用デモデータを投入した。
+
+実装内容:
+
+- `scripts/redmine/seed-demo.rb` を追加した。
+- Redmine service へ `./scripts/redmine:/demo-scripts:ro` をマウントした。
+- seed スクリプトで REST API 有効化、API キー、status、priority、tracker、project、issue を作成するようにした。
+- README にサンプルデータ投入手順を追加した。
+
+確認結果:
+
+- seed スクリプトの実行に成功した。
+- `GET /api/config` が `mode: redmine` を返した。
+- `GET /api/issues?status_id=open` が実 Redmine の未完了サンプル issue 6 件を返した。
+- `GET /api/issues?status_id=*` が実 Redmine のサンプル issue 7 件を返した。
+
+保留事項:
+
+- seed 実行時に Redmine のメールジョブログが出るため、必要なら後続で通知設定を抑制する。
