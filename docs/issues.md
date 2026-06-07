@@ -1864,3 +1864,144 @@ Priority: Low
 テスト仕様:
 
 - docs/role-design.md が存在し、developer / pm ロールの設計が記録されていることを確認する。
+
+### ISS-057: `__pycache__` を `.gitignore` に追加する
+
+Status: Open
+Priority: High
+
+要求仕様:
+
+- Python の `__pycache__` および `.pyc` ファイルがリポジトリに含まれないようにする。
+- 既存のコミット済みキャッシュファイルをトラッキングから除外する。
+
+機能仕様:
+
+- `.gitignore` に `__pycache__/` と `*.pyc` を追加する。
+- `git rm -r --cached` で既存のキャッシュファイルをインデックスから削除する。
+
+テスト仕様:
+
+- `git status` で `__pycache__/` が追跡対象外になっていることを確認する。
+- `git ls-files backend/ | grep __pycache__` が空になることを確認する。
+
+### ISS-058: 旧 Node.js サーバー (`src/`) を削除する
+
+Status: Open
+Priority: Medium
+
+要求仕様:
+
+- FastAPI 移行後に不要になった `src/server/` と `src/public/` を削除する。
+- 旧 Node.js 関連のファイルがリポジトリの混乱源にならないようにする。
+
+機能仕様:
+
+- `src/server/` ディレクトリを削除する（index.js, redmineConnector.js, mockRedmine.js）。
+- `src/public/` ディレクトリを削除する（index.html, app.js, styles.css）。
+- `src/` ディレクトリ自体が空になれば削除する。
+
+テスト仕様:
+
+- `ls src/` でファイルが存在しないことを確認する。
+- フロントエンド（5173）、バックエンド（8000）が正常に起動していることを確認する。
+
+### ISS-059: Proposal カードから Redmine コメントを実行できるようにする
+
+Status: Open
+Priority: Medium
+
+要求仕様:
+
+- Chat の Proposal カードに「実行」ボタンを追加し、確認後に Redmine へコメントを送信できるようにする。
+- 実行結果（成功・失敗）をカード内にフィードバック表示する。
+
+機能仕様:
+
+- `ProposalCard` コンポーネントを DeveloperChatView に追加する。
+- 「Redmine に送信」ボタンをクリック → 確認ダイアログまたはインライン確認 → POST /api/proposals/comment を呼び出す。
+- 成功時: カードを「送信済み」状態に変更し、Audit の更新ログに記録される。
+- 失敗時: エラーメッセージをカード内に表示し、再試行ボタンを出す。
+
+テスト仕様:
+
+- Chat で `#1208 にコメントを追加して: テスト送信` と入力 → Proposal カードが表示される。
+- 「Redmine に送信」をクリック → API が呼ばれ、カードが「送信済み」になる（mock モードで確認）。
+- Audit View の更新ログに実行記録が表示されることを確認する。
+
+### ISS-060: Issue 詳細パネルを正式 issue として記録する
+
+Status: Closed
+Priority: Low
+
+要求仕様:
+
+- Dashboard と Chat に追加した issue 詳細パネルを正式な issue として追跡記録する。
+- 実装済みの機能を docs で管理できるようにする。
+
+機能仕様:
+
+- `IssueDetailPanel` コンポーネント（description, meta, journals 表示）。
+- DeveloperDashboardView: issue 行クリックで右パネルが開く 2 ペイン構成。
+- DeveloperChatView: 参照チップクリックで同一パネルが開く。選択中はハイライト。
+- ✕ ボタンで閉じる。別 issue をクリックで切り替わる。
+
+テスト仕様:
+
+- Dashboard で issue をクリック → 詳細パネルに description・journals が表示される。
+- Chat で参照チップをクリック → 同じパネルが開く。
+- `npx tsc --noEmit` エラーなし。
+
+テスト結果:
+
+- 実装済み・動作確認済み（2026-06-07）。
+
+クローズ判定:
+
+- 実装済みのため Closed とする。
+
+### ISS-061: README を最新化する
+
+Status: Open
+Priority: High
+
+要求仕様:
+
+- React + TypeScript + Vite / Python + FastAPI への移行を反映した README にする。
+- 新しい 4 View の構成と起動手順を記載する。
+
+機能仕様:
+
+- アーキテクチャ概要（frontend / backend / Redmine の構成）を更新する。
+- `docker compose up` による起動手順と各サービスの URL を記載する。
+- 4 View（Developer Chat / Developer Dashboard / PM View / Audit）の説明を追加する。
+- 旧 Node.js サーバーへの言及を削除する。
+- モードの切り替え方（mock / Redmine 実接続）を記載する。
+
+テスト仕様:
+
+- README を読んで初回起動できる手順が揃っているかレビューする。
+- アーキテクチャ図または説明が現在の構成と一致していることを確認する。
+
+### ISS-062: 要求仕様・機能仕様・テスト仕様を文書化する
+
+Status: Open
+Priority: High
+
+要求仕様:
+
+- AIRedmine 全体の要求仕様・機能仕様・テスト仕様を一か所にまとめた文書を作る。
+- 個別 issue に分散している仕様を横断的に参照できるようにする。
+
+機能仕様:
+
+- `docs/spec.md` を新規作成する。
+- 要求仕様: 誰のどんな問題を解くか、対象ユーザー、主要なユースケース。
+- 機能仕様: エンドポイント一覧、View 構成、API / データ / 状態、ロール設計の概要。
+- テスト仕様: 手動確認チェックリスト（4 View 動作、Chat 応答、Proposal 実行、Experience Notes）。
+- 各仕様には対応する issue 番号を参照として記載する。
+
+テスト仕様:
+
+- `docs/spec.md` が存在し、要求・機能・テストの 3 セクションがあることを確認する。
+- 機能仕様のエンドポイント一覧が `backend/routers/` の実装と一致していることを確認する。
