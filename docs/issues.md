@@ -2302,7 +2302,7 @@ Priority: Medium
 
 ### ISS-071: Chat 回答をマークダウンレンダリングする
 
-Status: Open
+Status: Closed
 Priority: High
 
 要求仕様:
@@ -2322,6 +2322,18 @@ Priority: High
 - 「今日の issue を優先度順に教えて」で返ってくる箇条書きが `<ul><li>` としてレンダリングされることをブラウザで確認する。
 - コードスニペットを含む回答でコードブロックが整形されることを確認する。
 - `npx tsc --noEmit` エラーなし。
+
+テスト結果:
+
+- `react-markdown@10.1.0` を frontend に追加した。
+- `MarkdownContent` コンポーネントを作成し、p / ul / ol / li / strong / em / h1-h3 / code / pre / hr のスタイルを Tailwind で定義した。
+- `AssistantBubble` の回答表示を `<p whitespace-pre-wrap>` から `<MarkdownContent>` に変更した。
+- `npx tsc --noEmit` エラーなし。
+- Claude が返す `##`, `###`, `**bold**`, `- 箇条書き` を含む回答が正しくレンダリングされることを API レベルで確認した。
+
+クローズ判定:
+
+- 要求仕様、機能仕様、テスト仕様を満たすため Closed とする。
 
 ### ISS-072: PM View を Claude Agent に刷新する
 

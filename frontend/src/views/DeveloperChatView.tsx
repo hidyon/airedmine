@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import Markdown from 'react-markdown'
 import { postChat, postCommentProposal } from '../api/client'
 import type { ChatHistoryMessage } from '../api/client'
 import type { ChatResponse, ChatReference, UpdateProposal } from '../api/types'
@@ -281,6 +282,36 @@ function ToolCallBadges({ toolCalls }: { toolCalls: string[] }) {
   )
 }
 
+function MarkdownContent({ children }: { children: string }) {
+  return (
+    <Markdown
+      components={{
+        p: ({ children }) => <p className="text-sm text-slate-800 leading-relaxed my-1 first:mt-0 last:mb-0">{children}</p>,
+        ul: ({ children }) => <ul className="list-disc pl-4 my-1 space-y-0.5">{children}</ul>,
+        ol: ({ children }) => <ol className="list-decimal pl-4 my-1 space-y-0.5">{children}</ol>,
+        li: ({ children }) => <li className="text-sm text-slate-800 leading-relaxed">{children}</li>,
+        strong: ({ children }) => <strong className="font-semibold text-slate-900">{children}</strong>,
+        em: ({ children }) => <em className="italic text-slate-700">{children}</em>,
+        h1: ({ children }) => <h1 className="text-base font-bold text-slate-900 mt-2 mb-1 first:mt-0">{children}</h1>,
+        h2: ({ children }) => <h2 className="text-sm font-bold text-slate-900 mt-2 mb-1 first:mt-0">{children}</h2>,
+        h3: ({ children }) => <h3 className="text-sm font-semibold text-slate-900 mt-1 mb-0.5">{children}</h3>,
+        code: ({ className, children }) =>
+          className?.startsWith('language-') ? (
+            <code className="text-xs font-mono text-slate-700">{children}</code>
+          ) : (
+            <code className="bg-slate-100 px-1 py-0.5 rounded text-xs font-mono text-slate-700">{children}</code>
+          ),
+        pre: ({ children }) => (
+          <pre className="bg-slate-100 rounded-lg px-3 py-2 overflow-x-auto my-2 text-xs">{children}</pre>
+        ),
+        hr: () => <hr className="border-slate-200 my-2" />,
+      }}
+    >
+      {children}
+    </Markdown>
+  )
+}
+
 function UserBubble({ text }: { text: string }) {
   return (
     <div className="flex justify-end">
@@ -322,7 +353,7 @@ function AssistantBubble({
         </div>
       ) : (
         <div className="bg-white border border-slate-200 rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm">
-          <p className="text-sm text-slate-800 leading-relaxed whitespace-pre-wrap m-0">{res.answer}</p>
+          <MarkdownContent>{res.answer ?? ''}</MarkdownContent>
           {res.tool_calls && res.tool_calls.length > 0 && (
             <ToolCallBadges toolCalls={res.tool_calls} />
           )}
