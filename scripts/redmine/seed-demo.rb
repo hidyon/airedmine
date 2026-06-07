@@ -85,12 +85,20 @@ members_cfg["members"].each do |m|
 end
 
 role = Role.where(builtin: 0).first
-users.values.each do |user|
-  m = Member.find_or_initialize_by(project: project, user: user)
-  next unless m.new_record?
-  m.roles = [role].compact
-  m.save! rescue nil
+if role.nil?
+  role = Role.new(name: "Developer", position: 1)
+  role.save!(validate: false)
 end
+
+users.values.each do |user|
+  next if Member.exists?(project_id: project.id, user_id: user.id)
+  member = Member.new(project: project, user: user)
+  member.member_roles.build(role: role)
+  member.save!(validate: false)
+rescue => e
+  puts "  WARNING: Could not add #{user.login} as member: #{e.message}"
+end
+puts "  Members registered: #{project.reload.members.count}"
 
 # ===== バージョン（Sprint）=====
 versions = {}
@@ -147,7 +155,7 @@ def create_issue(project:, attrs:, idx:, assigned_to:, users:, statuses:, priori
     start_date:    [Date.current - days.days - 5.days, Date.current - 90.days].max,
     done_ratio:    done_ratio_for(status)
   )
-  issue.save!
+  issue.save!(validate: false)
 
   ts = days.days.ago
   Issue.where(id: issue.id).update_all(
