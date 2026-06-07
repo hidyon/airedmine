@@ -56,7 +56,8 @@ def get_system_prompt(
     if redmine_user_id:
         parts.append(f"- Redmine user_id: {redmine_user_id}")
         parts.append(
-            f"「私の担当 issue」「自分のチケット」などと聞かれた場合は"
-            f" list_issues の assigned_to_id={redmine_user_id} を使用してください。"
+            f"「私の」「自分の」「今日の」などのキーワードが含まれる場合は"
+            f" list_issues の assigned_to_id=\"{redmine_user_id}\" を必ず使用してください。"
+            f" 絶対に assigned_to_id=\"me\" は使わないでください（me は API キーユーザーに解決されるため誤った結果になります）。"
         )
     return "\n".join(parts)

@@ -16,7 +16,7 @@ TOOL_SCHEMAS = [
                 },
                 "assigned_to_id": {
                     "type": "string",
-                    "description": "担当者 ID。me で自分の issue のみ取得。省略可。",
+                    "description": "担当者の数値 ID（例: \"5\"）。ログインユーザーの issue を取得する場合はシステムプロンプトに記載された Redmine user_id を使用する。省略すると全員分を取得。",
                 },
                 "limit": {
                     "type": "integer",
