@@ -5,6 +5,7 @@ import { postChat, postCommentProposal } from '../api/client'
 import type { ChatHistoryMessage } from '../api/client'
 import type { ChatResponse, ChatReference, UpdateProposal } from '../api/types'
 import IssueDetailPanel from '../components/IssueDetailPanel'
+import { getUser } from '../auth'
 
 interface Message {
   id: string
@@ -37,7 +38,7 @@ export default function DeveloperChatView() {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
-  const [role, setRole] = useState<Role>('developer')
+  const [role, setRole] = useState<Role>(() => getUser()?.role ?? 'developer')
   const [selectedIssueId, setSelectedIssueId] = useState<number | null>(null)
   const sessionIdRef = useRef<string>(generateSessionId())
   const historyRef = useRef<ChatHistoryMessage[]>([])

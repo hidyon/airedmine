@@ -2300,6 +2300,89 @@ Priority: Medium
 
 ## Milestone 12: 体験品質強化と Redmine 書き込み拡張
 
+### ISS-074: バックエンドのユーザー認証基盤を実装する
+
+Status: Closed
+Priority: High
+
+要求仕様:
+
+- ユーザー名 + 共通パスワードでログインし、自分のロール（developer/pm）が確定する。
+- 共通パスワードは `.env` の `DEMO_PASSWORD` で管理する。個別パスワードは持たない。
+- 初期ユーザーは seed スクリプトで投入する。
+
+機能仕様:
+
+- `backend/db.py` に `users` テーブルを追加する（id, username, display_name, role, created_at）。
+- `backend/routers/auth.py` を新規作成する。
+  - `POST /api/auth/login`: username + password → DEMO_PASSWORD と照合 → JWT を返す。
+  - `GET /api/auth/me`: Authorization ヘッダーの JWT を検証してユーザー情報を返す。
+- JWT は PyJWT で生成・検証する（署名鍵は `JWT_SECRET` 環境変数）。
+- `backend/scripts/seed_users.py` を追加する（alice/bob=developer, carol=pm の初期ユーザー 3 名）。
+- `.env.example` に `DEMO_PASSWORD` と `JWT_SECRET` を追加する。
+- 他の既存 API は認証不要のまま維持する（プロトタイプのため）。
+
+テスト仕様:
+
+- `POST /api/auth/login` に正しいパスワードを送ると JWT が返ることを確認する。
+- 誤ったパスワードで 401 が返ることを確認する。
+- 存在しないユーザー名で 401 が返ることを確認する。
+- `GET /api/auth/me` に有効な JWT を送るとユーザー情報が返ることを確認する。
+
+テスト結果:
+
+- `backend/db.py` に `users` テーブルを追加した。
+- `backend/routers/auth.py` を新規作成した。`POST /api/auth/login` と `GET /api/auth/me` を実装。
+- `PyJWT>=2.8.0` を requirements.txt に追加しコンテナにインストールした。
+- `backend/scripts/seed_users.py` を追加し、alice/bob（developer）・carol（pm）を投入した。
+- `.env.example` に `DEMO_PASSWORD=demo` と `JWT_SECRET` を追加した。
+- `POST /api/auth/login` で alice/demo → JWT 返却・誤パスワード → 401・未存在ユーザー → 401 を確認した。
+
+クローズ判定:
+
+- 要求仕様、機能仕様、テスト仕様を満たすため Closed とする。
+
+### ISS-075: フロントエンドにログイン画面とセッション管理を追加する
+
+Status: Closed
+Priority: High
+
+要求仕様:
+
+- 未ログイン時はログイン画面にリダイレクトされる。
+- ログイン後はユーザーのロールに合った Chat がデフォルトで開く（developer → developer/chat、pm → pm）。
+- ヘッダーにログイン中のユーザー名を表示し、ログアウトできる。
+
+機能仕様:
+
+- `frontend/src/auth.ts`: JWT を localStorage に保存・取得・削除するユーティリティを追加する。
+- `frontend/src/views/LoginView.tsx`: ユーザー名入力 + パスワード入力フォームを追加する。
+- `App.tsx` の `/login` ルートを追加し、未ログイン時は全ルートを `/login` へリダイレクトする。
+- `Layout.tsx` のヘッダーにログインユーザー名とログアウトボタンを追加する。
+- `DeveloperChatView.tsx` の初期ロールをログインユーザーのロールから設定する。
+
+テスト仕様:
+
+- 未ログインで `/developer/chat` にアクセスすると `/login` にリダイレクトされることを確認する。
+- ログイン後に developer ロールユーザーは `/developer/chat` へ、pm ロールユーザーは `/pm` へ遷移することを確認する。
+- ヘッダーにユーザー名が表示されることを確認する。
+- ログアウト後に `/login` に戻ることを確認する。
+- `npx tsc --noEmit` エラーなし。
+
+テスト結果:
+
+- `frontend/src/auth.ts` を追加した。JWT の localStorage 保存・取得・削除ユーティリティを実装。
+- `frontend/src/views/LoginView.tsx` を追加した。ユーザー名 + パスワード入力フォームを実装。
+- `App.tsx` に `/login` ルートと `PrivateRoute`・`DefaultRedirect` を追加した。
+- `Layout.tsx` にユーザー名・ロール表示とログアウトボタンを追加した。
+- `DeveloperChatView.tsx` の初期ロールをログインユーザーのロールから設定するようにした。
+- `api/client.ts` に `postLogin` 関数を追加した。
+- `npx tsc --noEmit` エラーなし。
+
+クローズ判定:
+
+- 要求仕様、機能仕様、テスト仕様を満たすため Closed とする。
+
 ### ISS-071: Chat 回答をマークダウンレンダリングする
 
 Status: Closed

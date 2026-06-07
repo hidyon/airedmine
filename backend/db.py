@@ -44,4 +44,13 @@ def init_db() -> None:
                 indexed_at TEXT NOT NULL
             )
         """)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+                id           INTEGER PRIMARY KEY AUTOINCREMENT,
+                username     TEXT NOT NULL UNIQUE,
+                display_name TEXT NOT NULL,
+                role         TEXT NOT NULL CHECK(role IN ('developer', 'pm')),
+                created_at   TEXT NOT NULL
+            )
+        """)
         conn.commit()

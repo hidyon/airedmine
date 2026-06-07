@@ -1,7 +1,8 @@
-import { NavLink, Outlet, useLocation } from 'react-router-dom'
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { fetchConfig } from '../api/client'
 import type { ConfigResponse } from '../api/types'
+import { getUser, clearSession } from '../auth'
 
 const NAV_ITEMS = [
   { to: '/developer/chat', icon: '💬', label: 'Chat', section: 'developer' },
@@ -19,11 +20,18 @@ const VIEW_LABELS: Record<string, string> = {
 
 export default function Layout() {
   const { pathname } = useLocation()
+  const navigate = useNavigate()
   const [config, setConfig] = useState<ConfigResponse | null>(null)
+  const user = getUser()
 
   useEffect(() => {
     fetchConfig().then(setConfig).catch(() => null)
   }, [])
+
+  function logout() {
+    clearSession()
+    navigate('/login', { replace: true })
+  }
 
   const viewTitle = VIEW_LABELS[pathname] ?? 'AIRedmine'
   const mode = config?.mode
@@ -93,6 +101,22 @@ export default function Layout() {
               {mode === 'mock' ? 'Mock' : 'Redmine'}
             </span>
           )}
+          <div className="ml-auto flex items-center gap-3">
+            {user && (
+              <span className="text-xs text-slate-500">
+                {user.display_name}
+                <span className="ml-1.5 text-[10px] px-1.5 py-0.5 bg-slate-100 text-slate-500 rounded-full">
+                  {user.role === 'pm' ? 'PM' : '開発者'}
+                </span>
+              </span>
+            )}
+            <button
+              onClick={logout}
+              className="text-xs text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
+            >
+              ログアウト
+            </button>
+          </div>
         </header>
         <div className="flex-1 overflow-hidden">
           <Outlet />

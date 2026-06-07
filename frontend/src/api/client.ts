@@ -22,6 +22,18 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return res.json() as Promise<T>
 }
 
+export interface LoginResponse {
+  token: string
+  user: { user_id: number; username: string; display_name: string; role: 'developer' | 'pm' }
+}
+
+export function postLogin(username: string, password: string): Promise<LoginResponse> {
+  return request('/auth/login', {
+    method: 'POST',
+    body: JSON.stringify({ username, password }),
+  })
+}
+
 export function fetchConfig(): Promise<ConfigResponse> {
   return request('/config')
 }
