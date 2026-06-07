@@ -2055,7 +2055,7 @@ Priority: High
 
 ### ISS-063: Anthropic API を接続してヘルスチェックする
 
-Status: Open
+Status: Closed
 Priority: High
 
 要求仕様:
@@ -2075,6 +2075,18 @@ Priority: High
 
 - `GET /api/ai/health` が `{"status": "ok", "model": "claude-haiku-4-5-20251001"}` を返すことを確認する。
 - API キー未設定時に適切なエラーが返ることを確認する。
+
+テスト結果:
+
+- `backend/requirements.txt` に `anthropic>=0.40.0` を追加し、Docker イメージを再ビルドした。
+- `docker-compose.yml` の backend service に `ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}` を追加した。
+- `.env.example` に `ANTHROPIC_API_KEY` を追加した。
+- `backend/routers/ai.py` を新規作成し `GET /api/ai/health` を実装した。
+- `GET /api/ai/health` が `{"status": "ok", "model": "claude-haiku-4-5-20251001", "reply": "pong..."}` を返すことを確認した。
+
+クローズ判定:
+
+- 要求仕様、機能仕様、テスト仕様を満たすため Closed とする。
 
 ### ISS-064: Redmine 操作ツールを tool_use 形式で定義する
 
