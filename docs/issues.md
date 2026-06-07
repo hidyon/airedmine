@@ -1962,7 +1962,7 @@ Priority: Low
 
 ### ISS-061: README を最新化する
 
-Status: Open
+Status: Closed
 Priority: High
 
 要求仕様:

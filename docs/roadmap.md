@@ -233,7 +233,7 @@ developer / pm ロール概念を設計に織り込む（認証実装は後続 M
 - `ISS-058` Open: 旧 Node.js サーバー (`src/`) を削除する。
 - `ISS-059` Open: Proposal カードから Redmine コメントを実行できるようにする。
 - `ISS-060` Closed: Issue 詳細パネルを正式 issue として記録する。
-- `ISS-061` Open: README を最新化する。
+- `ISS-061` Closed: README を最新化する。
 - `ISS-062` Open: 要求仕様・機能仕様・テスト仕様を文書化する。
 
 期待成果:
