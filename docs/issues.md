@@ -2538,3 +2538,72 @@ Priority: High
 クローズ判定:
 
 - 要求仕様、機能仕様、テスト仕様を満たすため Closed とする。
+
+## Milestone 13: ロール別ダッシュボード
+
+### ISS-076: PM ダッシュボードにバーンダウンチャートを追加する
+
+Status: Open
+Priority: High
+
+要求仕様:
+
+- PM がログイン後に Dashboard を開くと、プロジェクト全体の issue 消化ペースを視覚的に確認できる。
+- 「進捗が計画より遅れているか」を Chat で聞かなくてもひと目で分かる。
+- 対象外: スプリント管理（Redmine 標準 API にスプリント概念がないため）。
+
+機能仕様:
+
+- PM ロールのナビに「Dashboard」を追加する（`ALL_NAV` に `roles: ['pm']` で追加）。
+- `GET /api/pm/burndown?days=N` エンドポイントを追加する。
+  - Redmine から全 open + 直近 N 日に closed された issue を取得する。
+  - closed issue の close 日は `updated_on` を代理として使用する。
+  - 起点日（N 日前）時点でのオープン数を baseline とする。
+  - 各日のオープン数 = baseline - その日までの cumulative closed 数。
+  - 理想線 = baseline から 0 まで線形減少。
+  - レスポンス形式: `{ days, baseline, series: [{date, open, ideal}] }`
+- PM Dashboard View (`frontend/src/views/PMDashboardView.tsx`) を新規作成する。
+  - `recharts` の `LineChart` でバーンダウンラインを描画する。
+  - 実績線（青）と理想線（グレー破線）を重ねて表示する。
+  - 期間セレクター（14日 / 30日 / 60日）を表示する。
+
+Redmine API 連携:
+
+- `GET /issues.json?status_id=open&limit=100` でオープン issue を取得。
+- `GET /issues.json?status_id=closed&updated_on=>=DATE&limit=100` で期間内クローズ issue を取得（ページネーション対応）。
+- 失敗時: `RedmineApiError` として 503 を返す。
+
+テスト仕様:
+
+- `GET /api/pm/burndown?days=14` が `{ days, baseline, series }` を返すことを確認する（mock モード）。
+- `series` の長さが `days + 1` であることを確認する。
+- PM でログインすると Dashboard がナビに表示され、グラフが描画されることをブラウザで確認する。
+- 開発者でログインすると Dashboard がナビに表示されないことを確認する。
+- `npx tsc --noEmit` エラーなし。
+
+### ISS-077: 開発者ダッシュボードを優先度・停滞でセクション分けする
+
+Status: Open
+Priority: Medium
+
+要求仕様:
+
+- 開発者が Dashboard を開いた瞬間に「今日何から着手すべきか」を判断できる。
+- フラットな一覧から、ブロッカー・高優先度・その他の3セクションに整理する。
+
+機能仕様:
+
+- 現在の「担当 issue 一覧」を以下の3セクションに分ける。
+  - **ブロッカー**: 5日以上更新のない自分の担当 open issue。
+  - **優先度 High 以上**: `priority.name` が `High` または `Urgent` の issue。
+  - **その他**: 上記以外の担当 open issue。
+- セクションが空の場合は「なし」と表示する。
+- 件数カウントを各セクションヘッダーに表示する。
+- issue 行クリックで詳細パネルを開く動作は変えない。
+- `assigned_to_id` は `me` でなく `getUser()?.redmine_user_id` の数値を使用する（`me` は admin に解決されるため）。
+
+テスト仕様:
+
+- Dashboard を開いたとき3セクションが表示されることを確認する。
+- 5日以上更新のない issue が「ブロッカー」セクションに表示されることを確認する（mock データで確認）。
+- `npx tsc --noEmit` エラーなし。
