@@ -234,7 +234,7 @@ developer / pm ロール概念を設計に織り込む（認証実装は後続 M
 - `ISS-059` Open: Proposal カードから Redmine コメントを実行できるようにする。
 - `ISS-060` Closed: Issue 詳細パネルを正式 issue として記録する。
 - `ISS-061` Closed: README を最新化する。
-- `ISS-062` Open: 要求仕様・機能仕様・テスト仕様を文書化する。
+- `ISS-062` Closed: 要求仕様・機能仕様・テスト仕様を文書化する。
 
 期待成果:
 
@@ -315,3 +315,4 @@ developer / pm ロール概念を設計に織り込む（認証実装は後続 M
 - 2026-06-07: `ISS-048` Closed。曖昧な更新依頼への確認質問ステップを実装した。
 - 2026-06-07: フロントエンドを React + TypeScript + Vite、バックエンドを Python + FastAPI に移行する方針を決定。Milestone 8 を追加し `ISS-052`〜`ISS-056` を候補 issue とした。ISS-049〜051 は On Hold とし Milestone 8 で再設計する。
 - 2026-06-07: `ISS-052` Closed。frontend/（Vite + React + TS）と backend/（FastAPI）のスケルトンを作成し Docker Compose で両サービスが起動することを確認した。
+- 2026-06-07: `ISS-062` Closed。`docs/spec.md` を新規作成し、要求仕様・機能仕様（エンドポイント一覧・View 構成・データ・Chat Engine・エラー処理）・テスト仕様（自動テスト一覧・手動確認チェックリスト）を文書化した。
