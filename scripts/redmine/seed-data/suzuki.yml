@@ -1,0 +1,1198 @@
+# 鈴木（フロントエンド担当）の issue 一覧
+# 90 件 / tracker: feature・task・bug / journals 付き約 35 件
+
+# ===== 打刻 UI =====
+
+- subject: "打刻画面のオフライン対応を実装する"
+  tracker: feature
+  status: in_progress
+  priority: urgent
+  updated_days_ago: 1
+  version: sprint3
+  description: |
+    ServiceWorker を使って打刻データをローカルに一時保存し、ネットワーク復帰後に自動同期する。
+    オフライン中の修正打刻は同期タイミングで競合が起きる可能性があるため、楽観的ロックを検討中。
+  journals:
+    - user: suzuki
+      note: "ServiceWorker の Cache Storage API で打刻データをローカル保存する方針にします。オフライン中の修正打刻は同期時に競合が起きる可能性があるため、楽観的ロックを検討中です。佐藤さん、同期 API のインターフェースについて相談させてください。"
+      days_ago: 4
+    - user: sato
+      note: "同期エンドポイントは `POST /api/v1/timecards/sync` で対応します。リクエストは `{ records: [...], client_synced_at: ISO8601 }` で、レスポンスは `{ accepted: [...], conflicts: [...] }` です。`conflicts` の UI 表示はどうしますか？"
+      days_ago: 3
+    - user: suzuki
+      note: "競合は「ローカルの打刻時刻」と「サーバー確定値」を並べてユーザーが選べるダイアログにします。モックアップを Figma に共有しました（kintai-next / Sync Conflict Dialog）。来週中に実装します。"
+      days_ago: 2
+
+- subject: "打刻時刻のタイムゾーン表示を統一する"
+  tracker: task
+  status: resolved
+  priority: high
+  updated_days_ago: 3
+  version: sprint2
+  description: |
+    打刻一覧・詳細・CSV エクスポートで日本標準時（JST）の表示が統一されていない。
+    フロントエンド側で `date-fns-tz` を用いて一元管理する。
+  journals:
+    - user: yamada
+      note: "QA 確認でステージング上の打刻一覧が UTC 表示になっているケースを発見しました。CSV エクスポートは JST になっているので、表示の不整合が起きています。"
+      days_ago: 7
+    - user: suzuki
+      note: "原因は `<DateDisplay>` コンポーネントが `toLocaleDateString()` をタイムゾーン指定なしで使っていたためです。`date-fns-tz` の `formatInTimeZone` に統一して修正しました（PR #187）。CSV は既存のサーバー側変換を維持します。"
+      days_ago: 5
+    - user: tanaka
+      note: "PR 確認しました。`TZ=Asia/Tokyo` の環境変数依存をなくして明示的に `Asia/Tokyo` を渡しているのは正しい実装です。マージOKです。"
+      days_ago: 4
+
+- subject: "IC カード打刻と Web 打刻の統合 UI を設計する"
+  tracker: feature
+  status: feedback
+  priority: high
+  updated_days_ago: 6
+  version: sprint3
+  description: |
+    IC カード打刻端末からの自動打刻と、Web ブラウザからの手動打刻を同一タイムラインで表示する。
+    端末ソースの表示ラベル（ICカード / Web / モバイル）をバッジで分かるようにする。
+  journals:
+    - user: suzuki
+      note: "打刻ソースを示すバッジ（`<SourceBadge source=\"ic\" />`）を設計しました。色コードは IC カード = 紫、Web = 青、モバイル = 緑で統一する予定です。Figma にモックアップを置きました。"
+      days_ago: 9
+    - user: nakamura
+      note: "ユーザーテストで「IC カード打刻と Web 修正の両方が同じ日に入った場合、どちらが正式か分からない」という声がありました。優先順位ルール（IC カード優先？ 後勝ち？）を仕様に明記してください。"
+      days_ago: 7
+    - user: suzuki
+      note: "中村さん、確認ありがとうございます。佐藤さんに確認したところ、バックエンドでは「後勝ち（最新の更新が正）」をデフォルトにする予定とのこと。UI 側は優先ルールを設定で変更できるように設計します。仕様を更新してPMの確認をお願いします。"
+      days_ago: 6
+
+- subject: "深夜勤務またぎの日付表示バグを修正する"
+  tracker: bug
+  status: closed
+  priority: high
+  updated_days_ago: 8
+  version: sprint2
+  description: |
+    23:30 出勤 → 翌 8:00 退勤のシナリオで、退勤が当日の行に表示される。
+    フロントエンドの日付分割ロジックがタイムゾーンを考慮していないことが原因。
+  journals:
+    - user: yamada
+      note: "再現手順: ① 打刻画面で 23:30 を入力 ② 翌日 8:00 に退勤打刻 ③ 勤務履歴を確認 → 8:00 の退勤が前日 23:xx と同じ行に表示される。iOS / Chrome 両方で再現します。"
+      days_ago: 14
+    - user: suzuki
+      note: "`Date.toLocaleDateString()` がタイムゾーン指定なしになっていました。`date-fns-tz` の `toZonedTime` に差し替えて、midnight crossing の単体テストも追加しました（PR #234）。山田さん、ステージングで確認してください。"
+      days_ago: 12
+    - user: yamada
+      note: "ステージングで再現しなくなりました。深夜 0 時ちょうどの打刻と、夜勤またぎ 3 パターンで確認 OK です。"
+      days_ago: 10
+    - user: suzuki
+      note: "PR マージ・クローズします。同様の問題が他コンポーネントにないかを TypeScript lint ルールで検出できるよう ESLint カスタムルールの追加も検討します。"
+      days_ago: 8
+
+- subject: "打刻ボタンの押下状態フィードバックを改善する"
+  tracker: task
+  status: closed
+  priority: normal
+  updated_days_ago: 12
+  version: sprint1
+  description: |
+    出勤・退勤ボタンの押下後に成功/失敗のフィードバックが遅い。
+    ローディングスピナーとトースト通知を組み合わせた UX に改善する。
+  journals:
+    - user: yamada
+      note: "ユーザーテストで「ボタンを押したか分からなくて二度押しする」という報告が複数ありました。300ms 以内に視覚的フィードバックが必要だと思います。"
+      days_ago: 16
+    - user: suzuki
+      note: "楽観的 UI 更新（押下直後にボタンを無効化 + ローディング表示）を実装しました。API エラー時はトーストで通知し、ボタンを再度有効化します。PR #142 でレビューお願いします。"
+      days_ago: 13
+
+- subject: "打刻一覧の仮想スクロールを導入する"
+  tracker: feature
+  status: new
+  priority: normal
+  updated_days_ago: 5
+  version: sprint4
+  description: |
+    年間打刻データ（約 500 行）を一覧表示すると DOM が重くなりスクロールがカクつく。
+    `@tanstack/react-virtual` を使って表示エリアの行のみレンダリングする。
+
+- subject: "GPS 位置情報の取得失敗時のエラー UX を改善する"
+  tracker: task
+  status: in_progress
+  priority: normal
+  updated_days_ago: 2
+  version: sprint3
+  description: |
+    GPS 取得を拒否した、またはタイムアウトした場合に空白のままになっている。
+    エラー種別（拒否/タイムアウト/未対応）ごとに案内メッセージと代替入力を表示する。
+  journals:
+    - user: yamada
+      note: "iOS Safari で位置情報を一度拒否すると設定リセットまで永久に使えません。Safari 固有の制約を UI で説明するメッセージを追加してほしいです。"
+      days_ago: 4
+    - user: suzuki
+      note: "GeolocationPositionError のコードで PERMISSION_DENIED / TIMEOUT / POSITION_UNAVAILABLE を分岐して案内文を出すようにします。iOS Safari 向けには「Safari > 設定 > 位置情報」への誘導リンクも追加します。"
+      days_ago: 2
+
+- subject: "打刻確認モーダルのアクセシビリティを改善する"
+  tracker: task
+  status: in_progress
+  priority: normal
+  updated_days_ago: 3
+  version: sprint3
+  description: |
+    打刻確認モーダルがキーボード操作・スクリーンリーダーに未対応。
+    `role="dialog"` / `aria-modal` / フォーカストラップ / Escape キー閉鎖を実装する。
+  journals:
+    - user: yamada
+      note: "axe DevTools でモーダルに `aria-labelledby` が設定されていないと報告が出ています。また Tab キーがモーダル外に抜けてしまいます。WCAG 2.1 AA を満たせていない状態です。"
+      days_ago: 5
+    - user: suzuki
+      note: "Radix UI の `Dialog` コンポーネントに移行することでフォーカストラップと aria 属性を一括対応します。現在の custom modal より実装コストが低く、今後の一貫性も確保できます。"
+      days_ago: 3
+
+- subject: "Beacon API を使った打刻データのバックグラウンド送信を試験する"
+  tracker: task
+  status: new
+  priority: low
+  updated_days_ago: 20
+  version: sprint4
+  description: |
+    ページ離脱時（beforeunload）に打刻送信が中断されるケースがある。
+    `navigator.sendBeacon` での POST を試験し、既存の fetch と比較する。
+
+- subject: "残業開始の自動検知 UI を追加する"
+  tracker: feature
+  status: new
+  priority: high
+  updated_days_ago: 7
+  version: sprint4
+  description: |
+    所定終業時刻を 30 分超えた場合に「残業中ですか？」のバナーを表示する。
+    確認後に残業申請ドラフトを自動作成する。
+
+- subject: "休憩打刻フローを 1 タップで完了できるように改善する"
+  tracker: feature
+  status: in_progress
+  priority: normal
+  updated_days_ago: 2
+  version: sprint3
+  description: |
+    現在の休憩打刻は「休憩開始」→ 確認モーダル → 送信 の 3 ステップ。
+    長押しアクションで確認不要の直接送信モードを追加する。
+  journals:
+    - user: suzuki
+      note: "長押し 800ms でダイレクト打刻する実装方針を試作しました。通常タップは確認モーダル、長押しは確認スキップというモードにします。田中さん、この方針でよいでしょうか？"
+      days_ago: 5
+    - user: tanaka
+      note: "長押しは慣れていないユーザーに不親切になる可能性があります。設定で「確認をスキップする」を個人設定として持たせる方向で検討してください。長押しは後から追加の方が良いと思います。"
+      days_ago: 3
+
+- subject: "打刻データの楽観的 UI 更新を実装する"
+  tracker: feature
+  status: new
+  priority: normal
+  updated_days_ago: 10
+  version: sprint4
+  description: |
+    打刻後に API レスポンスを待ってから一覧を更新しているため、遅延が体感できる。
+    React Query の `optimisticUpdate` を使って即座に一覧を更新し、エラー時はロールバックする。
+
+- subject: "打刻画面のスケルトンローディングを実装する"
+  tracker: task
+  status: closed
+  priority: normal
+  updated_days_ago: 20
+  version: sprint1
+  description: |
+    打刻一覧の初回ロード時に空白画面が表示される問題を改善する。
+    CSS アニメーション付きのスケルトン UI に差し替える。
+
+- subject: "打刻履歴の CSV エクスポートボタンを追加する"
+  tracker: feature
+  status: new
+  priority: low
+  updated_days_ago: 14
+  version: sprint4
+  description: |
+    打刻一覧ページに CSV エクスポートボタンを追加する。
+    期間フィルタと連動して対象行を出力する。バックエンドの `/timecards/export` を利用する。
+
+- subject: "打刻画面の React 18 Concurrent Mode 対応を確認する"
+  tracker: task
+  status: closed
+  priority: low
+  updated_days_ago: 45
+  version: sprint1
+  description: |
+    React 18 の Concurrent Mode 移行に伴い、`useEffect` の二重実行が起きていないか確認する。
+    StrictMode で問題がないことを検証し、`useRef` での冪等化対応を行う。
+
+- subject: "打刻修正申請フォームの入力バリデーションを強化する"
+  tracker: task
+  status: new
+  priority: normal
+  updated_days_ago: 9
+  version: sprint3
+  description: |
+    修正申請フォームで未来日時・矛盾した時刻範囲（退勤 < 出勤）を送信できてしまう。
+    クライアント側でのバリデーションを追加し、エラーメッセージをインライン表示する。
+
+# ===== 申請・承認 UI =====
+
+- subject: "有給申請フォームのカレンダー選択を改善する"
+  tracker: feature
+  status: in_progress
+  priority: high
+  updated_days_ago: 1
+  version: sprint3
+  description: |
+    現状の日付入力フィールドは `<input type="date">` のネイティブ UI で操作性が悪い。
+    React DayPicker を使ったカスタムカレンダーに置き換え、有給残日数もサイドパネルで表示する。
+  journals:
+    - user: yamada
+      note: "iOS Safari で日付ピッカーが表示されないケースを確認しました。`<input type='date'>` が Safari の古いバージョンで未サポートになっています。カスタムコンポーネントへの移行を優先したほうが良いと思います。"
+      days_ago: 4
+    - user: suzuki
+      note: "React DayPicker v8 で実装します。有給申請済みの日付をグレーアウト、残日数が 0 の場合は申請ボタンを無効化する予定です。モックアップを Figma に置きました。"
+      days_ago: 2
+    - user: yamada
+      note: "Figma モックアップ確認しました。月選択ボタンのタップ領域が小さいです。44px 以上にしてください（WCAG 2.5.5）。"
+      days_ago: 1
+
+- subject: "残業申請の上限チェックを UI 側でもバリデーションする"
+  tracker: task
+  status: new
+  priority: normal
+  updated_days_ago: 5
+  version: sprint3
+  description: |
+    残業申請フォームでの上限チェックをバックエンド任せにしているため、送信後にエラーが返ってくる。
+    36 協定の月 45 時間上限に近づいたらリアルタイムで警告を表示する。
+
+- subject: "代理承認ユーザーの選択 UI を実装する"
+  tracker: feature
+  status: feedback
+  priority: high
+  updated_days_ago: 7
+  version: sprint3
+  description: |
+    承認者が不在のときに代理承認者を設定する UI が未実装。
+    承認者設定画面に「代理承認者を追加」ボタンとユーザー検索コンポーネントを追加する。
+  journals:
+    - user: suzuki
+      note: "ユーザー検索は `Combobox` コンポーネントで部分一致検索できるよう実装しました。代理承認者は最大 2 名まで設定可能にします。中村さん、仕様確認してください。"
+      days_ago: 10
+    - user: nakamura
+      note: "代理承認者の設定期間を指定できるようにしてほしいです（例: 8/1〜8/15 の間だけ代理）。期間外は自動的に解除されると安心です。"
+      days_ago: 9
+    - user: suzuki
+      note: "期間指定のフィールドを追加しました（開始日・終了日の DatePicker）。期間未指定の場合は無期限として扱います。佐藤さん、API の `proxy_approver_start` / `proxy_approver_end` フィールドを追加していただけますか？"
+      days_ago: 7
+
+- subject: "申請一覧の承認待ち件数バッジを追加する"
+  tracker: task
+  status: closed
+  priority: normal
+  updated_days_ago: 15
+  version: sprint2
+  description: |
+    申請一覧のタブに「承認待ち」の件数バッジを表示して、未処理の申請をひと目で把握できるようにする。
+  journals:
+    - user: suzuki
+      note: "バッジ件数は `/api/v1/requests?status=pending&assigned_to=me&count=true` から取得します。SWR で 30 秒ごとにポーリングします。"
+      days_ago: 17
+
+- subject: "申請ステータス変更時のプッシュ通知を実装する"
+  tracker: feature
+  status: new
+  priority: high
+  updated_days_ago: 3
+  version: sprint4
+  description: |
+    申請が承認・却下されたときに申請者へプッシュ通知を送る。
+    Web Push API を使い、バックエンドからの Webhook で通知をトリガーする。
+
+- subject: "申請一覧の承認待ちを無限スクロールに変更する"
+  tracker: task
+  status: in_progress
+  priority: normal
+  updated_days_ago: 4
+  version: sprint3
+  description: |
+    現在のページネーションを廃止して Intersection Observer API による無限スクロールに変更する。
+    React Query の `useInfiniteQuery` を使う。
+
+- subject: "申請フォームの入力途中で離脱したときの警告を追加する"
+  tracker: bug
+  status: resolved
+  priority: normal
+  updated_days_ago: 6
+  version: sprint2
+  description: |
+    有給申請フォームを入力途中でブラウザバックすると内容が消えてしまう。
+    `beforeunload` イベントと React Router の `useBlocker` で離脱警告を実装する。
+  journals:
+    - user: tanaka
+      note: "PR #198 を確認しました。`useBlocker` の使い方は正しいですが、ブラウザの標準ダイアログではなく、カスタムダイアログを使う場合は `stable_v2` の API を使ってください。あと、フォームが一度も編集されていない場合は警告不要なので `isDirty` フラグとの連動が必要です。"
+      days_ago: 8
+    - user: suzuki
+      note: "ご指摘の通り `isDirty` との連動を追加しました。また未保存データをローカルストレージに一時保存して「前回の入力を復元しますか？」を表示する機能も追加しました。PR 更新しました。"
+      days_ago: 6
+
+- subject: "一括承認機能の UI を実装する"
+  tracker: feature
+  status: in_progress
+  priority: high
+  updated_days_ago: 2
+  version: sprint3
+  description: |
+    管理者が申請一覧からチェックボックスで複数申請を選択して一括承認できる UI を実装する。
+    最大 50 件まで一括処理可能。処理中はプログレスバーで進捗を表示する。
+  journals:
+    - user: suzuki
+      note: "一括承認のフローを設計しました。① 全選択 / 個別チェック → ② 「一括承認」ボタン → ③ 確認ダイアログ（件数表示）→ ④ API 呼び出し → ⑤ 結果サマリー表示。佐藤さん、一括承認の API はどんな形式になりますか？"
+      days_ago: 5
+    - user: sato
+      note: "`POST /api/v1/requests/bulk-approve` で `{ ids: [1,2,3,...] }` を受け付けます。レスポンスは `{ succeeded: [...], failed: [{ id, reason }] }` にします。失敗分は理由付きで返すので UI でエラー一覧を出してください。"
+      days_ago: 3
+    - user: suzuki
+      note: "API 仕様ありがとうございます。失敗した申請は赤いバッジで理由をツールチップ表示する形にします。実装中です。"
+      days_ago: 2
+
+- subject: "申請詳細画面のコメント欄を追加する"
+  tracker: feature
+  status: new
+  priority: normal
+  updated_days_ago: 8
+  version: sprint4
+  description: |
+    申請詳細に承認者・申請者間でコメントをやり取りできるスレッドを追加する。
+    却下理由や修正依頼をインライン記録できるようにする。
+
+- subject: "申請の添付ファイルアップロード UI を実装する"
+  tracker: feature
+  status: feedback
+  priority: normal
+  updated_days_ago: 9
+  version: sprint3
+  description: |
+    有給申請・特別休暇申請に診断書などのファイルを添付できるようにする。
+    ドラッグ＆ドロップと通常クリック選択の両方に対応する。
+  journals:
+    - user: suzuki
+      note: "React Dropzone でアップロード UI を実装します。許可するファイルタイプを `image/*`, `application/pdf` に制限し、最大 5MB までにします。佐藤さん、プリサインド URL での S3 アップロードに対応していただけますか？"
+      days_ago: 12
+    - user: sato
+      note: "`POST /api/v1/attachments/presigned-url` でプリサインド URL を発行します。有効期限 15 分・最大 5MB は設定済みです。アップロード完了後に `attachment_id` を申請 body に含めてください。"
+      days_ago: 10
+
+- subject: "承認者変更時のリアルタイム反映を WebSocket で対応する"
+  tracker: feature
+  status: new
+  priority: high
+  updated_days_ago: 5
+  version: sprint4
+  description: |
+    承認者が申請を処理した瞬間に申請者画面がリアルタイム更新されるようにする。
+    WebSocket（または SSE）でステータス変更を配信する。
+  journals:
+    - user: suzuki
+      note: "WebSocket と Server-Sent Events（SSE）で迷っています。申請ステータス変更は一方向通知なので SSE の方がシンプルです。佐藤さん、どちらが対応しやすいですか？"
+      days_ago: 7
+    - user: sato
+      note: "SSE で対応します。`GET /api/v1/events/requests?since=cursor` で EventSource を接続する方式にします。再接続時のカーソル管理が必要なので、フロント側で `Last-Event-ID` を送ってください。"
+      days_ago: 6
+    - user: suzuki
+      note: "了解しました。EventSource の `onmessage` で受信して React Query のキャッシュを直接更新する実装にします。切断・再接続のリトライも処理します。"
+      days_ago: 5
+
+- subject: "申請状態のステータスバーを改善する"
+  tracker: bug
+  status: closed
+  priority: low
+  updated_days_ago: 30
+  version: sprint2
+  description: |
+    申請詳細のステータスバーで「却下済み」が灰色で表示され、目立たない。
+    赤色に変更し、却下理由を強調表示する。
+
+- subject: "申請フォームの入力候補（サジェスト）を追加する"
+  tracker: feature
+  status: new
+  priority: low
+  updated_days_ago: 25
+  version: sprint4
+  description: |
+    有給申請の申請理由欄に過去に使った理由を候補として表示する。
+    ローカルストレージに最近の入力を最大 5 件保存する。
+
+- subject: "申請一覧のソートと絞り込みを実装する"
+  tracker: feature
+  status: closed
+  priority: normal
+  updated_days_ago: 18
+  version: sprint2
+  description: |
+    申請一覧に日付・ステータス・申請種別でのフィルタとソートを追加する。
+    URL パラメータにフィルタ条件を持たせてブックマーク可能にする。
+
+- subject: "月次サマリーを申請完了画面に表示する"
+  tracker: feature
+  status: new
+  priority: normal
+  updated_days_ago: 12
+  version: sprint4
+  description: |
+    申請完了後の画面に「今月の有給使用: 2日 / 残り: 18日」のようなサマリーを表示する。
+    申請者が残日数を意識できるようにする。
+
+- subject: "承認フローの可視化（フロー図）を実装する"
+  tracker: feature
+  status: in_progress
+  priority: normal
+  updated_days_ago: 3
+  version: sprint3
+  description: |
+    申請詳細に「誰が承認して誰が未処理か」を示すフロー図を追加する。
+    `reactflow` ライブラリで横並びのステップ図を表示する。
+  journals:
+    - user: suzuki
+      note: "reactflow でフロー図を試作しました。承認者ノード・未処理ノード・却下ノードを色分けして表示します。ただし reactflow のバンドルサイズが 200KB 超になるため、遅延ローディングを検討中です。"
+      days_ago: 6
+    - user: tanaka
+      note: "reactflow は重いので、シンプルな用途なら SVG + CSS で自前実装した方がバンドルを抑えられます。ノード数が最大 10 程度なら自前で十分だと思います。"
+      days_ago: 5
+    - user: nakamura
+      note: "PM として確認しました。フロー図はフェーズ 1 では「誰が承認待ちか」だけ分かれば十分です。複雑なフローの可視化は Sprint 4 以降で検討しましょう。"
+      days_ago: 3
+
+# ===== カレンダー表示 =====
+
+- subject: "月次勤怠カレンダーの初期描画パフォーマンスを改善する"
+  tracker: task
+  status: in_progress
+  priority: high
+  updated_days_ago: 1
+  version: sprint3
+  description: |
+    月次カレンダーの初期レンダリングに 340ms かかっている（React DevTools Profiler 計測）。
+    祝日判定の繰り返し計算をメモ化し、DayCell に React.memo を適用する。
+  journals:
+    - user: suzuki
+      note: "React DevTools Profiler で確認したところ、初期レンダリングに 340ms かかっています。原因は各日付セルで毎回 `isHoliday()` を呼び出しているためです。祝日データを Set に変換してメモ化することで対応します。"
+      days_ago: 3
+    - user: tanaka
+      note: "`useMemo` の依存配列に `year` を含めてください。年をまたいだときに祝日データが stale になるケースがありそうです。あと `DayCell` への `React.memo` 適用で不要な再レンダリングも抑えられます。"
+      days_ago: 2
+    - user: suzuki
+      note: "ご指摘の通り `year` を依存配列に追加しました。`DayCell` に `React.memo` も適用済みです。改善後は初期レンダリング 85ms まで削減（75% 削減）。週次ビューも同様に対応します。"
+      days_ago: 1
+
+- subject: "カレンダーの週表示モードを追加する"
+  tracker: feature
+  status: new
+  priority: normal
+  updated_days_ago: 7
+  version: sprint4
+  description: |
+    月次ビューに加えて週次ビューを追加する。
+    `?view=week` の URL パラメータで切り替え可能にし、ブックマーク対応する。
+
+- subject: "祝日・休日の色分けを勤務体制ごとに対応する"
+  tracker: task
+  status: feedback
+  priority: normal
+  updated_days_ago: 9
+  version: sprint3
+  description: |
+    現状は全員同じ祝日カラーを使っているが、シフト勤務者の所定休日は別色にする必要がある。
+    勤務体制 API から取得した所定休日データをカレンダーに重ねて表示する。
+  journals:
+    - user: suzuki
+      note: "勤務体制ごとの所定休日データを `/api/v1/work-schedules/{id}/holidays` から取得してカレンダーに重ねる実装をしました。国民の祝日と所定休日で色を分けています（青: 祝日、緑: 所定休日）。中村さん確認してください。"
+      days_ago: 12
+    - user: nakamura
+      note: "確認しました。土曜日の扱いがユーザーによって「所定休日」と「有給で休んでいる通常日」で見た目が同じになっています。有給取得日は別のハッチングパターンにしてほしいです。"
+      days_ago: 10
+    - user: suzuki
+      note: "CSS でハッチングパターン（斜線）を追加して有給取得日を区別するように修正しました。有給取得日が所定休日と重なった場合はどちらの色を優先するかの仕様を確認させてください。"
+      days_ago: 9
+
+- subject: "ドラッグ＆ドロップでシフトを編集する機能を追加する"
+  tracker: feature
+  status: new
+  priority: low
+  updated_days_ago: 30
+  version: sprint4
+  description: |
+    週次カレンダー上でシフトコマをドラッグして日程変更できるようにする。
+    `@dnd-kit/core` を使用する。
+
+- subject: "カレンダーの印刷 CSS を整備する"
+  tracker: task
+  status: closed
+  priority: low
+  updated_days_ago: 40
+  version: sprint2
+  description: |
+    `@media print` で月次カレンダーを A4 1 枚に収まるように CSS を整備する。
+    ナビゲーションやサイドバーは印刷除外にする。
+
+- subject: "残業時間のヒートマップ表示を追加する"
+  tracker: feature
+  status: feedback
+  priority: normal
+  updated_days_ago: 11
+  version: sprint3
+  description: |
+    月次カレンダーの各日付セルに残業時間をヒートマップで可視化する（0h=白 ～ 4h以上=赤）。
+    一目で残業が集中している曜日や時期を把握できるようにする。
+  journals:
+    - user: suzuki
+      note: "GitHub のコントリビューショングラフのような 5 段階のカラーグラデーションで実装しました。ツールチップで実際の時間数も表示します。カラーパレットは WCAG のコントラスト比を確認して決定しています。"
+      days_ago: 13
+    - user: nakamura
+      note: "デザインは良いです。色覚多様性への配慮として、赤一色ではなく赤・橙のグラデーションではなくモノクロ + ハッチングの選択肢も用意してほしいです。"
+      days_ago: 11
+
+- subject: "カレンダーとシフト表の同期表示を実装する"
+  tracker: feature
+  status: new
+  priority: normal
+  updated_days_ago: 6
+  version: sprint4
+  description: |
+    月次カレンダーにシフト予定（公休・夜勤など）を重ねて表示できるビューを追加する。
+
+- subject: "カレンダーの月切り替えアニメーションを改善する"
+  tracker: task
+  status: closed
+  priority: low
+  updated_days_ago: 35
+  version: sprint2
+  description: |
+    月切り替え時のフェードアニメーションがフレームドロップを起こしている。
+    `transform` と `will-change: transform` を使うコンポーザブルアニメーションに変更する。
+  journals:
+    - user: suzuki
+      note: "`opacity` アニメーションが paint を引き起こしていました。`transform: translateX` に変更して GPU 合成レイヤーに乗せることで解決しました。Chrome DevTools の Performance タブで確認済みです。"
+      days_ago: 36
+
+- subject: "カレンダーのキーボードナビゲーションを改善する"
+  tracker: task
+  status: in_progress
+  priority: normal
+  updated_days_ago: 4
+  version: sprint3
+  description: |
+    矢印キーで日付を移動し、Enter で打刻詳細を開けるようにする。
+    `role="grid"` / `aria-selected` を実装してスクリーンリーダー対応も行う。
+
+- subject: "年間ビューのカレンダーを追加する"
+  tracker: feature
+  status: new
+  priority: low
+  updated_days_ago: 22
+  version: sprint4
+  description: |
+    1 年分の勤怠状況（有給消化、残業超過日など）を 12 ヶ月マップで俯瞰するビューを追加する。
+
+# ===== レポート UI =====
+
+- subject: "月次勤怠レポートの PDF 生成ボタンを追加する"
+  tracker: feature
+  status: in_progress
+  priority: normal
+  updated_days_ago: 2
+  version: sprint3
+  description: |
+    月次レポートページに「PDF で出力」ボタンを追加する。
+    バックエンドで非同期生成し、完了後にダウンロードリンクを返す。
+  journals:
+    - user: suzuki
+      note: "PDF 生成は時間がかかるため、ポーリング方式を検討しています。① ボタン押下 → ② `POST /api/v1/reports/pdf` でジョブ作成 → ③ `GET /api/v1/reports/jobs/{id}` を 2 秒ごとにポーリング → ④ 完了したらダウンロード。佐藤さんこの方針で大丈夫ですか？"
+      days_ago: 4
+    - user: sato
+      note: "ポーリングで問題ありません。`status: pending | processing | done | failed` を返します。`done` のときに `download_url` も返すので、そのまま `<a href>` にしてください。生成には通常 3〜10 秒かかります。"
+      days_ago: 3
+    - user: suzuki
+      note: "了解しました。ポーリング中はプログレスインジケーターを表示して、30 秒でタイムアウトした場合はエラーメッセージを出します。実装開始します。"
+      days_ago: 2
+
+- subject: "残業時間の週次推移グラフを追加する"
+  tracker: feature
+  status: new
+  priority: normal
+  updated_days_ago: 8
+  version: sprint4
+  description: |
+    過去 12 週間の残業時間をバーグラフで表示する。
+    36 協定の警告ライン（月 45h）を破線で表示する。
+
+- subject: "部署別勤怠集計テーブルを実装する"
+  tracker: feature
+  status: feedback
+  priority: high
+  updated_days_ago: 10
+  version: sprint3
+  description: |
+    PM ・管理者向けに部署ごとの残業合計・有給消化率・遅刻回数を集計して表示する。
+    100 部署・500 人規模のデータでも 3 秒以内に表示できることを目標とする。
+  journals:
+    - user: nakamura
+      note: "エンタープライズの顧客から「500 人規模の部署別レポートが遅い」との声がありました。大量データ時のパフォーマンスを優先課題にしてください。"
+      days_ago: 14
+    - user: suzuki
+      note: "フロントエンドは仮想スクロール + 遅延ロードで対応します。テーブルの初期描画は上位 50 件のみで、スクロールに応じて追加ロードします。バックエンドのページネーション API が必要です。佐藤さん確認してください。"
+      days_ago: 11
+
+- subject: "レポートのフィルタ条件を URL パラメータで保持する"
+  tracker: task
+  status: in_progress
+  priority: normal
+  updated_days_ago: 3
+  version: sprint3
+  description: |
+    レポートの部署・期間・集計種別フィルタを URL クエリパラメータで保持し、ブックマークや共有ができるようにする。
+
+- subject: "グラフライブラリを Recharts から Visx に移行する"
+  tracker: task
+  status: new
+  priority: low
+  updated_days_ago: 20
+  version: sprint4
+  description: |
+    Recharts のバンドルサイズが大きく、カスタマイズに限界がある。
+    D3 ベースの Visx に移行して軽量化とデザイン自由度を確保する。
+
+- subject: "データエクスポートの進捗表示を追加する"
+  tracker: task
+  status: closed
+  priority: normal
+  updated_days_ago: 25
+  version: sprint2
+  description: |
+    大量データのエクスポート中に画面がフリーズしているように見える問題を解消する。
+    ストリーミングダウンロードとプログレスバーを組み合わせる。
+
+- subject: "レポート画面のローディング状態を改善する"
+  tracker: bug
+  status: resolved
+  priority: normal
+  updated_days_ago: 14
+  version: sprint2
+  description: |
+    レポート切り替え時に前のデータが一瞬表示されてからチラつく。
+    React Query の `keepPreviousData` オプションで解消する。
+
+- subject: "有給残日数の可視化ウィジェットを追加する"
+  tracker: feature
+  status: in_progress
+  priority: normal
+  updated_days_ago: 2
+  version: sprint3
+  description: |
+    ダッシュボードに有給残日数・申請中日数・消化済み日数を円グラフで表示するウィジェットを追加する。
+  journals:
+    - user: suzuki
+      note: "Recharts の PieChart で実装中です。中央に残日数を大きく表示して直感的に把握できるようにします。年度末に向けた消化推奨アラート（残日数 > 10日 かつ 残り 60日以下）も一緒に出します。"
+      days_ago: 3
+
+- subject: "CSV エクスポートの文字コードオプションを追加する"
+  tracker: task
+  status: new
+  priority: normal
+  updated_days_ago: 7
+  version: sprint3
+  description: |
+    CSV エクスポートが UTF-8 のみ対応で、Excel（Windows）で開くと文字化けする。
+    Shift_JIS（BOM 付き UTF-8）のオプションをエクスポートダイアログに追加する。
+
+- subject: "レポートの共有リンク機能を実装する"
+  tracker: feature
+  status: new
+  priority: low
+  updated_days_ago: 15
+  version: sprint4
+  description: |
+    特定の絞り込み条件を URL として共有できる機能を追加する。
+    一時的なトークン付きリンクを生成してメール送信できるようにする。
+
+- subject: "レポートの印刷プレビューを改善する"
+  tracker: bug
+  status: closed
+  priority: low
+  updated_days_ago: 42
+  version: sprint1
+  description: |
+    印刷プレビューでグラフが切れる問題を修正する。
+    `@media print` で SVG グラフのサイズを A4 に合わせる。
+
+# ===== 管理コンソール UI =====
+
+- subject: "テナント設定画面のフォームを再設計する"
+  tracker: task
+  status: in_progress
+  priority: normal
+  updated_days_ago: 4
+  version: sprint3
+  description: |
+    現在のテナント設定はシングルページに全項目が並んでいて見通しが悪い。
+    「基本設定」「勤務体制」「通知設定」「連携設定」のタブに分けて整理する。
+
+- subject: "ユーザー一括登録の CSV インポート画面を実装する"
+  tracker: feature
+  status: feedback
+  priority: high
+  updated_days_ago: 8
+  version: sprint3
+  description: |
+    管理者が CSV ファイルでユーザーを一括登録できる画面を実装する。
+    プレビューで 件数・エラー行を確認してからインポートを確定する。
+  journals:
+    - user: suzuki
+      note: "CSV インポートは ① ファイル選択 → ② バックグラウンドでバリデーション（最大 1000 行）→ ③ エラー一覧のプレビュー → ④ 確認後にインポート実行 という 4 ステップにします。バリデーション結果は `/api/v1/users/import/validate` から取得します。佐藤さん API 確認してください。"
+      days_ago: 11
+    - user: sato
+      note: "バリデーションエンドポイント実装しました。エラーは `{ row: 3, column: 'email', message: '形式が正しくありません' }` の形式で返します。1000 行でバリデーションに最大 5 秒かかるので非同期にしました。ジョブ ID を返すのでポーリングで結果を取得してください。"
+      days_ago: 9
+    - user: suzuki
+      note: "ポーリング対応しました。進捗バーで `validated: 850 / 1000` のようにリアルタイム表示できるようにします。エラー行は赤でハイライトして修正指示も表示します。"
+      days_ago: 8
+
+- subject: "ロール・権限設定 UI を直感的にする"
+  tracker: feature
+  status: in_progress
+  priority: normal
+  updated_days_ago: 5
+  version: sprint3
+  description: |
+    現在の権限設定はチェックボックスが 50 個並んでいて把握が難しい。
+    「承認できる」「レポートを見られる」などのグループ単位でトグル表示する。
+
+- subject: "操作ログ一覧画面を実装する"
+  tracker: feature
+  status: new
+  priority: normal
+  updated_days_ago: 6
+  version: sprint4
+  description: |
+    管理者が「誰がいつ何の操作をしたか」を確認できる操作ログ一覧を実装する。
+    日時・ユーザー・操作種別でフィルタリングできる。
+
+- subject: "テナント別使用量ダッシュボードを追加する"
+  tracker: feature
+  status: new
+  priority: normal
+  updated_days_ago: 14
+  version: sprint4
+  description: |
+    サービス提供者向けに、テナントごとのアクティブユーザー数・打刻件数・ストレージ使用量を表示するダッシュボードを追加する。
+
+- subject: "メンテナンスモードの切り替え UI を追加する"
+  tracker: task
+  status: closed
+  priority: normal
+  updated_days_ago: 28
+  version: sprint2
+  description: |
+    管理者がメンテナンスモードのオン・オフを管理画面から切り替えられるようにする。
+    メンテナンス中はすべてのユーザーに告知バナーを表示する。
+
+- subject: "管理者向けの通知設定画面を実装する"
+  tracker: feature
+  status: new
+  priority: normal
+  updated_days_ago: 10
+  version: sprint4
+  description: |
+    管理者が各アラート（残業超過・打刻漏れ・申請期限超過）の通知チャンネル（メール・Slack）を設定できる画面を実装する。
+
+- subject: "初回セットアップウィザードの UI を改善する"
+  tracker: task
+  status: in_progress
+  priority: normal
+  updated_days_ago: 3
+  version: sprint3
+  description: |
+    テナント登録後の初期設定（部署登録・勤務体制設定・ユーザー招待）を 5 ステップのウィザード形式で案内する。
+  journals:
+    - user: suzuki
+      note: "ウィザードは Stepper コンポーネントで実装します。各ステップに「スキップ」オプションを付けて、後から設定できることを案内します。中村さん、各ステップの完了条件を確認してください。"
+      days_ago: 6
+    - user: nakamura
+      note: "Step 1（基本情報）と Step 3（ユーザー招待）は必須、Step 2（部署）と Step 4（勤務体制）はスキップ可で良いです。Step 5 は「設定完了・ダッシュボードへ」の案内ページにしてください。"
+      days_ago: 4
+
+- subject: "マスタデータの一括更新確認ダイアログを追加する"
+  tracker: task
+  status: closed
+  priority: normal
+  updated_days_ago: 20
+  version: sprint2
+  description: |
+    勤務体制・部署の一括変更時に影響するユーザー数と変更内容を確認してから実行できるダイアログを追加する。
+
+- subject: "権限設定のプレビュー機能を実装する"
+  tracker: feature
+  status: new
+  priority: low
+  updated_days_ago: 17
+  version: sprint4
+  description: |
+    権限変更を保存する前に「このロールのユーザーが見えるもの」をプレビューできる機能を実装する。
+
+# ===== モバイル対応 =====
+
+- subject: "iOS Safari での日付ピッカー表示バグを修正する"
+  tracker: bug
+  status: in_progress
+  priority: high
+  updated_days_ago: 1
+  version: sprint3
+  description: |
+    iOS 16.4 以前の Safari で有給申請フォームの日付ピッカーが表示されないバグ。
+    ネイティブ `<input type="date">` から React DayPicker に切り替えることで根本解決する。
+  journals:
+    - user: yamada
+      note: "iOS 15 / Safari 15 の実機で日付ピッカーが表示されません。再現環境: iPhone SE (2nd) / iOS 15.8.1 / Safari。`<input type='date'>` のスタイリングをオーバーライドしていることが原因の可能性があります。"
+      days_ago: 4
+    - user: suzuki
+      note: "調査したところ、`appearance: none` を設定していたことで iOS Safari のネイティブ UI が無効化されていました。`有給申請フォームのカレンダー選択を改善する` と合わせて React DayPicker で統一対応します。暫定対応として `appearance: none` を削除しています。"
+      days_ago: 2
+    - user: yamada
+      note: "暫定対応で iOS 15 でも表示されることを確認しました。React DayPicker への移行を早めに進めてください。"
+      days_ago: 1
+
+- subject: "Android Chrome でのプッシュ通知を実装する"
+  tracker: feature
+  status: in_progress
+  priority: normal
+  updated_days_ago: 5
+  version: sprint3
+  description: |
+    Web Push API と Firebase Cloud Messaging を使って Android Chrome でのプッシュ通知を実装する。
+    通知許可ダイアログは初回ログイン後 3 日目に表示する。
+
+- subject: "モバイルでの打刻ボタンのタップ領域を拡大する"
+  tracker: task
+  status: closed
+  priority: normal
+  updated_days_ago: 22
+  version: sprint2
+  description: |
+    現在の打刻ボタンのタップ領域が 36px で小さい。
+    `min-height: 48px` / `min-width: 48px` に変更して WCAG 2.5.5 に準拠する。
+
+- subject: "モバイル版のヘッダーを改善する"
+  tracker: task
+  status: closed
+  priority: normal
+  updated_days_ago: 32
+  version: sprint2
+  description: |
+    スマートフォンでヘッダーが高さを取りすぎてコンテンツエリアが狭くなっている。
+    スクロール時にヘッダーを縮小するスティッキーヘッダーに変更する。
+
+- subject: "PWA 対応のマニフェストを整備する"
+  tracker: task
+  status: resolved
+  priority: normal
+  updated_days_ago: 12
+  version: sprint2
+  description: |
+    `manifest.json` のアイコンサイズ・テーマカラー・ショートカットを整備して PWA としてホーム画面に追加できるようにする。
+  journals:
+    - user: suzuki
+      note: "manifest.json に 192px・512px のアイコン、`theme_color: #1e40af`、ショートカット（打刻・申請）を追加しました。伊藤さん、HTTPS 配信と Service Worker のスコープ設定で何か制約はありますか？"
+      days_ago: 15
+    - user: ito
+      note: "HTTPS 配信は Cloud Load Balancer でターミネーションしているので問題ありません。Service Worker のスコープは `/` に設定してください。Nginx の `Service-Worker-Allowed` ヘッダーを追加しておきます。"
+      days_ago: 13
+
+- subject: "iPhone の Safe Area 対応を全画面で統一する"
+  tracker: bug
+  status: in_progress
+  priority: normal
+  updated_days_ago: 3
+  version: sprint3
+  description: |
+    iPhone の画面下部（ホームインジケーター部分）にコンテンツが被るページがある。
+    `env(safe-area-inset-bottom)` を全コンポーネントで統一適用する。
+
+- subject: "モバイルでのフォーム入力時のズームを防止する"
+  tracker: task
+  status: closed
+  priority: normal
+  updated_days_ago: 28
+  version: sprint2
+  description: |
+    iOS では `font-size: 16px` 未満の input でページがズームインされてしまう。
+    全 input の `font-size` を `16px` 以上に統一する。
+
+- subject: "タッチイベントとマウスイベントの競合を修正する"
+  tracker: bug
+  status: new
+  priority: normal
+  updated_days_ago: 6
+  version: sprint3
+  description: |
+    タブレットでドラッグ操作をすると `onMouseLeave` が誤発火して UI が崩れる。
+    `pointer-events` API に統一してタッチ・マウスの競合を解消する。
+
+- subject: "モバイル向けの Lighthouse スコアを 90 点以上に改善する"
+  tracker: task
+  status: in_progress
+  priority: high
+  updated_days_ago: 2
+  version: sprint3
+  description: |
+    現状の Lighthouse モバイルスコアは Performance 72 / Accessibility 81 / Best Practices 83。
+    画像最適化・不要な JS の遅延ロード・アクセシビリティ修正で各 90 点以上を目指す。
+  journals:
+    - user: suzuki
+      note: "Lighthouse のレポートを分析しました。主なボトルネック: ① LCP: アイコン SVG が render-blocking（`defer` 対応で解消見込）② TBT: moment.js が 120KB（date-fns に移行済みで解消予定）③ Accessibility: button のコントラスト比不足（3 箇所）。来週中に全対応します。"
+      days_ago: 4
+    - user: tanaka
+      note: "moment.js から date-fns への移行は Sprint 2 から引き継ぎの作業ですね。`import 'moment'` が残っているファイルが 3 箇所あります（`src/utils/date.ts`, `src/reports/index.ts`, `src/export/csv.ts`）。確認してください。"
+      days_ago: 3
+
+- subject: "バーチャルキーボード表示時のレイアウト崩れを修正する"
+  tracker: bug
+  status: new
+  priority: normal
+  updated_days_ago: 5
+  version: sprint3
+  description: |
+    Android Chrome でフォームにフォーカスするとバーチャルキーボードが表示され、フッターが画面外に押し出される。
+    `visualViewport` API でキーボード表示を検知し、フッターの位置を動的に調整する。
+
+- subject: "ホーム画面追加時のアイコンとスプラッシュ画面を整備する"
+  tracker: task
+  status: resolved
+  priority: low
+  updated_days_ago: 16
+  version: sprint2
+  description: |
+    iOS でホーム画面に追加したときのアイコンが低解像度になっている。
+    `apple-touch-icon` 180px を追加し、スプラッシュ画面も整備する。
+
+# ===== 基盤・品質 =====
+
+- subject: "フロントエンドの TypeScript strict モードに移行する"
+  tracker: task
+  status: in_progress
+  priority: normal
+  updated_days_ago: 3
+  version: sprint3
+  description: |
+    `tsconfig.json` の `"strict": true` を有効化し、潜在的な型エラーを排除する。
+    現在 87 件の型エラーが出ており、段階的に修正する。
+  journals:
+    - user: suzuki
+      note: "strict モードを有効化したところ 87 件の型エラーが出ました。主なカテゴリ: `strictNullChecks` 由来が 52 件、`noImplicitAny` が 35 件。週 20 件ずつ修正していきます。PR は分割して小さくします。"
+      days_ago: 6
+    - user: tanaka
+      note: "進め方は良いです。`as unknown as X` でのキャストは絶対に避けてください。`strictNullChecks` の修正は `?.` オペレーターと `??` を積極的に使うと綺麗に書けます。型定義の修正で API レスポンスの型が変わる場合は佐藤さんと確認してください。"
+      days_ago: 5
+    - user: suzuki
+      note: "了解しました。52 件中 30 件は修正完了です。API レスポンスの型で `id: number | undefined` になっているケースが多く、バックエンドの OpenAPI スキーマが `nullable: true` になっています。佐藤さんに確認して必要に応じてスキーマを修正します。"
+      days_ago: 3
+
+- subject: "Storybook のセットアップと共通コンポーネントのストーリーを書く"
+  tracker: task
+  status: closed
+  priority: normal
+  updated_days_ago: 22
+  version: sprint2
+  description: |
+    Storybook 7 を導入して `Button` `Input` `Badge` `Modal` などの共通コンポーネントのストーリーを作成する。
+
+- subject: "フロントエンドの E2E テスト（Playwright）を整備する"
+  tracker: task
+  status: in_progress
+  priority: high
+  updated_days_ago: 2
+  version: sprint3
+  description: |
+    Playwright で打刻フロー・有給申請フロー・管理者操作の E2E テストを整備する。
+    CI で全ブランチに自動実行する。
+  journals:
+    - user: suzuki
+      note: "Playwright のセットアップ完了しました。打刻フロー（出勤 → 退勤 → 一覧確認）の E2E テストを書きました。山田さん、優先度が高いテストシナリオを共有してください。"
+      days_ago: 5
+    - user: yamada
+      note: "E2E で優先すべきシナリオ: ① 打刻 → 申請 → 承認 のフル E2E ② 月またぎの打刻集計 ③ 管理者によるユーザー一括登録。特に ② は手動テストで何度かバグが出ているので自動化したいです。"
+      days_ago: 4
+    - user: suzuki
+      note: "① は実装完了しました。② は日付操作が必要なので `page.clock.setFixedTime` で月末をシミュレートします。来週中に ② と ③ も完成させます。"
+      days_ago: 2
+
+- subject: "共通 API クライアントの型生成を openapi-typescript で自動化する"
+  tracker: task
+  status: feedback
+  priority: normal
+  updated_days_ago: 7
+  version: sprint3
+  description: |
+    手書きの API 型定義をやめ、バックエンドの OpenAPI スキーマから `openapi-typescript` で自動生成する仕組みを構築する。
+  journals:
+    - user: suzuki
+      note: "手書きの型定義がバックエンドの変更に追いつかず、型エラーが本番リリース後に発覚するケースが出ています。`openapi-typescript` での自動生成を提案します。佐藤さん、OpenAPI スキーマはどこで管理しますか？"
+      days_ago: 12
+    - user: sato
+      note: "バックエンドのリポジトリに `api/openapi.yaml` を置いて、`swaggo/swag` でコードから生成する方針にします。ただし `nullable` フィールドが `anyOf` になるので `openapi-typescript` 側の `--empty-objects-unknown` オプションで対応してください。"
+      days_ago: 10
+    - user: suzuki
+      note: "試したところ v7 では問題なく生成できました。CI で差分を自動検知する仕組みも作りたいです。型が変わった PR では自動でコメントを付けるようにします。"
+      days_ago: 8
+    - user: tanaka
+      note: "方向性は良いですが、全エンドポイントを一気に移行するとリスクが高いです。まず主要 10 エンドポイント（打刻 / 申請 / 認証）から始めて、問題なければ段階的に拡張しましょう。"
+      days_ago: 7
+
+- subject: "フロントエンドのバンドルサイズを分析して削減する"
+  tracker: task
+  status: in_progress
+  priority: normal
+  updated_days_ago: 4
+  version: sprint3
+  description: |
+    `rollup-plugin-visualizer` で依存関係を分析し、バンドルサイズを削減する。
+    現状 gzip 後 420KB → 250KB 以下を目標とする。
+  journals:
+    - user: suzuki
+      note: "rollup-plugin-visualizer で分析したところ、最大の問題は: ① moment.js (67KB) → date-fns に移行済みだが tree shaking が効いていない ② lodash (72KB) → `import _ from 'lodash'` で全量 import しているファイルが 5 箇所あり。この 2 点を修正するだけで 100KB 以上削減できそうです。"
+      days_ago: 5
+
+- subject: "CSS Variables を使ったテーマ切り替え機能を実装する"
+  tracker: feature
+  status: new
+  priority: low
+  updated_days_ago: 18
+  version: sprint4
+  description: |
+    テナントブランドカラーをカスタマイズできるテーマ機能を実装する。
+    CSS Variables でカラーパレットを定義し、管理画面から変更できるようにする。
+
+- subject: "フロントエンドの ESLint ルールを強化する"
+  tracker: task
+  status: closed
+  priority: low
+  updated_days_ago: 38
+  version: sprint1
+  description: |
+    `eslint-plugin-react-hooks` / `eslint-plugin-jsx-a11y` / `@typescript-eslint` の推奨ルールを有効化する。
+
+- subject: "Web Vitals の計測・レポートを導入する"
+  tracker: task
+  status: resolved
+  priority: normal
+  updated_days_ago: 10
+  version: sprint2
+  description: |
+    `web-vitals` ライブラリで LCP / FID / CLS を計測し、Analytics に送信する。
+    回帰を検知するため CI で Lighthouse スコアが閾値を下回ったら警告を出す。
+  journals:
+    - user: suzuki
+      note: "`web-vitals` の計測を実装しました。LCP: 1.8s / FID: 45ms / CLS: 0.02 で Core Web Vitals の全項目 Good です。CI の Lighthouse で Performance スコア 85 以下になったら失敗にしています。"
+      days_ago: 12
+
+- subject: "フロントエンドのメモリリークを調査する"
+  tracker: bug
+  status: in_progress
+  priority: high
+  updated_days_ago: 2
+  version: sprint3
+  description: |
+    長時間使用するとブラウザのメモリ使用量が増え続ける報告がある。
+    Chrome DevTools の Memory タブでヒープスナップショットを取り、原因コンポーネントを特定する。
+  journals:
+    - user: suzuki
+      note: "Chrome DevTools でヒープスナップショットを取りました。`EventCalendar` コンポーネントのアンマウント後も WebSocket の接続が残っており、メモリが解放されていません。`useEffect` の cleanup 関数が空になっていることが原因です。"
+      days_ago: 4
+    - user: tanaka
+      note: "WebSocket の cleanup 以外に、`setInterval` や `addEventListener` も cleanup しているか確認してください。`useEffect` の cleanup は原則すべての副作用に書くようにルール化しましょう。ESLint カスタムルールで検出できるかもしれません。"
+      days_ago: 3
+    - user: suzuki
+      note: "EventCalendar の WebSocket cleanup を実装しました。追加で `useEventListener` カスタムフックを作成して、全コンポーネントから `addEventListener` を隠蔽する形にしました。cleanup 漏れが構造的に起きにくくなります。"
+      days_ago: 2
+
+- subject: "React Query のキャッシュ戦略を見直す"
+  tracker: task
+  status: in_progress
+  priority: normal
+  updated_days_ago: 3
+  version: sprint3
+  description: |
+    全クエリのデフォルト `staleTime` が 0 で不要なリフェッチが多発している。
+    エンドポイントの更新頻度に応じて `staleTime` を設定し、ネットワークリクエストを削減する。
+  journals:
+    - user: suzuki
+      note: "現在 Network タブで確認したところ、カレンダービューを開くたびに同一データを 5 回フェッチしています。`staleTime` を設定した QueryClient の設定を整理します。"
+      days_ago: 4
+    - user: tanaka
+      note: "打刻データは頻繁に変わるので staleTime 短め（30秒）、マスタデータ（部署・勤務体制）は 5 分くらいで良いです。ユーザー情報は session 中はほぼ変わらないので 15 分でも良いかと思います。"
+      days_ago: 3
+
+- subject: "コンポーネントの表示崩れを検知するビジュアルリグレッションテストを導入する"
+  tracker: task
+  status: new
+  priority: normal
+  updated_days_ago: 8
+  version: sprint4
+  description: |
+    Playwright の toHaveScreenshot でコンポーネントのスクリーンショット比較テストを導入する。
+    デザイン変更による意図しない表示崩れを CI で自動検知する。
+
+- subject: "共通コンポーネントライブラリを独立パッケージに切り出す"
+  tracker: task
+  status: new
+  priority: low
+  updated_days_ago: 21
+  version: sprint4
+  description: |
+    Button / Input / Modal / Badge などの共通コンポーネントを @kintai/ui パッケージとして切り出す。
+    将来のモバイルアプリや管理サイトと共有できるようにする。
+
+- subject: "i18n 対応（日本語・英語）の基盤を整備する"
+  tracker: feature
+  status: new
+  priority: normal
+  updated_days_ago: 13
+  version: sprint4
+  description: |
+    react-i18next を導入して翻訳キーを JSON ファイルで管理する基盤を整備する。
+    まず日本語・英語の 2 言語をサポートし、言語切り替えをユーザー設定に保存する。
+
+- subject: "エラー境界（Error Boundary）を全 View に実装する"
+  tracker: task
+  status: in_progress
+  priority: high
+  updated_days_ago: 2
+  version: sprint3
+  description: |
+    予期しない JS エラーでアプリ全体が白画面になる問題を防ぐ。
+    各 View に React Error Boundary を設置し、エラー発生時は「再読み込み」ボタン付きのフォールバック UI を表示する。
+  journals:
+    - user: suzuki
+      note: "本番でユーザーから「画面が真っ白になった」という報告が 3 件ありました。Sentry のエラーログを確認したところ、Cannot read properties of undefined が Dashboard View で発生していました。Error Boundary を全 View に設置して影響範囲を局所化します。"
+      days_ago: 4
+    - user: tanaka
+      note: "Error Boundary に加えて Sentry の captureException でエラーを自動送信するようにしてください。エラー発生時のコンポーネントツリーとユーザーの操作ステップが分かると原因調査が速くなります。"
+      days_ago: 3
+
+- subject: "フォームの入力値をサーバーサイドに下書き保存してセッション復元する"
+  tracker: feature
+  status: new
+  priority: low
+  updated_days_ago: 16
+  version: sprint4
+  description: |
+    申請フォームの入力途中でセッション切れになると入力内容が消える問題への対応。
+    定期的にサーバーに下書き保存して、再ログイン後に復元できるようにする。
+
+- subject: "フロントエンドの依存パッケージを LTS バージョンに揃える"
+  tracker: task
+  status: closed
+  priority: low
+  updated_days_ago: 50
+  version: sprint1
+  description: |
+    Node.js 18 LTS への移行と、主要パッケージ（React 18 / TypeScript 5 / Vite 5）のバージョン統一を行う。

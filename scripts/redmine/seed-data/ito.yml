@@ -1,0 +1,569 @@
+# 伊藤（インフラ担当）の issue 一覧 / 80 件
+
+# ===== Kubernetes・コンテナ =====
+- subject: "Kubernetes クラスタのバージョンを 1.29 にアップグレードする"
+  tracker: task
+  status: in_progress
+  priority: high
+  updated_days_ago: 3
+  version: sprint3
+
+- subject: "Helm チャートを整備してアプリのデプロイを標準化する"
+  tracker: task
+  status: closed
+  priority: normal
+  updated_days_ago: 32
+  version: sprint2
+
+- subject: "HPA（水平 Pod オートスケーリング）を設定する"
+  tracker: task
+  status: in_progress
+  priority: high
+  updated_days_ago: 5
+  version: sprint3
+
+- subject: "Pod のリソースリクエストとリミットを最適化する"
+  tracker: task
+  status: in_progress
+  priority: normal
+  updated_days_ago: 4
+  version: sprint3
+
+- subject: "Kubernetes Network Policy を実装してネットワーク分離を強化する"
+  tracker: task
+  status: new
+  priority: high
+  updated_days_ago: 7
+  version: sprint4
+
+- subject: "コンテナイメージのマルチステージビルドを導入する"
+  tracker: task
+  status: closed
+  priority: normal
+  updated_days_ago: 28
+  version: sprint2
+
+- subject: "イメージスキャンを CI パイプラインに組み込む"
+  tracker: task
+  status: in_progress
+  priority: high
+  updated_days_ago: 2
+  version: sprint3
+
+- subject: "Kubernetes External Secrets と Secrets Manager を連携する"
+  tracker: task
+  status: in_progress
+  priority: high
+  updated_days_ago: 6
+  version: sprint3
+
+- subject: "Ingress Controller の設定を最適化する"
+  tracker: task
+  status: closed
+  priority: normal
+  updated_days_ago: 35
+  version: sprint2
+
+- subject: "PodDisruptionBudget を設定して可用性を確保する"
+  tracker: task
+  status: new
+  priority: normal
+  updated_days_ago: 10
+  version: sprint4
+
+- subject: "サービスメッシュ（Istio）の導入を評価する"
+  tracker: task
+  status: feedback
+  priority: low
+  updated_days_ago: 15
+  version: sprint4
+
+- subject: "ローリングデプロイの設定を見直す"
+  tracker: task
+  status: closed
+  priority: normal
+  updated_days_ago: 22
+  version: sprint2
+
+# ===== データベース =====
+- subject: "PostgreSQL のスロークエリログを有効化して分析する"
+  tracker: task
+  status: in_progress
+  priority: high
+  updated_days_ago: 3
+  version: sprint3
+
+- subject: "データベースのコネクションプールを最適化する"
+  tracker: task
+  status: in_progress
+  priority: high
+  updated_days_ago: 2
+  version: sprint3
+
+- subject: "PostgreSQL のストリーミングレプリケーションを設定する"
+  tracker: task
+  status: closed
+  priority: high
+  updated_days_ago: 25
+  version: sprint2
+
+- subject: "Read Replica を追加してレポートクエリを分散する"
+  tracker: feature
+  status: in_progress
+  priority: high
+  updated_days_ago: 4
+  version: sprint3
+
+- subject: "PgBouncer でコネクション管理を改善する"
+  tracker: task
+  status: resolved
+  priority: normal
+  updated_days_ago: 8
+  version: sprint2
+
+- subject: "PostgreSQL の設定値（shared_buffers 等）をチューニングする"
+  tracker: task
+  status: in_progress
+  priority: normal
+  updated_days_ago: 5
+  version: sprint3
+
+- subject: "データベースをバージョン PostgreSQL 16 にアップグレードする"
+  tracker: task
+  status: feedback
+  priority: high
+  updated_days_ago: 9
+  version: sprint4
+
+- subject: "Redis Cluster の設定を最適化する"
+  tracker: task
+  status: in_progress
+  priority: normal
+  updated_days_ago: 6
+  version: sprint3
+
+- subject: "データベースの論理バックアップを自動化する"
+  tracker: task
+  status: closed
+  priority: high
+  updated_days_ago: 30
+  version: sprint2
+
+- subject: "スキーママイグレーションのゼロダウンタイム手順を整備する"
+  tracker: task
+  status: in_progress
+  priority: high
+  updated_days_ago: 3
+  version: sprint3
+
+- subject: "データベースのパーティショニングを導入する"
+  tracker: task
+  status: new
+  priority: normal
+  updated_days_ago: 14
+  version: sprint4
+
+# ===== CI/CD =====
+- subject: "GitHub Actions のワークフローを最適化する"
+  tracker: task
+  status: closed
+  priority: normal
+  updated_days_ago: 20
+  version: sprint2
+
+- subject: "テスト並列実行でビルド時間を短縮する"
+  tracker: task
+  status: in_progress
+  priority: normal
+  updated_days_ago: 4
+  version: sprint3
+
+- subject: "ステージング環境への自動デプロイを設定する"
+  tracker: task
+  status: closed
+  priority: high
+  updated_days_ago: 38
+  version: sprint2
+
+- subject: "本番デプロイの承認ゲートを追加する"
+  tracker: task
+  status: in_progress
+  priority: high
+  updated_days_ago: 2
+  version: sprint3
+
+- subject: "Renovate で依存関係を自動更新する"
+  tracker: task
+  status: in_progress
+  priority: normal
+  updated_days_ago: 7
+  version: sprint3
+
+- subject: "デプロイパイプラインの失敗通知を Slack に連携する"
+  tracker: task
+  status: closed
+  priority: normal
+  updated_days_ago: 27
+  version: sprint2
+
+- subject: "E2E テストを CI に組み込む"
+  tracker: task
+  status: in_progress
+  priority: high
+  updated_days_ago: 3
+  version: sprint3
+
+- subject: "ビルドキャッシュを活用して CI 時間を削減する"
+  tracker: task
+  status: in_progress
+  priority: normal
+  updated_days_ago: 5
+  version: sprint3
+
+- subject: "フィーチャーフラグデプロイのパイプラインを整備する"
+  tracker: task
+  status: new
+  priority: normal
+  updated_days_ago: 12
+  version: sprint4
+
+# ===== 監視・可観測性 =====
+- subject: "Prometheus + Grafana の監視ダッシュボードを整備する"
+  tracker: task
+  status: in_progress
+  priority: high
+  updated_days_ago: 2
+  version: sprint3
+
+- subject: "アプリケーションのカスタムメトリクスを定義する"
+  tracker: task
+  status: in_progress
+  priority: normal
+  updated_days_ago: 4
+  version: sprint3
+
+- subject: "SLI/SLO のアラートルールを設定する"
+  tracker: task
+  status: in_progress
+  priority: high
+  updated_days_ago: 3
+  version: sprint3
+
+- subject: "分散トレーシング（Jaeger）を導入する"
+  tracker: feature
+  status: new
+  priority: normal
+  updated_days_ago: 11
+  version: sprint4
+
+- subject: "ログ集約基盤を Loki で構築する"
+  tracker: task
+  status: in_progress
+  priority: normal
+  updated_days_ago: 6
+  version: sprint3
+
+- subject: "アラートのノイズを削減してファイン化する"
+  tracker: task
+  status: feedback
+  priority: normal
+  updated_days_ago: 10
+  version: sprint3
+
+- subject: "オンコール体制とエスカレーションポリシーを整備する"
+  tracker: task
+  status: in_progress
+  priority: high
+  updated_days_ago: 5
+  version: sprint3
+
+- subject: "ダッシュボードのアノテーションでデプロイを可視化する"
+  tracker: task
+  status: closed
+  priority: normal
+  updated_days_ago: 18
+  version: sprint2
+
+- subject: "データベースの遅延モニタリングを設定する"
+  tracker: task
+  status: in_progress
+  priority: high
+  updated_days_ago: 2
+  version: sprint3
+
+- subject: "フロントエンドの Core Web Vitals を監視する"
+  tracker: task
+  status: new
+  priority: normal
+  updated_days_ago: 8
+  version: sprint4
+
+# ===== セキュリティ =====
+- subject: "WAF の設定を見直してルールを最適化する"
+  tracker: task
+  status: in_progress
+  priority: high
+  updated_days_ago: 4
+  version: sprint3
+
+- subject: "TLS 証明書の自動更新を設定する"
+  tracker: task
+  status: closed
+  priority: high
+  updated_days_ago: 33
+  version: sprint2
+
+- subject: "脆弱性スキャン（Trivy）を本番環境に適用する"
+  tracker: task
+  status: in_progress
+  priority: high
+  updated_days_ago: 3
+  version: sprint3
+
+- subject: "クラウドの IAM 権限を最小権限原則で見直す"
+  tracker: task
+  status: in_progress
+  priority: high
+  updated_days_ago: 5
+  version: sprint3
+
+- subject: "セキュリティインシデント対応手順を整備する"
+  tracker: task
+  status: in_progress
+  priority: high
+  updated_days_ago: 6
+  version: sprint3
+
+- subject: "ペネトレーションテストの結果を対応する"
+  tracker: task
+  status: feedback
+  priority: urgent
+  updated_days_ago: 11
+  version: sprint3
+
+- subject: "SSH キーの定期ローテーションを自動化する"
+  tracker: task
+  status: new
+  priority: normal
+  updated_days_ago: 13
+  version: sprint4
+
+- subject: "秘密情報の管理を HashiCorp Vault に移行する"
+  tracker: task
+  status: new
+  priority: high
+  updated_days_ago: 9
+  version: sprint4
+
+- subject: "コンプライアンス監査のログ保全期間を設定する"
+  tracker: task
+  status: in_progress
+  priority: normal
+  updated_days_ago: 7
+  version: sprint3
+
+# ===== バックアップ・DR =====
+- subject: "データベースの自動バックアップと保持期間を設定する"
+  tracker: task
+  status: closed
+  priority: high
+  updated_days_ago: 29
+  version: sprint2
+
+- subject: "バックアップのリストアテストを月次で実施する"
+  tracker: task
+  status: in_progress
+  priority: high
+  updated_days_ago: 2
+  version: sprint3
+
+- subject: "DR 環境へのフェイルオーバー手順を整備する"
+  tracker: task
+  status: new
+  priority: high
+  updated_days_ago: 8
+  version: sprint4
+
+- subject: "RTO/RPO の目標値を設定して DR を設計する"
+  tracker: task
+  status: feedback
+  priority: high
+  updated_days_ago: 12
+  version: sprint4
+
+- subject: "定期バックアップジョブの監視と失敗通知を設定する"
+  tracker: task
+  status: in_progress
+  priority: normal
+  updated_days_ago: 4
+  version: sprint3
+
+# ===== コスト最適化 =====
+- subject: "クラウドリソースのコスト分析と最適化を行う"
+  tracker: task
+  status: in_progress
+  priority: normal
+  updated_days_ago: 5
+  version: sprint3
+
+- subject: "未使用リソースを削除してコストを削減する"
+  tracker: task
+  status: closed
+  priority: normal
+  updated_days_ago: 21
+  version: sprint2
+
+- subject: "Spot インスタンスを活用して計算コストを削減する"
+  tracker: task
+  status: new
+  priority: normal
+  updated_days_ago: 14
+  version: sprint4
+
+- subject: "開発環境のリソースを業務時間外に自動停止する"
+  tracker: task
+  status: in_progress
+  priority: normal
+  updated_days_ago: 6
+  version: sprint3
+
+# ===== ミドルウェア・その他 =====
+- subject: "Nginx の設定を最適化して SSL ターミネーションを改善する"
+  tracker: task
+  status: closed
+  priority: normal
+  updated_days_ago: 24
+  version: sprint2
+
+- subject: "メール送信基盤（SES）の設定と監視を整備する"
+  tracker: task
+  status: in_progress
+  priority: normal
+  updated_days_ago: 7
+  version: sprint3
+
+- subject: "定期バッチジョブのスケジューラを Kubernetes CronJob に移行する"
+  tracker: task
+  status: in_progress
+  priority: normal
+  updated_days_ago: 4
+  version: sprint3
+
+- subject: "オブジェクトストレージの CORS 設定を見直す"
+  tracker: task
+  status: closed
+  priority: normal
+  updated_days_ago: 17
+  version: sprint2
+
+- subject: "CDN のエッジキャッシュルールを最適化する"
+  tracker: task
+  status: new
+  priority: normal
+  updated_days_ago: 10
+  version: sprint4
+
+- subject: "インフラのコード化（Terraform）を推進する"
+  tracker: task
+  status: in_progress
+  priority: high
+  updated_days_ago: 3
+  version: sprint3
+
+- subject: "APM ツールの導入で本番パフォーマンスを可視化する"
+  tracker: task
+  status: new
+  priority: normal
+  updated_days_ago: 16
+  version: sprint4
+
+- subject: "クラウドコンソールのアクセスログ監視を強化する"
+  tracker: task
+  status: in_progress
+  priority: normal
+  updated_days_ago: 5
+  version: sprint3
+
+- subject: "サービス間通信のタイムアウトとリトライを統一する"
+  tracker: task
+  status: in_progress
+  priority: high
+  updated_days_ago: 2
+  version: sprint3
+
+- subject: "各サービスの依存ヘルスチェックを強化する"
+  tracker: task
+  status: closed
+  priority: normal
+  updated_days_ago: 36
+  version: sprint2
+
+- subject: "Kafka のブローカー設定をチューニングする"
+  tracker: task
+  status: new
+  priority: normal
+  updated_days_ago: 12
+  version: sprint4
+
+- subject: "ストレージの階層化でコストを最適化する"
+  tracker: task
+  status: new
+  priority: low
+  updated_days_ago: 17
+  version: sprint4
+
+- subject: "データ転送コストを削減する経路を最適化する"
+  tracker: task
+  status: new
+  priority: normal
+  updated_days_ago: 19
+  version: sprint4
+
+- subject: "クラスタのノードオートスケーリングを設定する"
+  tracker: task
+  status: in_progress
+  priority: normal
+  updated_days_ago: 5
+  version: sprint3
+
+- subject: "ログローテーションと保持ポリシーを設定する"
+  tracker: task
+  status: closed
+  priority: normal
+  updated_days_ago: 26
+  version: sprint2
+
+- subject: "ネットワーク境界のファイアウォールルールを整理する"
+  tracker: task
+  status: in_progress
+  priority: high
+  updated_days_ago: 4
+  version: sprint3
+
+- subject: "本番環境の障害時アラート閾値を見直す"
+  tracker: task
+  status: in_progress
+  priority: high
+  updated_days_ago: 3
+  version: sprint3
+
+- subject: "DNS フェイルオーバーの動作を確認する"
+  tracker: task
+  status: new
+  priority: normal
+  updated_days_ago: 15
+  version: sprint4
+
+- subject: "サービスアカウントの権限を定期棚卸しする"
+  tracker: task
+  status: new
+  priority: high
+  updated_days_ago: 11
+  version: sprint4
+
+- subject: "インフラ構成の変更履歴管理を整備する"
+  tracker: task
+  status: in_progress
+  priority: normal
+  updated_days_ago: 6
+  version: sprint3

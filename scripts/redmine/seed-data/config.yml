@@ -1,0 +1,81 @@
+project:
+  name: kintai-next
+  description: |
+    次世代勤怠管理 SaaS プロジェクト。
+    フロントエンド: React + TypeScript + Vite
+    バックエンド: Go 1.22 + PostgreSQL 16
+    開発チーム 6 名。全 4 Sprint 計画、Sprint 3 進行中。
+
+statuses:
+  - key: new
+    name: New
+    position: 1
+    done_ratio: 0
+    is_closed: false
+  - key: in_progress
+    name: In Progress
+    position: 2
+    done_ratio: 40
+    is_closed: false
+  - key: feedback
+    name: Feedback
+    position: 3
+    done_ratio: 20
+    is_closed: false
+  - key: resolved
+    name: Resolved
+    position: 4
+    done_ratio: 90
+    is_closed: false
+  - key: closed
+    name: Closed
+    position: 5
+    done_ratio: 100
+    is_closed: true
+
+priorities:
+  - key: low
+    name: Low
+    position: 1
+    default: false
+  - key: normal
+    name: Normal
+    position: 2
+    default: true
+  - key: high
+    name: High
+    position: 3
+    default: false
+  - key: urgent
+    name: Urgent
+    position: 4
+    default: false
+
+trackers:
+  - key: feature
+    name: Feature
+    position: 1
+  - key: task
+    name: Task
+    position: 2
+  - key: bug
+    name: Bug
+    position: 3
+
+versions:
+  - key: sprint1
+    name: "Sprint 1: 基盤構築"
+    status: closed
+    days_from_now: -60
+  - key: sprint2
+    name: "Sprint 2: コア機能"
+    status: closed
+    days_from_now: -30
+  - key: sprint3
+    name: "Sprint 3: 申請・集計"
+    status: open
+    days_from_now: 14
+  - key: sprint4
+    name: "Sprint 4: 外部連携・品質"
+    status: open
+    days_from_now: 45

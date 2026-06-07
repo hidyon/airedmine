@@ -1,0 +1,42 @@
+members:
+  - key: suzuki
+    login: admin
+    firstname: 花子
+    lastname: 鈴木
+    mail: suzuki@kintai.example.com
+    role: frontend
+
+  - key: tanaka
+    login: tanaka
+    firstname: 健太
+    lastname: 田中
+    mail: tanaka@kintai.example.com
+    role: lead
+
+  - key: sato
+    login: sato
+    firstname: 誠
+    lastname: 佐藤
+    mail: sato@kintai.example.com
+    role: backend
+
+  - key: ito
+    login: ito
+    firstname: 大輔
+    lastname: 伊藤
+    mail: ito@kintai.example.com
+    role: infra
+
+  - key: yamada
+    login: yamada
+    firstname: 真由美
+    lastname: 山田
+    mail: yamada@kintai.example.com
+    role: qa
+
+  - key: nakamura
+    login: nakamura
+    firstname: 雄二
+    lastname: 中村
+    mail: nakamura@kintai.example.com
+    role: pm

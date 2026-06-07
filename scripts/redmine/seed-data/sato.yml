@@ -1,0 +1,709 @@
+# 佐藤（バックエンド担当）の issue 一覧 / 100 件
+
+# ===== 認証・認可 API =====
+- subject: "JWT 認証ミドルウェアを実装する"
+  tracker: task
+  status: closed
+  priority: high
+  updated_days_ago: 55
+  version: sprint1
+
+- subject: "リフレッシュトークンのローテーション機能を追加する"
+  tracker: task
+  status: closed
+  priority: high
+  updated_days_ago: 50
+  version: sprint1
+
+- subject: "権限スコープ別の API アクセス制御を実装する"
+  tracker: feature
+  status: closed
+  priority: high
+  updated_days_ago: 45
+  version: sprint1
+
+- subject: "OAuth 2.0 認可コードフローを実装する"
+  tracker: feature
+  status: in_progress
+  priority: high
+  updated_days_ago: 5
+  version: sprint3
+
+- subject: "SAML 2.0 シングルサインオンのバックエンド対応を調査する"
+  tracker: task
+  status: feedback
+  priority: normal
+  updated_days_ago: 8
+  version: sprint4
+
+- subject: "API キーによる外部サービス認証を実装する"
+  tracker: feature
+  status: in_progress
+  priority: normal
+  updated_days_ago: 3
+  version: sprint3
+
+- subject: "セッション管理のデータベース永続化を実装する"
+  tracker: task
+  status: closed
+  priority: normal
+  updated_days_ago: 42
+  version: sprint1
+
+- subject: "パスワードリセットフローのバックエンドを実装する"
+  tracker: feature
+  status: closed
+  priority: normal
+  updated_days_ago: 35
+  version: sprint2
+
+- subject: "多要素認証（TOTP）のバックエンドを実装する"
+  tracker: feature
+  status: in_progress
+  priority: high
+  updated_days_ago: 2
+  version: sprint3
+
+- subject: "認証失敗時のレート制限を実装する"
+  tracker: task
+  status: closed
+  priority: normal
+  updated_days_ago: 38
+  version: sprint2
+
+- subject: "ユーザーアカウント無効化 API を実装する"
+  tracker: feature
+  status: closed
+  priority: normal
+  updated_days_ago: 30
+  version: sprint2
+
+- subject: "監査ログ用の認証イベント記録を追加する"
+  tracker: task
+  status: in_progress
+  priority: normal
+  updated_days_ago: 4
+  version: sprint3
+
+- subject: "IP アドレスホワイトリスト機能を API に追加する"
+  tracker: feature
+  status: new
+  priority: normal
+  updated_days_ago: 10
+  version: sprint4
+
+- subject: "認証トークンの有効期限ポリシーを設定可能にする"
+  tracker: task
+  status: feedback
+  priority: normal
+  updated_days_ago: 7
+  version: sprint3
+
+- subject: "サービスアカウント用の API キー管理エンドポイントを実装する"
+  tracker: feature
+  status: new
+  priority: normal
+  updated_days_ago: 12
+  version: sprint4
+
+# ===== 打刻 API =====
+- subject: "打刻レコードの作成・更新・取得エンドポイントを実装する"
+  tracker: task
+  status: closed
+  priority: high
+  updated_days_ago: 48
+  version: sprint1
+
+- subject: "打刻の二重送信防止ロジックを実装する"
+  tracker: task
+  status: closed
+  priority: high
+  updated_days_ago: 40
+  version: sprint2
+
+- subject: "GPS 座標付き打刻のバリデーションを実装する"
+  tracker: feature
+  status: closed
+  priority: normal
+  updated_days_ago: 32
+  version: sprint2
+
+- subject: "IC カード打刻データの受信エンドポイントを実装する"
+  tracker: feature
+  status: in_progress
+  priority: high
+  updated_days_ago: 3
+  version: sprint3
+
+- subject: "打刻修正申請の承認フローバックエンドを実装する"
+  tracker: feature
+  status: in_progress
+  priority: normal
+  updated_days_ago: 5
+  version: sprint3
+
+- subject: "打刻データの一括インポート API を実装する"
+  tracker: feature
+  status: new
+  priority: normal
+  updated_days_ago: 9
+  version: sprint4
+
+- subject: "勤務時間の自動計算ロジックを実装する"
+  tracker: task
+  status: closed
+  priority: high
+  updated_days_ago: 36
+  version: sprint2
+
+- subject: "打刻漏れアラートのバックエンドロジックを実装する"
+  tracker: feature
+  status: in_progress
+  priority: normal
+  updated_days_ago: 6
+  version: sprint3
+
+- subject: "残業開始・終了の自動検知ロジックを実装する"
+  tracker: feature
+  status: feedback
+  priority: high
+  updated_days_ago: 11
+  version: sprint3
+
+- subject: "打刻データのアーカイブと削除ポリシーを実装する"
+  tracker: task
+  status: new
+  priority: low
+  updated_days_ago: 20
+  version: sprint4
+
+- subject: "深夜勤務またぎの日付処理ロジックを修正する"
+  tracker: bug
+  status: closed
+  priority: high
+  updated_days_ago: 14
+  version: sprint2
+
+- subject: "タイムゾーン別打刻データの正規化を実装する"
+  tracker: task
+  status: closed
+  priority: normal
+  updated_days_ago: 28
+  version: sprint2
+
+- subject: "打刻データの整合性チェックバッチを実装する"
+  tracker: task
+  status: new
+  priority: normal
+  updated_days_ago: 15
+  version: sprint4
+
+- subject: "打刻レコードの論理削除と復元 API を実装する"
+  tracker: feature
+  status: closed
+  priority: normal
+  updated_days_ago: 25
+  version: sprint2
+
+- subject: "打刻集計の差分更新ロジックを最適化する"
+  tracker: task
+  status: in_progress
+  priority: high
+  updated_days_ago: 2
+  version: sprint3
+
+# ===== 申請・承認 API =====
+- subject: "有給申請 CRUD エンドポイントを実装する"
+  tracker: task
+  status: closed
+  priority: high
+  updated_days_ago: 44
+  version: sprint2
+
+- subject: "残業申請と上限チェックロジックを実装する"
+  tracker: feature
+  status: closed
+  priority: high
+  updated_days_ago: 33
+  version: sprint2
+
+- subject: "代理承認者の設定 API を実装する"
+  tracker: feature
+  status: in_progress
+  priority: high
+  updated_days_ago: 6
+  version: sprint3
+
+- subject: "申請ステータス変更の通知トリガーを実装する"
+  tracker: task
+  status: in_progress
+  priority: normal
+  updated_days_ago: 4
+  version: sprint3
+
+- subject: "申請の添付ファイル管理とプリサインド URL を実装する"
+  tracker: feature
+  status: in_progress
+  priority: normal
+  updated_days_ago: 3
+  version: sprint3
+
+- subject: "一括承認 API エンドポイントを実装する"
+  tracker: feature
+  status: in_progress
+  priority: high
+  updated_days_ago: 2
+  version: sprint3
+
+- subject: "申請の差し戻しと再申請フローを実装する"
+  tracker: feature
+  status: closed
+  priority: normal
+  updated_days_ago: 27
+  version: sprint2
+
+- subject: "申請期限の自動エスカレーションロジックを実装する"
+  tracker: feature
+  status: new
+  priority: normal
+  updated_days_ago: 13
+  version: sprint4
+
+- subject: "申請履歴の監査ログを記録する"
+  tracker: task
+  status: closed
+  priority: normal
+  updated_days_ago: 31
+  version: sprint2
+
+- subject: "承認フロー設定の CRUD API を実装する"
+  tracker: feature
+  status: in_progress
+  priority: normal
+  updated_days_ago: 5
+  version: sprint3
+
+- subject: "休暇残日数の自動更新ロジックを実装する"
+  tracker: feature
+  status: closed
+  priority: high
+  updated_days_ago: 29
+  version: sprint2
+
+- subject: "申請コメント機能の API を実装する"
+  tracker: feature
+  status: new
+  priority: normal
+  updated_days_ago: 8
+  version: sprint4
+
+- subject: "申請の CSV エクスポート API を実装する"
+  tracker: feature
+  status: in_progress
+  priority: normal
+  updated_days_ago: 4
+  version: sprint3
+
+- subject: "承認待ち件数のサマリー API を実装する"
+  tracker: task
+  status: closed
+  priority: normal
+  updated_days_ago: 22
+  version: sprint2
+
+- subject: "申請データの年次リセットバッチを実装する"
+  tracker: task
+  status: new
+  priority: normal
+  updated_days_ago: 18
+  version: sprint4
+
+# ===== 集計・計算ロジック =====
+- subject: "月次勤怠集計の計算ロジックを実装する"
+  tracker: task
+  status: closed
+  priority: high
+  updated_days_ago: 39
+  version: sprint2
+
+- subject: "フレックスタイム制の精算計算を実装する"
+  tracker: feature
+  status: in_progress
+  priority: high
+  updated_days_ago: 3
+  version: sprint3
+
+- subject: "法定休日と所定休日の区分ロジックを実装する"
+  tracker: task
+  status: closed
+  priority: high
+  updated_days_ago: 34
+  version: sprint2
+
+- subject: "時間外労働の 36 協定チェックロジックを実装する"
+  tracker: feature
+  status: in_progress
+  priority: urgent
+  updated_days_ago: 1
+  version: sprint3
+
+- subject: "深夜割増・休日割増の計算ロジックを実装する"
+  tracker: feature
+  status: closed
+  priority: high
+  updated_days_ago: 37
+  version: sprint2
+
+- subject: "有給休暇の比例付与計算を実装する"
+  tracker: feature
+  status: in_progress
+  priority: normal
+  updated_days_ago: 7
+  version: sprint3
+
+- subject: "勤怠データの月次締め処理バッチを実装する"
+  tracker: task
+  status: in_progress
+  priority: high
+  updated_days_ago: 2
+  version: sprint3
+
+- subject: "工数集計と部門別コスト計算を実装する"
+  tracker: feature
+  status: new
+  priority: normal
+  updated_days_ago: 16
+  version: sprint4
+
+- subject: "集計エラーの自動検知と通知を実装する"
+  tracker: feature
+  status: new
+  priority: normal
+  updated_days_ago: 11
+  version: sprint4
+
+- subject: "集計データのキャッシュ戦略を設計する"
+  tracker: task
+  status: feedback
+  priority: high
+  updated_days_ago: 9
+  version: sprint3
+
+- subject: "変形労働時間制の集計ロジックを実装する"
+  tracker: feature
+  status: new
+  priority: normal
+  updated_days_ago: 17
+  version: sprint4
+
+- subject: "育児・介護短時間勤務の計算特例を実装する"
+  tracker: feature
+  status: new
+  priority: low
+  updated_days_ago: 23
+  version: sprint4
+
+# ===== レポート API =====
+- subject: "月次勤怠レポートの生成 API を実装する"
+  tracker: feature
+  status: closed
+  priority: high
+  updated_days_ago: 26
+  version: sprint2
+
+- subject: "部署別・個人別レポートのフィルタリングを実装する"
+  tracker: task
+  status: closed
+  priority: normal
+  updated_days_ago: 24
+  version: sprint2
+
+- subject: "レポートデータの CSV エクスポートを実装する"
+  tracker: feature
+  status: closed
+  priority: normal
+  updated_days_ago: 21
+  version: sprint2
+
+- subject: "PDF 帳票生成の非同期ジョブを実装する"
+  tracker: feature
+  status: in_progress
+  priority: normal
+  updated_days_ago: 3
+  version: sprint3
+
+- subject: "レポートの定期配信スケジューラを実装する"
+  tracker: feature
+  status: new
+  priority: normal
+  updated_days_ago: 14
+  version: sprint4
+
+- subject: "残業時間ランキングの API を実装する"
+  tracker: feature
+  status: new
+  priority: low
+  updated_days_ago: 19
+  version: sprint4
+
+- subject: "有給消化率のレポート API を実装する"
+  tracker: feature
+  status: in_progress
+  priority: normal
+  updated_days_ago: 5
+  version: sprint3
+
+- subject: "大量データのページネーション付きレポート API を実装する"
+  tracker: task
+  status: in_progress
+  priority: high
+  updated_days_ago: 2
+  version: sprint3
+
+# ===== 外部連携 API =====
+- subject: "給与計算ソフト向けデータエクスポート API を実装する"
+  tracker: feature
+  status: new
+  priority: high
+  updated_days_ago: 7
+  version: sprint4
+
+- subject: "HR システムとのユーザー同期 API を実装する"
+  tracker: feature
+  status: feedback
+  priority: high
+  updated_days_ago: 10
+  version: sprint4
+
+- subject: "Slack 通知連携のウェブフックを実装する"
+  tracker: feature
+  status: in_progress
+  priority: normal
+  updated_days_ago: 4
+  version: sprint3
+
+- subject: "Google カレンダー連携で祝日を自動同期する"
+  tracker: feature
+  status: new
+  priority: low
+  updated_days_ago: 20
+  version: sprint4
+
+- subject: "外部勤怠端末とのリアルタイム連携 API を実装する"
+  tracker: feature
+  status: feedback
+  priority: high
+  updated_days_ago: 12
+  version: sprint3
+
+- subject: "会計システムへの工数データ連携 API を実装する"
+  tracker: feature
+  status: new
+  priority: normal
+  updated_days_ago: 15
+  version: sprint4
+
+- subject: "外部 API の失敗時リトライと冪等性を確保する"
+  tracker: task
+  status: in_progress
+  priority: high
+  updated_days_ago: 3
+  version: sprint3
+
+- subject: "連携ログと同期ステータス管理 API を実装する"
+  tracker: feature
+  status: new
+  priority: normal
+  updated_days_ago: 11
+  version: sprint4
+
+- subject: "外部連携エラーのアラート通知を実装する"
+  tracker: feature
+  status: new
+  priority: normal
+  updated_days_ago: 16
+  version: sprint4
+
+- subject: "Webhook 受信の署名検証を実装する"
+  tracker: task
+  status: in_progress
+  priority: high
+  updated_days_ago: 4
+  version: sprint3
+
+- subject: "SSO プロバイダとの属性マッピングを実装する"
+  tracker: task
+  status: new
+  priority: normal
+  updated_days_ago: 13
+  version: sprint4
+
+- subject: "マルチテナントのデータ隔離を API レベルで保証する"
+  tracker: task
+  status: in_progress
+  priority: urgent
+  updated_days_ago: 2
+  version: sprint3
+
+# ===== パフォーマンス改善 =====
+- subject: "N+1 クエリを解消してレポート API を最適化する"
+  tracker: task
+  status: in_progress
+  priority: high
+  updated_days_ago: 3
+  version: sprint3
+
+- subject: "打刻 API のレスポンスタイムを 200ms 以下にする"
+  tracker: task
+  status: feedback
+  priority: high
+  updated_days_ago: 8
+  version: sprint3
+
+- subject: "集計バッチのメモリ使用量を削減する"
+  tracker: task
+  status: new
+  priority: normal
+  updated_days_ago: 14
+  version: sprint4
+
+- subject: "データベースインデックスを見直して検索を高速化する"
+  tracker: task
+  status: in_progress
+  priority: high
+  updated_days_ago: 5
+  version: sprint3
+
+- subject: "Redis キャッシュを導入してセッション管理を改善する"
+  tracker: task
+  status: closed
+  priority: normal
+  updated_days_ago: 29
+  version: sprint2
+
+- subject: "大量データの非同期処理にジョブキューを導入する"
+  tracker: feature
+  status: in_progress
+  priority: high
+  updated_days_ago: 2
+  version: sprint3
+
+- subject: "API のレートリミットとバックプレッシャーを実装する"
+  tracker: task
+  status: new
+  priority: normal
+  updated_days_ago: 10
+  version: sprint4
+
+# ===== バグ修正 =====
+- subject: "月またぎの打刻集計にズレが出るバグを修正する"
+  tracker: bug
+  status: resolved
+  priority: high
+  updated_days_ago: 6
+  version: sprint3
+
+- subject: "有給残日数がマイナスになるケースを修正する"
+  tracker: bug
+  status: in_progress
+  priority: urgent
+  updated_days_ago: 1
+  version: sprint3
+
+- subject: "タイムゾーン変換で 1 時間ズレるバグを修正する"
+  tracker: bug
+  status: closed
+  priority: high
+  updated_days_ago: 18
+  version: sprint2
+
+- subject: "申請削除後も通知が届くバグを修正する"
+  tracker: bug
+  status: resolved
+  priority: normal
+  updated_days_ago: 7
+  version: sprint3
+
+- subject: "大量データ取得時にメモリリークするバグを修正する"
+  tracker: bug
+  status: in_progress
+  priority: high
+  updated_days_ago: 3
+  version: sprint3
+
+- subject: "OpenAPI スキーマを swaggo で自動生成する"
+  tracker: task
+  status: in_progress
+  priority: normal
+  updated_days_ago: 4
+  version: sprint3
+
+- subject: "打刻 API のユニットテストカバレッジを 85% 以上にする"
+  tracker: task
+  status: in_progress
+  priority: normal
+  updated_days_ago: 5
+  version: sprint3
+
+- subject: "申請 API の統合テストを整備する"
+  tracker: task
+  status: new
+  priority: normal
+  updated_days_ago: 9
+  version: sprint4
+
+- subject: "データベースマイグレーションのゼロダウンタイム手順を整備する"
+  tracker: task
+  status: feedback
+  priority: high
+  updated_days_ago: 8
+  version: sprint3
+
+- subject: "テナント作成時の初期データ投入バッチを実装する"
+  tracker: task
+  status: closed
+  priority: normal
+  updated_days_ago: 23
+  version: sprint2
+
+- subject: "Go の context キャンセルをリクエスト全体で伝播させる"
+  tracker: task
+  status: in_progress
+  priority: normal
+  updated_days_ago: 3
+  version: sprint3
+
+- subject: "打刻同期 API の競合解決ロジックを実装する"
+  tracker: feature
+  status: in_progress
+  priority: high
+  updated_days_ago: 1
+  version: sprint3
+
+- subject: "認証 API の E2E テストを Postman コレクションで整備する"
+  tracker: task
+  status: new
+  priority: low
+  updated_days_ago: 17
+  version: sprint4
+
+- subject: "ヘルスチェックエンドポイントに依存サービスの状態を含める"
+  tracker: task
+  status: closed
+  priority: normal
+  updated_days_ago: 41
+  version: sprint1
+
+- subject: "構造化ログに request_id と tenant_id を含める"
+  tracker: task
+  status: closed
+  priority: normal
+  updated_days_ago: 44
+  version: sprint1
+
+- subject: "Graceful Shutdown の実装を見直す"
+  tracker: task
+  status: resolved
+  priority: normal
+  updated_days_ago: 11
+  version: sprint2

@@ -1,165 +1,210 @@
 # frozen_string_literal: true
+# kintai-next デモデータ投入スクリプト
+# 次世代勤怠管理 SaaS プロジェクトの開発 issue を 510 件以上登録する。
+# 想定ユーザー: admin = 鈴木（フロントエンド担当）が AIRedmine を利用している場面。
+#
+# Usage: bundle exec rails runner /demo-scripts/seed-demo.rb
+
+require "yaml"
+
+DATA_DIR = File.expand_path("seed-data", __dir__)
 
 User.current = User.find_by(login: "admin") || User.first
-
 Setting.rest_api_enabled = "1"
 
-new_status = IssueStatus.find_or_create_by!(name: "New") do |status|
-  status.position = 1
-  status.default_done_ratio = 0
+cfg = YAML.load_file(File.join(DATA_DIR, "config.yml"))
+
+# ===== ステータス =====
+statuses = {}
+cfg["statuses"].each do |s|
+  st = IssueStatus.find_or_create_by!(name: s["name"]) do |obj|
+    obj.position          = s["position"]
+    obj.default_done_ratio = s["done_ratio"]
+    obj.is_closed         = s["is_closed"] || false
+  end
+  st.update!(is_closed: s["is_closed"] || false, default_done_ratio: s["done_ratio"])
+  statuses[s["key"]] = st
 end
 
-in_progress_status = IssueStatus.find_or_create_by!(name: "In Progress") do |status|
-  status.position = 2
-  status.default_done_ratio = 40
+# ===== 優先度 =====
+priorities = {}
+cfg["priorities"].each do |p|
+  pr = IssuePriority.find_or_create_by!(name: p["name"]) do |obj|
+    obj.position   = p["position"]
+    obj.active     = true
+    obj.is_default = p["default"] || false
+  end
+  pr.update!(is_default: p["default"] || false)
+  priorities[p["key"]] = pr
 end
 
-feedback_status = IssueStatus.find_or_create_by!(name: "Feedback") do |status|
-  status.position = 3
-  status.default_done_ratio = 20
+# ===== トラッカー =====
+trackers = {}
+cfg["trackers"].each do |t|
+  tr = Tracker.find_or_create_by!(name: t["name"]) do |obj|
+    obj.default_status = statuses["new"]
+    obj.position       = t["position"]
+  end
+  trackers[t["key"]] = tr
 end
 
-resolved_status = IssueStatus.find_or_create_by!(name: "Resolved") do |status|
-  status.position = 4
-  status.default_done_ratio = 90
-end
-
-closed_status = IssueStatus.find_or_create_by!(name: "Closed") do |status|
-  status.position = 5
-  status.is_closed = true
-  status.default_done_ratio = 100
-end
-closed_status.update!(is_closed: true, default_done_ratio: 100)
-
-low_priority = IssuePriority.find_or_create_by!(name: "Low") do |priority|
-  priority.position = 1
-  priority.active = true
-end
-
-normal_priority = IssuePriority.find_or_create_by!(name: "Normal") do |priority|
-  priority.position = 2
-  priority.active = true
-  priority.is_default = true
-end
-normal_priority.update!(is_default: true)
-
-high_priority = IssuePriority.find_or_create_by!(name: "High") do |priority|
-  priority.position = 3
-  priority.active = true
-end
-
-urgent_priority = IssuePriority.find_or_create_by!(name: "Urgent") do |priority|
-  priority.position = 4
-  priority.active = true
-end
-
-feature_tracker = Tracker.find_or_create_by!(name: "Feature") do |tracker|
-  tracker.default_status = new_status
-  tracker.position = 1
-end
-
-task_tracker = Tracker.find_or_create_by!(name: "Task") do |tracker|
-  tracker.default_status = new_status
-  tracker.position = 2
-end
-
-bug_tracker = Tracker.find_or_create_by!(name: "Bug") do |tracker|
-  tracker.default_status = new_status
-  tracker.position = 3
-end
-
-project = Project.find_or_initialize_by(identifier: "airedmine-demo")
-project.name = "AIRedmine Demo"
-project.description = "AI agent driven Redmine project experience demo."
-project.is_public = true
-project.status = Project::STATUS_ACTIVE
-project.trackers = [feature_tracker, task_tracker, bug_tracker]
-project.enabled_module_names = %w[issue_tracking wiki time_tracking news]
+# ===== プロジェクト =====
+project = Project.find_or_initialize_by(identifier: "kintai-next")
+project.name                 = cfg["project"]["name"]
+project.description          = cfg["project"]["description"].strip
+project.is_public            = true
+project.status               = Project::STATUS_ACTIVE
+project.trackers             = trackers.values
+project.enabled_module_names = %w[issue_tracking wiki time_tracking]
 project.save!
 
+# ===== メンバー =====
+members_cfg = YAML.load_file(File.join(DATA_DIR, "members.yml"))
+users = {}
 admin = User.current
+users["suzuki"] = admin  # admin = 鈴木（フロントエンド）
 
-issues = [
-  {
-    subject: "PM判断待ち: リリース対象issueの優先順位を確定する",
-    tracker: task_tracker,
-    status: feedback_status,
-    priority: urgent_priority,
-    description: "次回リリースに含めるissueをPMが確定する。AIエージェントは候補と根拠を提示する。",
-    updated_on: 8.days.ago
-  },
-  {
-    subject: "開発者向け: 今日取り組むissue候補を提示する",
-    tracker: feature_tracker,
-    status: in_progress_status,
-    priority: high_priority,
-    description: "担当issue、優先度、更新状況をもとに、今日の作業候補と確認点を提示する。",
-    updated_on: 2.days.ago
-  },
-  {
-    subject: "仕様確認待ち: Redmine更新前の承認境界を決める",
-    tracker: task_tracker,
-    status: feedback_status,
-    priority: high_priority,
-    description: "AIがRedmineを更新する前に、人間が確認すべき差分、理由、影響範囲を整理する。",
-    updated_on: 6.days.ago
-  },
-  {
-    subject: "停滞リスク: 知識ベース連携の対象範囲を絞る",
-    tracker: feature_tracker,
-    status: new_status,
-    priority: normal_priority,
-    description: "docs、Redmine wiki、PR、CI結果のどこまでを最初の知識ベース対象にするか決める。",
-    updated_on: 12.days.ago
-  },
-  {
-    subject: "不具合: APIキー未設定時の案内文を改善する",
-    tracker: bug_tracker,
-    status: new_status,
-    priority: normal_priority,
-    description: "モック表示中であることと、実Redmine接続に必要な設定をより分かりやすくする。",
-    updated_on: 1.day.ago
-  },
-  {
-    subject: "クローズ候補: Docker Compose接続手順をREADMEに反映する",
-    tracker: task_tracker,
-    status: resolved_status,
-    priority: normal_priority,
-    description: "Docker ComposeでRedmineとAIRedmineを起動し、API接続まで確認する手順をREADMEへ反映する。",
-    updated_on: 3.days.ago
-  },
-  {
-    subject: "完了: Redmine Connectorを分離する",
-    tracker: task_tracker,
-    status: closed_status,
-    priority: low_priority,
-    description: "Redmine API呼び出しとモックデータ取得をConnectorとして分離した。",
-    updated_on: 5.days.ago
-  }
-]
+members_cfg["members"].each do |m|
+  next if m["key"] == "suzuki"
+  u = User.find_by(login: m["login"])
+  unless u
+    u = User.new(
+      login:                m["login"],
+      firstname:            m["firstname"],
+      lastname:             m["lastname"],
+      mail:                 m["mail"],
+      language:             "ja",
+      status:               User::STATUS_ACTIVE,
+      must_change_passwd:   false,
+      password:             "Welcome1!",
+      password_confirmation: "Welcome1!"
+    )
+    u.save!(validate: false)
+  end
+  users[m["key"]] = u
+end
 
-issues.each do |attrs|
-  issue = Issue.find_or_initialize_by(project: project, subject: attrs[:subject])
-  issue.tracker = attrs[:tracker]
-  issue.status = attrs[:status]
-  issue.priority = attrs[:priority]
-  issue.author = admin
-  issue.assigned_to = admin
-  issue.description = attrs[:description]
-  issue.start_date ||= Date.current
-  issue.done_ratio = attrs[:status].is_closed? ? 100 : (attrs[:status].default_done_ratio || 0)
-  issue.save!
-  Issue.where(id: issue.id).update_all(
-    updated_on: attrs[:updated_on],
-    closed_on: attrs[:status].is_closed? ? attrs[:updated_on] : nil
+role = Role.where(builtin: 0).first
+users.values.each do |user|
+  m = Member.find_or_initialize_by(project: project, user: user)
+  next unless m.new_record?
+  m.roles = [role].compact
+  m.save! rescue nil
+end
+
+# ===== バージョン（Sprint）=====
+versions = {}
+cfg["versions"].each do |v|
+  date = v["days_from_now"] >= 0 \
+    ? v["days_from_now"].days.from_now.to_date \
+    : v["days_from_now"].abs.days.ago.to_date
+  vr = Version.find_or_create_by!(project: project, name: v["name"]) do |obj|
+    obj.status         = v["status"]
+    obj.effective_date = date
+  end
+  versions[v["key"]] = vr
+end
+
+# ===== ヘルパー =====
+STATUS_CYCLE   = %w[new in_progress in_progress feedback resolved closed closed closed]
+PRIORITY_CYCLE = %w[low normal normal normal high high urgent]
+DAYS_CYCLE     = [1, 2, 3, 5, 7, 10, 14, 20, 30, 45, 60, 90]
+VERSION_CYCLE  = %w[sprint1 sprint2 sprint2 sprint3 sprint3 sprint4]
+
+def done_ratio_for(status)
+  case status.name
+  when "New"         then 0
+  when "In Progress" then 40
+  when "Feedback"    then 20
+  when "Resolved"    then 90
+  when "Closed"      then 100
+  else 0
+  end
+end
+
+def create_issue(project:, attrs:, idx:, assigned_to:, users:, statuses:, priorities:, trackers:, versions:)
+  subject = attrs["subject"].to_s.strip
+  return if subject.empty?
+  return unless Issue.find_or_initialize_by(project: project, subject: subject).new_record?
+
+  status   = statuses[attrs["status"]   || STATUS_CYCLE[idx % STATUS_CYCLE.length]]
+  priority = priorities[attrs["priority"] || PRIORITY_CYCLE[idx % PRIORITY_CYCLE.length]]
+  tracker  = trackers[attrs["tracker"]  || "task"]
+  version  = versions[attrs["version"]  || VERSION_CYCLE[idx % VERSION_CYCLE.length]]
+  days     = (attrs["updated_days_ago"] || DAYS_CYCLE[idx % DAYS_CYCLE.length]).to_i
+  author   = users[attrs["author"] || "suzuki"] || assigned_to
+
+  issue = Issue.new(
+    project:       project,
+    subject:       subject,
+    tracker:       tracker,
+    status:        status,
+    priority:      priority,
+    assigned_to:   assigned_to,
+    author:        author,
+    description:   attrs["description"].to_s.strip,
+    fixed_version: version,
+    start_date:    [Date.current - days.days - 5.days, Date.current - 90.days].max,
+    done_ratio:    done_ratio_for(status)
   )
+  issue.save!
+
+  ts = days.days.ago
+  Issue.where(id: issue.id).update_all(
+    updated_on: ts,
+    closed_on:  status.is_closed? ? ts : nil
+  )
+
+  (attrs["journals"] || []).each do |j|
+    note = Journal.new(
+      journalized:   issue,
+      user:          users[j["user"]] || author,
+      notes:         j["note"].to_s,
+      private_notes: false
+    )
+    note.save!(validate: false)
+    Journal.where(id: note.id).update_all(created_on: j["days_ago"].to_i.days.ago)
+  end
+
+  issue
+end
+
+# ===== データファイルを読み込んで issue を作成 =====
+data_files = Dir.glob(File.join(DATA_DIR, "*.yml"))
+  .reject { |f| %w[config.yml members.yml].include?(File.basename(f)) }
+  .sort
+
+total = 0
+
+data_files.each do |file|
+  member_key  = File.basename(file, ".yml")
+  assigned_to = users[member_key] || admin
+  data        = YAML.load_file(file) || []
+
+  data.each_with_index do |attrs, i|
+    create_issue(
+      project:    project,
+      attrs:      attrs,
+      idx:        i,
+      assigned_to: assigned_to,
+      users:      users,
+      statuses:   statuses,
+      priorities: priorities,
+      trackers:   trackers,
+      versions:   versions
+    )
+  end
+
+  puts "  #{member_key}: #{data.size} issues"
+  total += data.size
 end
 
 token = Token.find_or_create_by!(user: admin, action: "api")
 
 puts({
-  project: project.identifier,
-  issues: project.issues.count,
+  project:     project.identifier,
+  issues_registered: total,
+  issues_in_db:      project.issues.count,
   api_enabled: Setting.rest_api_enabled,
-  api_key: token.value
+  api_key:     token.value
 }.to_json)

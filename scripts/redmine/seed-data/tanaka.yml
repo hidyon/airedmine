@@ -1,0 +1,568 @@
+# 田中（開発リーダー）の issue 一覧 / 80 件
+
+# ===== アーキテクチャ・設計 =====
+- subject: "マイクロサービス分割方針を決定する"
+  tracker: task
+  status: closed
+  priority: high
+  updated_days_ago: 55
+  version: sprint1
+
+- subject: "フロントエンドとバックエンドの API 契約設計を整備する"
+  tracker: task
+  status: closed
+  priority: high
+  updated_days_ago: 48
+  version: sprint1
+
+- subject: "データモデル設計をレビューして承認する"
+  tracker: task
+  status: closed
+  priority: high
+  updated_days_ago: 42
+  version: sprint1
+
+- subject: "認証サービスの分離とシングルサインオン設計を行う"
+  tracker: task
+  status: closed
+  priority: high
+  updated_days_ago: 38
+  version: sprint2
+
+- subject: "イベント駆動アーキテクチャの導入可否を検討する"
+  tracker: task
+  status: feedback
+  priority: normal
+  updated_days_ago: 9
+  version: sprint4
+
+- subject: "マルチテナント設計のデータ分離方針を決定する"
+  tracker: task
+  status: closed
+  priority: urgent
+  updated_days_ago: 50
+  version: sprint1
+
+- subject: "API バージョニング戦略を定義する"
+  tracker: task
+  status: closed
+  priority: normal
+  updated_days_ago: 43
+  version: sprint1
+
+- subject: "エラーコードと例外処理の標準化を行う"
+  tracker: task
+  status: closed
+  priority: normal
+  updated_days_ago: 36
+  version: sprint2
+
+- subject: "依存ライブラリの更新ポリシーを制定する"
+  tracker: task
+  status: closed
+  priority: normal
+  updated_days_ago: 31
+  version: sprint2
+
+- subject: "モノレポ vs 分割リポジトリの方針を決定する"
+  tracker: task
+  status: closed
+  priority: normal
+  updated_days_ago: 52
+  version: sprint1
+
+# ===== コードレビュー・品質 =====
+- subject: "PR レビューの観点と基準を文書化する"
+  tracker: task
+  status: closed
+  priority: normal
+  updated_days_ago: 44
+  version: sprint1
+
+- subject: "コードレビューの SLA（48 時間以内）を制定する"
+  tracker: task
+  status: closed
+  priority: normal
+  updated_days_ago: 40
+  version: sprint2
+
+- subject: "テストカバレッジの目標を 80% 以上に設定する"
+  tracker: task
+  status: in_progress
+  priority: normal
+  updated_days_ago: 5
+  version: sprint3
+
+- subject: "静的解析ツールの CI 組み込みを整備する"
+  tracker: task
+  status: closed
+  priority: normal
+  updated_days_ago: 35
+  version: sprint2
+
+- subject: "ブランチ戦略（GitHub Flow）を標準化する"
+  tracker: task
+  status: closed
+  priority: normal
+  updated_days_ago: 53
+  version: sprint1
+
+- subject: "コミットメッセージの規約を整備する"
+  tracker: task
+  status: closed
+  priority: low
+  updated_days_ago: 54
+  version: sprint1
+
+- subject: "技術的負債の優先度付け基準を策定する"
+  tracker: task
+  status: in_progress
+  priority: normal
+  updated_days_ago: 7
+  version: sprint3
+
+- subject: "セキュリティレビューのチェックリストを整備する"
+  tracker: task
+  status: in_progress
+  priority: high
+  updated_days_ago: 4
+  version: sprint3
+
+- subject: "パフォーマンスレビューの基準を定める"
+  tracker: task
+  status: feedback
+  priority: normal
+  updated_days_ago: 10
+  version: sprint3
+
+- subject: "フロントエンドコーディング規約を見直す"
+  tracker: task
+  status: in_progress
+  priority: normal
+  updated_days_ago: 3
+  version: sprint3
+
+# ===== スプリント管理 =====
+- subject: "Sprint 1 の scope を確定してキックオフする"
+  tracker: task
+  status: closed
+  priority: high
+  updated_days_ago: 60
+  version: sprint1
+
+- subject: "Sprint 2 のバックログリファインメントを行う"
+  tracker: task
+  status: closed
+  priority: normal
+  updated_days_ago: 33
+  version: sprint2
+
+- subject: "Sprint 3 の計画会議を開催する"
+  tracker: task
+  status: closed
+  priority: normal
+  updated_days_ago: 17
+  version: sprint3
+
+- subject: "Sprint 4 の事前準備と前提確認を行う"
+  tracker: task
+  status: new
+  priority: normal
+  updated_days_ago: 6
+  version: sprint4
+
+- subject: "デイリースクラムの進め方を改善する"
+  tracker: task
+  status: closed
+  priority: normal
+  updated_days_ago: 25
+  version: sprint2
+
+- subject: "スプリントレトロスペクティブの記録を残す"
+  tracker: task
+  status: in_progress
+  priority: normal
+  updated_days_ago: 2
+  version: sprint3
+
+- subject: "ベロシティの計測と予測精度を改善する"
+  tracker: task
+  status: in_progress
+  priority: normal
+  updated_days_ago: 8
+  version: sprint3
+
+- subject: "ストーリーポイントの見積もり基準を統一する"
+  tracker: task
+  status: closed
+  priority: normal
+  updated_days_ago: 29
+  version: sprint2
+
+- subject: "受け入れ基準の記述方法を標準化する"
+  tracker: task
+  status: closed
+  priority: normal
+  updated_days_ago: 45
+  version: sprint1
+
+- subject: "スプリントデモの準備と進行を担当する"
+  tracker: task
+  status: in_progress
+  priority: normal
+  updated_days_ago: 1
+  version: sprint3
+
+# ===== リリース管理 =====
+- subject: "v1.0 のリリース計画を策定する"
+  tracker: task
+  status: in_progress
+  priority: high
+  updated_days_ago: 3
+  version: sprint3
+
+- subject: "ステージング環境のリリース手順を整備する"
+  tracker: task
+  status: closed
+  priority: normal
+  updated_days_ago: 28
+  version: sprint2
+
+- subject: "本番リリースのロールバック手順を整備する"
+  tracker: task
+  status: in_progress
+  priority: high
+  updated_days_ago: 6
+  version: sprint3
+
+- subject: "フィーチャーフラグの運用方針を決める"
+  tracker: task
+  status: feedback
+  priority: normal
+  updated_days_ago: 11
+  version: sprint3
+
+- subject: "カナリアリリースの仕組みを設計する"
+  tracker: task
+  status: new
+  priority: normal
+  updated_days_ago: 12
+  version: sprint4
+
+- subject: "リリースノートの作成プロセスを整備する"
+  tracker: task
+  status: closed
+  priority: low
+  updated_days_ago: 26
+  version: sprint2
+
+- subject: "ホットフィックスの手順を標準化する"
+  tracker: task
+  status: closed
+  priority: normal
+  updated_days_ago: 22
+  version: sprint2
+
+- subject: "リリース前チェックリストを整備する"
+  tracker: task
+  status: in_progress
+  priority: high
+  updated_days_ago: 4
+  version: sprint3
+
+- subject: "SLO・SLA の定義と測定方法を決める"
+  tracker: task
+  status: in_progress
+  priority: high
+  updated_days_ago: 5
+  version: sprint3
+
+- subject: "ダウンタイム最小化のリリース手順を設計する"
+  tracker: task
+  status: new
+  priority: normal
+  updated_days_ago: 9
+  version: sprint4
+
+# ===== 技術方針・調査 =====
+- subject: "Go 1.22 へのアップグレード影響を評価する"
+  tracker: task
+  status: closed
+  priority: normal
+  updated_days_ago: 32
+  version: sprint2
+
+- subject: "PostgreSQL 16 の新機能を調査して採用可否を決める"
+  tracker: task
+  status: in_progress
+  priority: normal
+  updated_days_ago: 7
+  version: sprint3
+
+- subject: "WebSocket vs Server-Sent Events の選定を行う"
+  tracker: task
+  status: closed
+  priority: normal
+  updated_days_ago: 16
+  version: sprint2
+
+- subject: "型安全な API クライアント生成ツールを評価する"
+  tracker: task
+  status: in_progress
+  priority: normal
+  updated_days_ago: 6
+  version: sprint3
+
+- subject: "OpenTelemetry の導入計画を策定する"
+  tracker: task
+  status: new
+  priority: normal
+  updated_days_ago: 11
+  version: sprint4
+
+- subject: "データベース暗号化の実装方針を決める"
+  tracker: task
+  status: in_progress
+  priority: high
+  updated_days_ago: 3
+  version: sprint3
+
+- subject: "CDN 戦略とエッジキャッシュの設計を行う"
+  tracker: task
+  status: new
+  priority: normal
+  updated_days_ago: 14
+  version: sprint4
+
+- subject: "コンテナイメージの最適化方針を決める"
+  tracker: task
+  status: closed
+  priority: normal
+  updated_days_ago: 27
+  version: sprint2
+
+- subject: "gRPC の内部通信での採用を検討する"
+  tracker: task
+  status: feedback
+  priority: low
+  updated_days_ago: 20
+  version: sprint4
+
+- subject: "フロントエンドのモノレポ化（Turborepo）を検討する"
+  tracker: task
+  status: new
+  priority: low
+  updated_days_ago: 18
+  version: sprint4
+
+# ===== チーム調整・ドキュメント =====
+- subject: "オンボーディングドキュメントを整備する"
+  tracker: task
+  status: closed
+  priority: normal
+  updated_days_ago: 46
+  version: sprint1
+
+- subject: "技術選定の意思決定記録（ADR）を書く"
+  tracker: task
+  status: in_progress
+  priority: normal
+  updated_days_ago: 5
+  version: sprint3
+
+- subject: "API ドキュメントの生成と管理方針を決める"
+  tracker: task
+  status: closed
+  priority: normal
+  updated_days_ago: 30
+  version: sprint2
+
+- subject: "依存関係の脆弱性スキャンを自動化する"
+  tracker: task
+  status: in_progress
+  priority: high
+  updated_days_ago: 2
+  version: sprint3
+
+- subject: "インシデント対応手順書を整備する"
+  tracker: task
+  status: in_progress
+  priority: high
+  updated_days_ago: 4
+  version: sprint3
+
+- subject: "アーキテクチャ図を最新化する"
+  tracker: task
+  status: in_progress
+  priority: normal
+  updated_days_ago: 8
+  version: sprint3
+
+- subject: "鈴木のフロントエンド実装方針をレビューする"
+  tracker: task
+  status: in_progress
+  priority: normal
+  updated_days_ago: 1
+  version: sprint3
+
+- subject: "佐藤のバックエンド設計をレビューして承認する"
+  tracker: task
+  status: in_progress
+  priority: normal
+  updated_days_ago: 2
+  version: sprint3
+
+- subject: "社内 LT 資料を作成して知識共有を行う"
+  tracker: task
+  status: closed
+  priority: low
+  updated_days_ago: 19
+  version: sprint2
+
+- subject: "本番環境の設定値を棚卸しして文書化する"
+  tracker: task
+  status: new
+  priority: normal
+  updated_days_ago: 13
+  version: sprint4
+
+# ===== PM・ステークホルダー対応 =====
+- subject: "中村 PM からの追加要件を技術的に評価する"
+  tracker: task
+  status: in_progress
+  priority: high
+  updated_days_ago: 3
+  version: sprint3
+
+- subject: "リリース判定のための完了基準を確認する"
+  tracker: task
+  status: in_progress
+  priority: high
+  updated_days_ago: 5
+  version: sprint3
+
+- subject: "外部ベンダーとの API 連携仕様を合意する"
+  tracker: task
+  status: feedback
+  priority: high
+  updated_days_ago: 9
+  version: sprint3
+
+- subject: "ステークホルダーへの進捗報告資料を作成する"
+  tracker: task
+  status: in_progress
+  priority: normal
+  updated_days_ago: 2
+  version: sprint3
+
+- subject: "リスク一覧を更新して優先度を見直す"
+  tracker: task
+  status: in_progress
+  priority: normal
+  updated_days_ago: 6
+  version: sprint3
+
+- subject: "品質基準を満たしているかのゲートレビューを行う"
+  tracker: task
+  status: new
+  priority: high
+  updated_days_ago: 7
+  version: sprint3
+
+- subject: "次期機能の概算見積もりを行う"
+  tracker: task
+  status: new
+  priority: normal
+  updated_days_ago: 10
+  version: sprint4
+
+- subject: "開発環境の統一化と標準化を進める"
+  tracker: task
+  status: in_progress
+  priority: normal
+  updated_days_ago: 4
+  version: sprint3
+
+- subject: "本番データの個人情報マスキング方針を決める"
+  tracker: task
+  status: in_progress
+  priority: high
+  updated_days_ago: 7
+  version: sprint3
+
+- subject: "障害訓練（Game Day）を企画する"
+  tracker: task
+  status: new
+  priority: normal
+  updated_days_ago: 15
+  version: sprint4
+
+- subject: "GDPR・個人情報保護法への対応を確認する"
+  tracker: task
+  status: in_progress
+  priority: high
+  updated_days_ago: 6
+  version: sprint3
+
+- subject: "バックアップリストアの定期テストを実施する"
+  tracker: task
+  status: new
+  priority: normal
+  updated_days_ago: 11
+  version: sprint4
+
+- subject: "コスト最適化の施策を検討する"
+  tracker: task
+  status: new
+  priority: normal
+  updated_days_ago: 13
+  version: sprint4
+
+- subject: "採用候補者の技術面接に協力する"
+  tracker: task
+  status: in_progress
+  priority: low
+  updated_days_ago: 4
+  version: sprint3
+
+- subject: "フロントエンドとバックエンドの疎通確認を行う"
+  tracker: task
+  status: closed
+  priority: normal
+  updated_days_ago: 19
+  version: sprint2
+
+- subject: "ミドルウェアのライセンス確認を行う"
+  tracker: task
+  status: closed
+  priority: low
+  updated_days_ago: 47
+  version: sprint1
+
+- subject: "技術ロードマップを四半期ごとに更新する"
+  tracker: task
+  status: in_progress
+  priority: normal
+  updated_days_ago: 8
+  version: sprint3
+
+- subject: "外部委託先とのインターフェース仕様を確認する"
+  tracker: task
+  status: feedback
+  priority: high
+  updated_days_ago: 10
+  version: sprint3
+
+- subject: "ロードマップの見直しと承認を取る"
+  tracker: task
+  status: in_progress
+  priority: normal
+  updated_days_ago: 5
+  version: sprint3
+
+- subject: "次のスプリントで取り組む改善候補を整理する"
+  tracker: task
+  status: new
+  priority: normal
+  updated_days_ago: 9
+  version: sprint4

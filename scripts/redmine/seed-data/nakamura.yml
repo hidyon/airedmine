@@ -1,0 +1,569 @@
+# 中村（PM担当）の issue 一覧 / 80 件
+
+# ===== 要件・仕様管理 =====
+- subject: "勤怠打刻機能の要件定義書を作成する"
+  tracker: task
+  status: closed
+  priority: high
+  updated_days_ago: 52
+  version: sprint1
+
+- subject: "申請・承認フローの詳細仕様を確定する"
+  tracker: task
+  status: closed
+  priority: high
+  updated_days_ago: 46
+  version: sprint1
+
+- subject: "フレックスタイム制の要件を整理する"
+  tracker: task
+  status: closed
+  priority: high
+  updated_days_ago: 40
+  version: sprint2
+
+- subject: "モバイルアプリの UX 要件を定義する"
+  tracker: task
+  status: closed
+  priority: normal
+  updated_days_ago: 35
+  version: sprint2
+
+- subject: "外部連携の API 仕様要件を確認する"
+  tracker: task
+  status: in_progress
+  priority: high
+  updated_days_ago: 4
+  version: sprint3
+
+- subject: "レポート帳票の出力要件を確定する"
+  tracker: task
+  status: in_progress
+  priority: normal
+  updated_days_ago: 6
+  version: sprint3
+
+- subject: "管理コンソールの権限モデルを定義する"
+  tracker: task
+  status: closed
+  priority: normal
+  updated_days_ago: 28
+  version: sprint2
+
+- subject: "多言語対応（日本語・英語）の要件を定義する"
+  tracker: task
+  status: new
+  priority: normal
+  updated_days_ago: 10
+  version: sprint4
+
+- subject: "法令対応（36 協定・労基法）の要件を確認する"
+  tracker: task
+  status: in_progress
+  priority: urgent
+  updated_days_ago: 3
+  version: sprint3
+
+- subject: "SLA・可用性要件を決定する"
+  tracker: task
+  status: in_progress
+  priority: high
+  updated_days_ago: 5
+  version: sprint3
+
+- subject: "データ保持期間と削除ポリシーを決定する"
+  tracker: task
+  status: in_progress
+  priority: normal
+  updated_days_ago: 7
+  version: sprint3
+
+- subject: "アクセシビリティ（WCAG 2.1 AA）要件を確定する"
+  tracker: task
+  status: closed
+  priority: normal
+  updated_days_ago: 22
+  version: sprint2
+
+# ===== スプリント計画・進捗管理 =====
+- subject: "Sprint 1 のゴールと受け入れ基準を定義する"
+  tracker: task
+  status: closed
+  priority: high
+  updated_days_ago: 58
+  version: sprint1
+
+- subject: "Sprint 2 のバックログを優先順位付けする"
+  tracker: task
+  status: closed
+  priority: high
+  updated_days_ago: 31
+  version: sprint2
+
+- subject: "Sprint 3 のスプリント計画会議を開催する"
+  tracker: task
+  status: closed
+  priority: high
+  updated_days_ago: 16
+  version: sprint3
+
+- subject: "Sprint 4 の準備と前提条件を確認する"
+  tracker: task
+  status: new
+  priority: high
+  updated_days_ago: 5
+  version: sprint4
+
+- subject: "週次進捗レポートを作成してステークホルダーに共有する"
+  tracker: task
+  status: in_progress
+  priority: normal
+  updated_days_ago: 2
+  version: sprint3
+
+- subject: "バーンダウンチャートを更新して遅延リスクを共有する"
+  tracker: task
+  status: in_progress
+  priority: normal
+  updated_days_ago: 1
+  version: sprint3
+
+- subject: "スコープ変更の影響をチームに共有する"
+  tracker: task
+  status: in_progress
+  priority: normal
+  updated_days_ago: 4
+  version: sprint3
+
+- subject: "マイルストーンの達成を確認してリリース判断をする"
+  tracker: task
+  status: feedback
+  priority: high
+  updated_days_ago: 8
+  version: sprint3
+
+- subject: "フィーチャーの優先順位を再評価する"
+  tracker: task
+  status: in_progress
+  priority: high
+  updated_days_ago: 3
+  version: sprint3
+
+- subject: "スプリントデモを企画してステークホルダーを招待する"
+  tracker: task
+  status: in_progress
+  priority: normal
+  updated_days_ago: 5
+  version: sprint3
+
+# ===== ステークホルダー管理 =====
+- subject: "経営層への月次進捗報告資料を作成する"
+  tracker: task
+  status: in_progress
+  priority: high
+  updated_days_ago: 2
+  version: sprint3
+
+- subject: "顧客向けデモ環境を準備してデモを実施する"
+  tracker: task
+  status: in_progress
+  priority: high
+  updated_days_ago: 4
+  version: sprint3
+
+- subject: "外部ベンダーとの定例会議を設定する"
+  tracker: task
+  status: closed
+  priority: normal
+  updated_days_ago: 18
+  version: sprint2
+
+- subject: "ユーザーインタビューを設計して実施する"
+  tracker: task
+  status: closed
+  priority: normal
+  updated_days_ago: 23
+  version: sprint2
+
+- subject: "営業チームへの機能説明資料を作成する"
+  tracker: task
+  status: in_progress
+  priority: normal
+  updated_days_ago: 6
+  version: sprint3
+
+- subject: "サポートチームへの操作マニュアルを提供する"
+  tracker: task
+  status: in_progress
+  priority: normal
+  updated_days_ago: 7
+  version: sprint3
+
+- subject: "法務・コンプライアンスとの要件確認を行う"
+  tracker: task
+  status: in_progress
+  priority: high
+  updated_days_ago: 5
+  version: sprint3
+
+- subject: "カスタマーサクセスからのフィードバックを整理する"
+  tracker: task
+  status: in_progress
+  priority: normal
+  updated_days_ago: 3
+  version: sprint3
+
+- subject: "パートナー企業との共同開発要件を調整する"
+  tracker: task
+  status: feedback
+  priority: normal
+  updated_days_ago: 10
+  version: sprint4
+
+# ===== リスク・課題管理 =====
+- subject: "リリース遅延リスクを評価して対応策を立案する"
+  tracker: task
+  status: in_progress
+  priority: urgent
+  updated_days_ago: 2
+  version: sprint3
+
+- subject: "外部連携先の API 仕様変更リスクを確認する"
+  tracker: task
+  status: feedback
+  priority: high
+  updated_days_ago: 9
+  version: sprint3
+
+- subject: "チームメンバーの離脱リスクと引き継ぎ計画を立てる"
+  tracker: task
+  status: in_progress
+  priority: high
+  updated_days_ago: 6
+  version: sprint3
+
+- subject: "技術的負債のリスクを評価してスプリントに組み込む"
+  tracker: task
+  status: in_progress
+  priority: normal
+  updated_days_ago: 5
+  version: sprint3
+
+- subject: "セキュリティ監査の指摘事項を管理する"
+  tracker: task
+  status: in_progress
+  priority: high
+  updated_days_ago: 3
+  version: sprint3
+
+- subject: "法令改正への対応スケジュールを立てる"
+  tracker: task
+  status: new
+  priority: high
+  updated_days_ago: 7
+  version: sprint4
+
+- subject: "重大バグの影響範囲を評価してエスカレーションする"
+  tracker: task
+  status: in_progress
+  priority: urgent
+  updated_days_ago: 1
+  version: sprint3
+
+- subject: "予算超過リスクを早期に検知して報告する"
+  tracker: task
+  status: in_progress
+  priority: high
+  updated_days_ago: 4
+  version: sprint3
+
+# ===== リリース計画 =====
+- subject: "v1.0 ベータ版のリリース計画を策定する"
+  tracker: task
+  status: in_progress
+  priority: high
+  updated_days_ago: 3
+  version: sprint3
+
+- subject: "段階的ロールアウト（5% → 20% → 100%）計画を立てる"
+  tracker: task
+  status: new
+  priority: high
+  updated_days_ago: 7
+  version: sprint4
+
+- subject: "リリース前の最終確認チェックリストを作成する"
+  tracker: task
+  status: in_progress
+  priority: high
+  updated_days_ago: 5
+  version: sprint3
+
+- subject: "ロールバック判断基準を明確にする"
+  tracker: task
+  status: in_progress
+  priority: high
+  updated_days_ago: 6
+  version: sprint3
+
+- subject: "初期ユーザー向けのサポート体制を整備する"
+  tracker: task
+  status: new
+  priority: normal
+  updated_days_ago: 8
+  version: sprint4
+
+- subject: "リリース後のモニタリング計画を立てる"
+  tracker: task
+  status: in_progress
+  priority: normal
+  updated_days_ago: 4
+  version: sprint3
+
+- subject: "フィードバック収集の仕組みを整備する"
+  tracker: task
+  status: new
+  priority: normal
+  updated_days_ago: 11
+  version: sprint4
+
+- subject: "次期バージョンのロードマップを作成する"
+  tracker: task
+  status: new
+  priority: normal
+  updated_days_ago: 14
+  version: sprint4
+
+- subject: "競合サービスの機能比較を行う"
+  tracker: task
+  status: in_progress
+  priority: normal
+  updated_days_ago: 9
+  version: sprint3
+
+- subject: "製品ビジョンを更新してチームに共有する"
+  tracker: task
+  status: in_progress
+  priority: normal
+  updated_days_ago: 7
+  version: sprint3
+
+# ===== PM 判断が必要な issue =====
+- subject: "PM判断待ち: フレックス精算の端数処理方針を決める"
+  tracker: task
+  status: feedback
+  priority: high
+  updated_days_ago: 8
+  version: sprint3
+
+- subject: "PM判断待ち: モバイルアプリの iOS 最低サポートバージョンを決める"
+  tracker: task
+  status: feedback
+  priority: normal
+  updated_days_ago: 11
+  version: sprint3
+
+- subject: "PM判断待ち: 外部連携の優先対象サービスを絞る"
+  tracker: task
+  status: feedback
+  priority: high
+  updated_days_ago: 6
+  version: sprint4
+
+- subject: "PM判断待ち: v1.0 のリリース日程を最終確定する"
+  tracker: task
+  status: feedback
+  priority: urgent
+  updated_days_ago: 3
+  version: sprint3
+
+- subject: "PM判断待ち: 有料プランの機能制限を決める"
+  tracker: task
+  status: feedback
+  priority: high
+  updated_days_ago: 9
+  version: sprint4
+
+- subject: "PM判断待ち: EU 市場への展開優先度を決める"
+  tracker: task
+  status: feedback
+  priority: normal
+  updated_days_ago: 13
+  version: sprint4
+
+- subject: "PM判断待ち: オフライン機能の対応範囲を決める"
+  tracker: task
+  status: feedback
+  priority: high
+  updated_days_ago: 5
+  version: sprint3
+
+- subject: "PM判断待ち: サポート対応時間の SLA を決める"
+  tracker: task
+  status: feedback
+  priority: normal
+  updated_days_ago: 12
+  version: sprint4
+
+- subject: "PM判断待ち: 多言語対応の優先言語を決める"
+  tracker: task
+  status: feedback
+  priority: normal
+  updated_days_ago: 14
+  version: sprint4
+
+- subject: "PM判断待ち: ベータユーザー向けの割引ポリシーを決める"
+  tracker: task
+  status: feedback
+  priority: normal
+  updated_days_ago: 7
+  version: sprint4
+
+# ===== ユーザーリサーチ・UX =====
+- subject: "ユーザビリティテストのシナリオを設計する"
+  tracker: task
+  status: closed
+  priority: normal
+  updated_days_ago: 24
+  version: sprint2
+
+- subject: "NPS 調査を実施して結果を分析する"
+  tracker: task
+  status: in_progress
+  priority: normal
+  updated_days_ago: 4
+  version: sprint3
+
+- subject: "ユーザーペルソナを作成して共有する"
+  tracker: task
+  status: closed
+  priority: normal
+  updated_days_ago: 49
+  version: sprint1
+
+- subject: "プロトタイプのユーザーテストを実施する"
+  tracker: task
+  status: closed
+  priority: high
+  updated_days_ago: 37
+  version: sprint2
+
+- subject: "ユーザーインタビューの結果をまとめて共有する"
+  tracker: task
+  status: in_progress
+  priority: normal
+  updated_days_ago: 6
+  version: sprint3
+
+- subject: "オンボーディング完了率を改善する施策を立案する"
+  tracker: task
+  status: new
+  priority: normal
+  updated_days_ago: 10
+  version: sprint4
+
+- subject: "ユーザーサポート問い合わせを分析して課題を抽出する"
+  tracker: task
+  status: in_progress
+  priority: normal
+  updated_days_ago: 3
+  version: sprint3
+
+- subject: "ベータユーザーのフィードバックを開発チームに共有する"
+  tracker: task
+  status: in_progress
+  priority: high
+  updated_days_ago: 2
+  version: sprint3
+
+# ===== ドキュメント =====
+- subject: "プロダクトロードマップを更新する"
+  tracker: task
+  status: in_progress
+  priority: normal
+  updated_days_ago: 5
+  version: sprint3
+
+- subject: "リリースノートを作成する"
+  tracker: task
+  status: new
+  priority: normal
+  updated_days_ago: 8
+  version: sprint3
+
+- subject: "FAQ ドキュメントを作成する"
+  tracker: task
+  status: in_progress
+  priority: normal
+  updated_days_ago: 7
+  version: sprint3
+
+- subject: "操作マニュアルのレビューと承認をする"
+  tracker: task
+  status: in_progress
+  priority: normal
+  updated_days_ago: 4
+  version: sprint3
+
+- subject: "ヘルプページのコンテンツを作成する"
+  tracker: task
+  status: new
+  priority: normal
+  updated_days_ago: 9
+  version: sprint4
+
+- subject: "変更管理記録を更新する"
+  tracker: task
+  status: in_progress
+  priority: low
+  updated_days_ago: 3
+  version: sprint3
+
+- subject: "機能仕様書のテンプレートを作成する"
+  tracker: task
+  status: closed
+  priority: low
+  updated_days_ago: 41
+  version: sprint1
+
+- subject: "ステークホルダー要望の優先度評価基準を作る"
+  tracker: task
+  status: in_progress
+  priority: normal
+  updated_days_ago: 7
+  version: sprint3
+
+- subject: "PM判断待ち: 競合機能との差別化ポイントを確認する"
+  tracker: task
+  status: feedback
+  priority: high
+  updated_days_ago: 6
+  version: sprint3
+
+- subject: "PM判断待ち: トライアル期間の長さを決める"
+  tracker: task
+  status: feedback
+  priority: normal
+  updated_days_ago: 10
+  version: sprint4
+
+- subject: "契約・SLA ドキュメントを更新する"
+  tracker: task
+  status: in_progress
+  priority: normal
+  updated_days_ago: 5
+  version: sprint3
+
+- subject: "β版ユーザー向け招待メールの文面を作成する"
+  tracker: task
+  status: in_progress
+  priority: normal
+  updated_days_ago: 4
+  version: sprint3
+
+- subject: "PM判断待ち: 打刻修正の申請期限（何日以内まで？）を決める"
+  tracker: task
+  status: feedback
+  priority: high
+  updated_days_ago: 9
+  version: sprint3

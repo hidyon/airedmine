@@ -1,0 +1,568 @@
+# 山田（QA担当）の issue 一覧 / 80 件
+
+# ===== テスト設計・整備 =====
+- subject: "テスト計画書を作成してチームレビューしてもらう"
+  tracker: task
+  status: closed
+  priority: high
+  updated_days_ago: 44
+  version: sprint1
+
+- subject: "打刻機能の単体テストケースを作成する"
+  tracker: task
+  status: closed
+  priority: high
+  updated_days_ago: 38
+  version: sprint2
+
+- subject: "申請・承認フローの結合テストケースを作成する"
+  tracker: task
+  status: in_progress
+  priority: high
+  updated_days_ago: 3
+  version: sprint3
+
+- subject: "集計計算ロジックの境界値テストを設計する"
+  tracker: task
+  status: in_progress
+  priority: high
+  updated_days_ago: 5
+  version: sprint3
+
+- subject: "外部連携 API のモックテストを設計する"
+  tracker: task
+  status: new
+  priority: normal
+  updated_days_ago: 8
+  version: sprint4
+
+- subject: "認証フローの網羅テストケースを作成する"
+  tracker: task
+  status: closed
+  priority: high
+  updated_days_ago: 32
+  version: sprint2
+
+- subject: "E2E テストシナリオをユーザーストーリーから作成する"
+  tracker: task
+  status: in_progress
+  priority: high
+  updated_days_ago: 2
+  version: sprint3
+
+- subject: "レグレッションテストスイートを整備する"
+  tracker: task
+  status: in_progress
+  priority: normal
+  updated_days_ago: 4
+  version: sprint3
+
+- subject: "モバイルブラウザ向けテストケースを追加する"
+  tracker: task
+  status: new
+  priority: normal
+  updated_days_ago: 9
+  version: sprint3
+
+- subject: "アクセシビリティテストの観点を整理する"
+  tracker: task
+  status: in_progress
+  priority: normal
+  updated_days_ago: 6
+  version: sprint3
+
+# ===== バグ報告 =====
+- subject: "有給申請のカウントがずれるバグを報告する"
+  tracker: bug
+  status: in_progress
+  priority: urgent
+  updated_days_ago: 1
+  version: sprint3
+
+- subject: "深夜勤務で翌日の出勤が記録されないバグを報告する"
+  tracker: bug
+  status: resolved
+  priority: high
+  updated_days_ago: 7
+  version: sprint2
+
+- subject: "一括承認で一部が承認されないバグを報告する"
+  tracker: bug
+  status: in_progress
+  priority: high
+  updated_days_ago: 2
+  version: sprint3
+
+- subject: "PDF 帳票で文字が欠けるバグを報告する"
+  tracker: bug
+  status: feedback
+  priority: high
+  updated_days_ago: 10
+  version: sprint3
+
+- subject: "iOS Safari で日付入力ができないバグを報告する"
+  tracker: bug
+  status: in_progress
+  priority: high
+  updated_days_ago: 3
+  version: sprint3
+
+- subject: "フレックス計算で端数誤差が出るバグを報告する"
+  tracker: bug
+  status: in_progress
+  priority: high
+  updated_days_ago: 4
+  version: sprint3
+
+- subject: "ログアウト後もセッションが有効なバグを報告する"
+  tracker: bug
+  status: resolved
+  priority: urgent
+  updated_days_ago: 6
+  version: sprint2
+
+- subject: "検索フィルタが URL から復元されないバグを報告する"
+  tracker: bug
+  status: closed
+  priority: normal
+  updated_days_ago: 15
+  version: sprint2
+
+- subject: "部署変更後にレポートが更新されないバグを報告する"
+  tracker: bug
+  status: in_progress
+  priority: normal
+  updated_days_ago: 5
+  version: sprint3
+
+- subject: "申請を差し戻すと通知が届かないバグを報告する"
+  tracker: bug
+  status: in_progress
+  priority: normal
+  updated_days_ago: 3
+  version: sprint3
+
+- subject: "月初に集計がリセットされないバグを報告する"
+  tracker: bug
+  status: feedback
+  priority: urgent
+  updated_days_ago: 8
+  version: sprint3
+
+- subject: "CSV エクスポートで文字化けするバグを報告する"
+  tracker: bug
+  status: in_progress
+  priority: normal
+  updated_days_ago: 6
+  version: sprint3
+
+- subject: "残業申請の上限チェックがゼロ除算エラーになるバグを報告する"
+  tracker: bug
+  status: resolved
+  priority: high
+  updated_days_ago: 9
+  version: sprint3
+
+- subject: "ページネーションで最終ページが空になるバグを報告する"
+  tracker: bug
+  status: closed
+  priority: normal
+  updated_days_ago: 20
+  version: sprint2
+
+- subject: "管理者削除後に孤立したデータが残るバグを報告する"
+  tracker: bug
+  status: new
+  priority: normal
+  updated_days_ago: 11
+  version: sprint4
+
+# ===== 性能・負荷試験 =====
+- subject: "月次締め処理の負荷試験を実施する"
+  tracker: task
+  status: in_progress
+  priority: high
+  updated_days_ago: 3
+  version: sprint3
+
+- subject: "1000 ユーザー同時打刻のシナリオテストを実施する"
+  tracker: task
+  status: new
+  priority: high
+  updated_days_ago: 7
+  version: sprint4
+
+- subject: "レポート生成 API の応答時間を計測する"
+  tracker: task
+  status: in_progress
+  priority: normal
+  updated_days_ago: 5
+  version: sprint3
+
+- subject: "大量データ投入時のデータベース性能を計測する"
+  tracker: task
+  status: new
+  priority: normal
+  updated_days_ago: 12
+  version: sprint4
+
+- subject: "長時間稼働時のメモリ使用量を計測する"
+  tracker: task
+  status: in_progress
+  priority: normal
+  updated_days_ago: 4
+  version: sprint3
+
+- subject: "API のスロットリング動作を確認する"
+  tracker: task
+  status: new
+  priority: normal
+  updated_days_ago: 9
+  version: sprint4
+
+- subject: "フロントエンドの初期ローディング時間を計測する"
+  tracker: task
+  status: closed
+  priority: normal
+  updated_days_ago: 22
+  version: sprint2
+
+- subject: "モバイルネットワーク環境でのパフォーマンステストを実施する"
+  tracker: task
+  status: new
+  priority: normal
+  updated_days_ago: 13
+  version: sprint4
+
+- subject: "PDF 一括生成の処理時間と上限を計測する"
+  tracker: task
+  status: in_progress
+  priority: normal
+  updated_days_ago: 6
+  version: sprint3
+
+- subject: "同時承認操作でのデータ競合を試験する"
+  tracker: task
+  status: new
+  priority: high
+  updated_days_ago: 8
+  version: sprint4
+
+# ===== セキュリティテスト =====
+- subject: "SQL インジェクション試験を全エンドポイントで実施する"
+  tracker: task
+  status: in_progress
+  priority: high
+  updated_days_ago: 3
+  version: sprint3
+
+- subject: "XSS 脆弱性の検査を実施する"
+  tracker: task
+  status: in_progress
+  priority: high
+  updated_days_ago: 4
+  version: sprint3
+
+- subject: "CSRF 対策の動作を確認する"
+  tracker: task
+  status: closed
+  priority: high
+  updated_days_ago: 25
+  version: sprint2
+
+- subject: "認証バイパスの試みを検証する"
+  tracker: task
+  status: in_progress
+  priority: urgent
+  updated_days_ago: 2
+  version: sprint3
+
+- subject: "API の認可チェックを全エンドポイントで確認する"
+  tracker: task
+  status: in_progress
+  priority: high
+  updated_days_ago: 5
+  version: sprint3
+
+- subject: "個人情報の暗号化状態をデータベースレベルで確認する"
+  tracker: task
+  status: in_progress
+  priority: high
+  updated_days_ago: 6
+  version: sprint3
+
+- subject: "不正なファイルアップロードの拒否を確認する"
+  tracker: task
+  status: closed
+  priority: normal
+  updated_days_ago: 18
+  version: sprint2
+
+- subject: "セキュリティヘッダーの設定を全ページで検証する"
+  tracker: task
+  status: in_progress
+  priority: high
+  updated_days_ago: 3
+  version: sprint3
+
+- subject: "脆弱性スキャンツールの結果をレビューして対応する"
+  tracker: task
+  status: feedback
+  priority: high
+  updated_days_ago: 9
+  version: sprint3
+
+# ===== 受け入れテスト =====
+- subject: "打刻機能のユーザー受け入れテストシナリオを実施する"
+  tracker: task
+  status: closed
+  priority: high
+  updated_days_ago: 28
+  version: sprint2
+
+- subject: "有給申請フローの受け入れテストを実施する"
+  tracker: task
+  status: in_progress
+  priority: high
+  updated_days_ago: 4
+  version: sprint3
+
+- subject: "管理者向け機能の受け入れテストを実施する"
+  tracker: task
+  status: new
+  priority: normal
+  updated_days_ago: 7
+  version: sprint3
+
+- subject: "外部連携データの整合性を受け入れテストで確認する"
+  tracker: task
+  status: new
+  priority: high
+  updated_days_ago: 10
+  version: sprint4
+
+- subject: "モバイルアプリの受け入れテストを実施する"
+  tracker: task
+  status: in_progress
+  priority: normal
+  updated_days_ago: 5
+  version: sprint3
+
+- subject: "レポート出力の受け入れテストを実施する"
+  tracker: task
+  status: new
+  priority: normal
+  updated_days_ago: 11
+  version: sprint3
+
+- subject: "Sprint 2 の受け入れテストを実施する"
+  tracker: task
+  status: closed
+  priority: high
+  updated_days_ago: 30
+  version: sprint2
+
+- subject: "Sprint 3 の受け入れテストを実施する"
+  tracker: task
+  status: in_progress
+  priority: high
+  updated_days_ago: 1
+  version: sprint3
+
+- subject: "本番リリース前の最終確認テストを実施する"
+  tracker: task
+  status: new
+  priority: urgent
+  updated_days_ago: 6
+  version: sprint3
+
+# ===== ドキュメント・プロセス =====
+- subject: "バグトリアージの優先度付け基準を整備する"
+  tracker: task
+  status: closed
+  priority: normal
+  updated_days_ago: 40
+  version: sprint1
+
+- subject: "テスト環境の設定手順を文書化する"
+  tracker: task
+  status: closed
+  priority: normal
+  updated_days_ago: 33
+  version: sprint2
+
+- subject: "バグ報告テンプレートを作成する"
+  tracker: task
+  status: closed
+  priority: normal
+  updated_days_ago: 42
+  version: sprint1
+
+- subject: "テスト結果レポートのフォーマットを整備する"
+  tracker: task
+  status: closed
+  priority: normal
+  updated_days_ago: 36
+  version: sprint2
+
+- subject: "自動テストと手動テストの分担方針を決める"
+  tracker: task
+  status: closed
+  priority: normal
+  updated_days_ago: 29
+  version: sprint2
+
+- subject: "リリース候補の QA ゲート基準を定める"
+  tracker: task
+  status: in_progress
+  priority: high
+  updated_days_ago: 5
+  version: sprint3
+
+- subject: "バグ修正の確認テスト（デグレ確認）手順を整備する"
+  tracker: task
+  status: closed
+  priority: normal
+  updated_days_ago: 24
+  version: sprint2
+
+- subject: "テストデータ管理方針を策定する"
+  tracker: task
+  status: in_progress
+  priority: normal
+  updated_days_ago: 7
+  version: sprint3
+
+# ===== 品質指標・改善 =====
+- subject: "バグ発生率のトレンドを週次でレポートする"
+  tracker: task
+  status: in_progress
+  priority: normal
+  updated_days_ago: 2
+  version: sprint3
+
+- subject: "テストカバレッジの計測環境を整備する"
+  tracker: task
+  status: closed
+  priority: normal
+  updated_days_ago: 26
+  version: sprint2
+
+- subject: "欠陥密度を計算してコンポーネント別リスクを評価する"
+  tracker: task
+  status: new
+  priority: normal
+  updated_days_ago: 9
+  version: sprint4
+
+- subject: "フロントエンドのスナップショットテストを追加する"
+  tracker: task
+  status: in_progress
+  priority: normal
+  updated_days_ago: 4
+  version: sprint3
+
+- subject: "API コントラクトテストを導入する"
+  tracker: task
+  status: new
+  priority: normal
+  updated_days_ago: 11
+  version: sprint4
+
+- subject: "テストスイートの実行時間を 15 分以内に最適化する"
+  tracker: task
+  status: new
+  priority: normal
+  updated_days_ago: 13
+  version: sprint4
+
+- subject: "フロントエンド Vitest のカバレッジを 70% 以上にする"
+  tracker: task
+  status: in_progress
+  priority: normal
+  updated_days_ago: 6
+  version: sprint3
+
+- subject: "バグの再発防止策とテスト追加を標準化する"
+  tracker: task
+  status: in_progress
+  priority: normal
+  updated_days_ago: 5
+  version: sprint3
+
+- subject: "QA プロセスを改善するためのレトロを実施する"
+  tracker: task
+  status: closed
+  priority: low
+  updated_days_ago: 16
+  version: sprint2
+
+- subject: "テスト自動化の進捗をチームに週次報告する"
+  tracker: task
+  status: in_progress
+  priority: low
+  updated_days_ago: 3
+  version: sprint3
+
+- subject: "打刻修正申請の E2E テストシナリオを追加する"
+  tracker: task
+  status: new
+  priority: normal
+  updated_days_ago: 7
+  version: sprint4
+
+- subject: "残業申請承認の境界値テストを実施する"
+  tracker: task
+  status: new
+  priority: normal
+  updated_days_ago: 10
+  version: sprint4
+
+- subject: "管理画面のアクセス権限テストを実施する"
+  tracker: task
+  status: in_progress
+  priority: high
+  updated_days_ago: 3
+  version: sprint3
+
+- subject: "新機能リリース前の回帰テストを実施する"
+  tracker: task
+  status: in_progress
+  priority: high
+  updated_days_ago: 2
+  version: sprint3
+
+- subject: "ステージング環境のデータ整合性を確認する"
+  tracker: task
+  status: in_progress
+  priority: normal
+  updated_days_ago: 5
+  version: sprint3
+
+- subject: "テスト環境の自動リセット仕組みを整備する"
+  tracker: task
+  status: new
+  priority: normal
+  updated_days_ago: 14
+  version: sprint4
+
+- subject: "エラーハンドリングの UX をユーザー視点で評価する"
+  tracker: task
+  status: new
+  priority: normal
+  updated_days_ago: 8
+  version: sprint4
+
+- subject: "ユーザーガイドの操作手順が正確かを検証する"
+  tracker: task
+  status: in_progress
+  priority: normal
+  updated_days_ago: 6
+  version: sprint3
+
+- subject: "多ブラウザ（Chrome / Firefox / Edge / Safari）動作確認を実施する"
+  tracker: task
+  status: in_progress
+  priority: high
+  updated_days_ago: 4
+  version: sprint3
