@@ -410,6 +410,27 @@ ISS-012 の記録の入口は残っているが、可視化・テンプレート
 
 - ISS-079〜084 がすべてクローズされ、チャットから主要な Redmine 更新操作が「提案 → 確認 → 実行」フローで動作する。
 
+## Milestone 15: Redmine MCP サーバー
+
+優先度: High
+状態: Open
+
+背景: AIRedmine web アプリは PM・開発者がブラウザで使う体験を提供する。一方で Claude Code ユーザーはターミナルや IDE から直接 Redmine を操作したい。MCP サーバーとして Redmine を公開することで、両方の体験を並行して提供できる。
+
+関連 issue:
+
+- `ISS-085` Open: Redmine MCP サーバーを追加し Claude Code から操作できるようにする。
+
+期待成果:
+
+- Claude Code から `list_issues` / `create_issue` などのツールで Redmine を直接操作できる。
+- web アプリを開かなくても、ターミナル・IDE から Redmine のコンテキストを Claude に渡せる。
+
+完了条件:
+
+- Claude Code に MCP サーバーを接続し、issue の照会・作成・更新が動作する。
+- 接続手順が `docs/mcp.md` に記載されている。
+
 ## 変更履歴
 
 - 2026-06-06: アプリの目的を「AI エージェント経由の Redmine 利用体験を明らかにするプロトタイプ」として定義した。

@@ -2808,3 +2808,52 @@ Priority: Low
 - 「停滞 issue を全部 Feedback にして」で対象 issue リストが提案カードに表示されることを確認する。
 - 21 件以上を指定した場合にエラーメッセージが返ることを確認する。
 - `npx tsc --noEmit` エラーなし。
+
+### ISS-085: Redmine MCP サーバーを追加し Claude Code から操作できるようにする
+
+Status: Open
+Priority: High
+
+要求仕様:
+
+- 開発者が Claude Code（ターミナル・IDE）から Redmine を直接操作できるようにする。
+- 既存の AIRedmine web アプリは変更せず、MCP サーバーを新サービスとして追加する。
+- 対象外: web アプリの「提案 → 確認 → 実行」フロー（MCP では Claude Code のツール確認に委ねる）。
+
+機能仕様:
+
+- `mcp-server/` ディレクトリを新設し、Python で MCP サーバーを実装する。
+  - 使用パッケージ: `mcp`（Model Context Protocol Python SDK）。
+  - 既存 `backend/services/redmine_connector.py` のロジックを流用する。
+- 公開するツール（最小セット）:
+  - `list_issues`: issue 一覧取得（status / assigned_to_id / limit でフィルタ）。
+  - `get_issue`: issue 詳細取得（id 指定）。
+  - `search_issues`: キーワード検索。
+  - `create_issue`: issue 新規作成（subject / description / assigned_to_id / priority_id）。
+  - `add_comment`: コメント追加（issue_id / notes）。
+  - `change_status`: ステータス変更（issue_id / status_id）。
+  - `change_assignee`: 担当変更（issue_id / assigned_to_id）。
+- トランスポート: stdio（Claude Code のローカル起動に対応）。
+- 環境変数: `REDMINE_BASE_URL` / `REDMINE_API_KEY`（既存 `.env` と共有）。
+- `docker-compose.yml` には追加しない（Claude Code が直接 `python mcp_server.py` で起動する形）。
+- Claude Code への接続設定例を `docs/mcp.md` に記載する。
+  ```json
+  {
+    "mcpServers": {
+      "redmine": {
+        "command": "python",
+        "args": ["/path/to/mcp-server/mcp_server.py"],
+        "env": {
+          "REDMINE_BASE_URL": "http://localhost:3000",
+          "REDMINE_API_KEY": "your-api-key"
+        }
+      }
+    }
+  }
+  ```
+
+テスト仕様:
+
+- Claude Code に MCP サーバーを接続し、`list_issues` を呼んで Redmine の issue 一覧が返ることを手動で確認する。
+- `create_issue` で issue が Redmine に作成されることを確認する。
+- `REDMINE_BASE_URL` 未設定時にエラーメッセージが返ることを確認する。
