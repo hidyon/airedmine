@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import Markdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import { postChat, postCommentProposal } from '../api/client'
 import type { ChatHistoryMessage } from '../api/client'
 import type { ChatResponse, ChatReference, UpdateProposal } from '../api/types'
@@ -282,9 +283,22 @@ function ToolCallBadges({ toolCalls }: { toolCalls: string[] }) {
   )
 }
 
-function MarkdownContent({ children }: { children: string }) {
+function linkifyIssues(text: string): string {
+  // #NNN を [#NNN](#issue-NNN) に変換。既存リンク内 ([#NNN]) は除外する
+  return text.replace(/(?<!\[)#(\d+)/g, '[#$1](#issue-$1)')
+}
+
+function MarkdownContent({
+  children,
+  onSelectIssue,
+}: {
+  children: string
+  onSelectIssue?: (id: number) => void
+}) {
+  const processed = onSelectIssue ? linkifyIssues(children) : children
   return (
     <Markdown
+      remarkPlugins={[remarkGfm]}
       components={{
         p: ({ children }) => <p className="text-sm text-slate-800 leading-relaxed my-1 first:mt-0 last:mb-0">{children}</p>,
         ul: ({ children }) => <ul className="list-disc pl-4 my-1 space-y-0.5">{children}</ul>,
@@ -305,9 +319,38 @@ function MarkdownContent({ children }: { children: string }) {
           <pre className="bg-slate-100 rounded-lg px-3 py-2 overflow-x-auto my-2 text-xs">{children}</pre>
         ),
         hr: () => <hr className="border-slate-200 my-2" />,
+        a: ({ href, children }) => {
+          const m = href?.match(/^#issue-(\d+)$/)
+          if (m && onSelectIssue) {
+            const id = parseInt(m[1])
+            return (
+              <button
+                onClick={() => onSelectIssue(id)}
+                className="text-blue-600 hover:text-blue-800 underline cursor-pointer font-medium"
+              >
+                {children}
+              </button>
+            )
+          }
+          return (
+            <a href={href} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+              {children}
+            </a>
+          )
+        },
+        table: ({ children }) => (
+          <div className="overflow-x-auto my-2">
+            <table className="text-xs border-collapse w-full">{children}</table>
+          </div>
+        ),
+        thead: ({ children }) => <thead className="bg-slate-100">{children}</thead>,
+        tbody: ({ children }) => <tbody>{children}</tbody>,
+        tr: ({ children }) => <tr className="border-b border-slate-200">{children}</tr>,
+        th: ({ children }) => <th className="px-3 py-1.5 text-left font-semibold text-slate-700 border border-slate-200">{children}</th>,
+        td: ({ children }) => <td className="px-3 py-1.5 text-slate-700 border border-slate-200">{children}</td>,
       }}
     >
-      {children}
+      {processed}
     </Markdown>
   )
 }
@@ -353,7 +396,7 @@ function AssistantBubble({
         </div>
       ) : (
         <div className="bg-white border border-slate-200 rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm">
-          <MarkdownContent>{res.answer ?? ''}</MarkdownContent>
+          <MarkdownContent onSelectIssue={onSelectIssue}>{res.answer ?? ''}</MarkdownContent>
           {res.tool_calls && res.tool_calls.length > 0 && (
             <ToolCallBadges toolCalls={res.tool_calls} />
           )}
