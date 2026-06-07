@@ -2596,7 +2596,7 @@ Redmine API 連携:
 
 ### ISS-077: 開発者ダッシュボードを優先度・停滞でセクション分けする
 
-Status: Open
+Status: Closed
 Priority: Medium
 
 要求仕様:
