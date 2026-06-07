@@ -3,15 +3,12 @@ import Layout from './components/Layout'
 import LoginView from './views/LoginView'
 import DeveloperChatView from './views/DeveloperChatView'
 import DeveloperDashboardView from './views/DeveloperDashboardView'
-import PMView from './views/PMView'
 import AuditView from './views/AuditView'
-import { isLoggedIn, getUser } from './auth'
+import { isLoggedIn } from './auth'
 
 function DefaultRedirect() {
   if (!isLoggedIn()) return <Navigate to="/login" replace />
-  const user = getUser()
-  const dest = user?.role === 'pm' ? '/pm' : '/developer/chat'
-  return <Navigate to={dest} replace />
+  return <Navigate to="/developer/chat" replace />
 }
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -34,7 +31,7 @@ export default function App() {
         >
           <Route path="/developer/chat" element={<DeveloperChatView />} />
           <Route path="/developer/dashboard" element={<DeveloperDashboardView />} />
-          <Route path="/pm" element={<PMView />} />
+          <Route path="/pm" element={<Navigate to="/developer/chat" replace />} />
           <Route path="/audit" element={<AuditView />} />
         </Route>
       </Routes>

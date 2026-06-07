@@ -2420,26 +2420,39 @@ Priority: High
 
 ### ISS-072: PM View を Claude Agent に刷新する
 
-Status: Open
+Status: Closed
 Priority: Medium
 
 要求仕様:
 
-- 現在の PM View はルールベース（更新日・優先度から機械的に分類）でのカード表示のみ。
-- PM が AI の洞察（停滞の根本原因・優先判断・定例アジェンダ候補）を PM View から直接受け取れるようにする。
+- PM ロールでログインしたユーザーが、DeveloperChatView と同じ AI チャット画面を利用できる。
+- ロールセレクターを UI から廃止し、ロールはログイン時に固定する。
 
 機能仕様:
 
-- PM View の上部に「AI 分析を取得」ボタンを追加する。
-- ボタンクリックで `POST /api/chat` に `role=pm` で固定の分析依頼（「プロジェクトの現状、停滞 issue、PM が今日判断すべきことを教えて」）を送る。
-- Claude の回答をマークダウンレンダリングして AI 分析カードとして表示する。
-- 既存のルールベースカード（判断待ち・停滞・高優先度）は残す。
+- `DeveloperChatView.tsx` からロールセレクタータブと `switchRole` 関数を削除する。ロールは `getUser()?.role` から読み取る（変更不可）。
+- 「会話をリセット」ボタンはロールセレクターバーから独立させ、メッセージがある場合のみ右端に表示する。
+- `App.tsx`: `/pm` ルートは `/developer/chat` へリダイレクトする。PMView をルーターから削除する。
+- `Layout.tsx`: `ALL_NAV` でロール別にナビ項目をフィルタリングする（PM: Chat + Audit、開発者: Chat + Dashboard + Audit）。セクションヘッダー（Developer / Management）を削除してシンプル化する。
 
 テスト仕様:
 
-- 「AI 分析を取得」ボタンを押したとき Claude が Redmine を参照して PM 向けの分析を返すことを確認する。
-- 分析カードにマークダウンがレンダリングされることを確認する。
+- nakamura でログインするとナビに「Chat」「Audit」のみ表示され「Dashboard」が見えないことを確認する。
+- 開発者でログインするとナビに「Chat」「Dashboard」「Audit」が表示されることを確認する。
+- ロールセレクタータブが画面に存在しないことを確認する。
+- `/pm` にアクセスすると `/developer/chat` にリダイレクトされることを確認する。
 - `npx tsc --noEmit` エラーなし。
+
+テスト結果:
+
+- `DeveloperChatView.tsx`: `switchRole` → `resetConversation`、ロールセレクターバー削除、「会話をリセット」のみ残存。
+- `App.tsx`: `PMView` import と route 削除、`/pm` → Navigate to `/developer/chat`、DefaultRedirect を `/developer/chat` 固定に変更。
+- `Layout.tsx`: `ALL_NAV` に `roles` フィールド追加、`navItems` でフィルタリング、セクションヘッダー削除。
+- `tsc --noEmit` エラーなし（コンテナ内で確認）。
+
+クローズ判定:
+
+- 要求仕様・機能仕様・テスト仕様をすべて満たすため Closed とする。
 
 ### ISS-073: ステータス変更・担当変更の実行フローを実装する
 

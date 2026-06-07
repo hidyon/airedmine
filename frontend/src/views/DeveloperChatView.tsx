@@ -38,7 +38,7 @@ export default function DeveloperChatView() {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
-  const [role, setRole] = useState<Role>(() => getUser()?.role ?? 'developer')
+  const role: Role = getUser()?.role ?? 'developer'
   const [selectedIssueId, setSelectedIssueId] = useState<number | null>(null)
   const sessionIdRef = useRef<string>(generateSessionId())
   const historyRef = useRef<ChatHistoryMessage[]>([])
@@ -48,8 +48,7 @@ export default function DeveloperChatView() {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, loading])
 
-  function switchRole(next: Role) {
-    setRole(next)
+  function resetConversation() {
     setMessages([])
     historyRef.current = []
     sessionIdRef.current = generateSessionId()
@@ -105,31 +104,16 @@ export default function DeveloperChatView() {
   return (
     <div className="flex h-full overflow-hidden">
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
-        {/* Role selector */}
-        <div className="flex items-center gap-2 px-4 py-2 border-b border-slate-200 bg-slate-50 flex-shrink-0">
-          <span className="text-xs text-slate-500">ロール:</span>
-          {(['developer', 'pm'] as Role[]).map(r => (
+        {messages.length > 0 && (
+          <div className="flex items-center justify-end px-4 py-2 border-b border-slate-200 bg-slate-50 flex-shrink-0">
             <button
-              key={r}
-              onClick={() => switchRole(r)}
-              className={`px-3 py-1 text-xs font-medium rounded-full border transition-colors cursor-pointer ${
-                role === r
-                  ? 'bg-blue-500 text-white border-blue-500'
-                  : 'bg-white text-slate-600 border-slate-300 hover:border-blue-300'
-              }`}
-            >
-              {r === 'developer' ? '開発者' : 'PM'}
-            </button>
-          ))}
-          {messages.length > 0 && (
-            <button
-              onClick={() => { setMessages([]); historyRef.current = []; sessionIdRef.current = generateSessionId() }}
-              className="ml-auto text-xs text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
+              onClick={resetConversation}
+              className="text-xs text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
             >
               会話をリセット
             </button>
-          )}
-        </div>
+          </div>
+        )}
 
         <div className="flex-1 overflow-y-auto px-4 py-6 flex flex-col gap-4">
           {messages.length === 0 && (

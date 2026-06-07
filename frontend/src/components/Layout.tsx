@@ -4,17 +4,15 @@ import { fetchConfig } from '../api/client'
 import type { ConfigResponse } from '../api/types'
 import { getUser, clearSession } from '../auth'
 
-const NAV_ITEMS = [
-  { to: '/developer/chat', icon: '💬', label: 'Chat', section: 'developer' },
-  { to: '/developer/dashboard', icon: '📋', label: 'Dashboard', section: 'developer' },
-  { to: '/pm', icon: '🎯', label: 'PM View', section: 'management' },
-  { to: '/audit', icon: '📝', label: 'Audit', section: 'management' },
-]
+const ALL_NAV = [
+  { to: '/developer/chat', icon: '💬', label: 'Chat', roles: ['developer', 'pm'] },
+  { to: '/developer/dashboard', icon: '📋', label: 'Dashboard', roles: ['developer'] },
+  { to: '/audit', icon: '📝', label: 'Audit', roles: ['developer', 'pm'] },
+] as const
 
 const VIEW_LABELS: Record<string, string> = {
-  '/developer/chat': 'Developer Chat',
-  '/developer/dashboard': 'Developer Dashboard',
-  '/pm': 'PM View',
+  '/developer/chat': 'Chat',
+  '/developer/dashboard': 'Dashboard',
   '/audit': 'Audit',
 }
 
@@ -35,6 +33,8 @@ export default function Layout() {
 
   const viewTitle = VIEW_LABELS[pathname] ?? 'AIRedmine'
   const mode = config?.mode
+  const role = user?.role ?? 'developer'
+  const navItems = ALL_NAV.filter(item => item.roles.includes(role))
 
   return (
     <div className="flex h-screen overflow-hidden bg-slate-50">
@@ -45,30 +45,8 @@ export default function Layout() {
             {mode === 'mock' ? 'Mock mode' : mode === 'redmine' ? 'Redmine' : '…'}
           </p>
         </div>
-        <nav className="p-2 flex flex-col gap-0.5">
-          <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest px-2 pt-3 pb-1">
-            Developer
-          </span>
-          {NAV_ITEMS.slice(0, 2).map(({ to, icon, label }) => (
-            <NavLink
-              key={to}
-              to={to}
-              className={({ isActive }) =>
-                `flex items-center gap-2.5 px-3 py-2 rounded-md text-[13.5px] font-medium no-underline transition-colors ${
-                  isActive
-                    ? 'bg-slate-600 text-white'
-                    : 'text-slate-300 hover:bg-slate-700 hover:text-white'
-                }`
-              }
-            >
-              <span className="text-[15px] w-5 text-center">{icon}</span>
-              {label}
-            </NavLink>
-          ))}
-          <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest px-2 pt-3 pb-1">
-            Management
-          </span>
-          {NAV_ITEMS.slice(2).map(({ to, icon, label }) => (
+        <nav className="p-2 flex flex-col gap-0.5 pt-3">
+          {navItems.map(({ to, icon, label }) => (
             <NavLink
               key={to}
               to={to}
