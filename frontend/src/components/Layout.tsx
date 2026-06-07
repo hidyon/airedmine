@@ -7,12 +7,14 @@ import { getUser, clearSession } from '../auth'
 const ALL_NAV = [
   { to: '/developer/chat', icon: '💬', label: 'Chat', roles: ['developer', 'pm'] },
   { to: '/developer/dashboard', icon: '📋', label: 'Dashboard', roles: ['developer'] },
+  { to: '/pm/dashboard', icon: '📊', label: 'Dashboard', roles: ['pm'] },
   { to: '/audit', icon: '📝', label: 'Audit', roles: ['developer', 'pm'] },
 ] as const
 
 const VIEW_LABELS: Record<string, string> = {
   '/developer/chat': 'Chat',
   '/developer/dashboard': 'Dashboard',
+  '/pm/dashboard': 'PM Dashboard',
   '/audit': 'Audit',
 }
 

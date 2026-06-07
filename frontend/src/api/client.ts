@@ -85,6 +85,22 @@ export function postChat(
   })
 }
 
+export interface BurndownPoint {
+  date: string
+  open: number
+  ideal: number
+}
+
+export interface BurndownResponse {
+  days: number
+  baseline: number
+  series: BurndownPoint[]
+}
+
+export function fetchBurndown(days: number): Promise<BurndownResponse> {
+  return request(`/pm/burndown?days=${days}`)
+}
+
 export function postUpdateProposal(
   issueId: number,
   action: 'status_change' | 'assignee_change',

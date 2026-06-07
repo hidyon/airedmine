@@ -3,6 +3,7 @@ import Layout from './components/Layout'
 import LoginView from './views/LoginView'
 import DeveloperChatView from './views/DeveloperChatView'
 import DeveloperDashboardView from './views/DeveloperDashboardView'
+import PMDashboardView from './views/PMDashboardView'
 import AuditView from './views/AuditView'
 import { isLoggedIn } from './auth'
 
@@ -31,6 +32,7 @@ export default function App() {
         >
           <Route path="/developer/chat" element={<DeveloperChatView />} />
           <Route path="/developer/dashboard" element={<DeveloperDashboardView />} />
+          <Route path="/pm/dashboard" element={<PMDashboardView />} />
           <Route path="/pm" element={<Navigate to="/developer/chat" replace />} />
           <Route path="/audit" element={<AuditView />} />
         </Route>

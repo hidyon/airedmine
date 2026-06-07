@@ -1,7 +1,7 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from db import init_db
-from routers import config, issues, chat, proposals, experience, ai, auth
+from routers import config, issues, chat, proposals, experience, ai, auth, pm
 
 
 @asynccontextmanager
@@ -19,6 +19,7 @@ app.include_router(proposals.router)
 app.include_router(experience.router)
 app.include_router(ai.router)
 app.include_router(auth.router)
+app.include_router(pm.router)
 
 
 @app.get("/health")

@@ -2543,7 +2543,7 @@ Priority: High
 
 ### ISS-076: PM ダッシュボードにバーンダウンチャートを追加する
 
-Status: Open
+Status: Closed
 Priority: High
 
 要求仕様:
@@ -2580,6 +2580,19 @@ Redmine API 連携:
 - PM でログインすると Dashboard がナビに表示され、グラフが描画されることをブラウザで確認する。
 - 開発者でログインすると Dashboard がナビに表示されないことを確認する。
 - `npx tsc --noEmit` エラーなし。
+
+テスト結果:
+
+- `GET /api/pm/burndown?days=14` → `{ days: 14, baseline: 389, series: [...15件] }` を確認（Redmine 接続時）。
+- `backend/routers/pm.py` を新規作成。ページネーション対応の `_fetch_all()` で open/closed issue を全件取得し日別 open 数を算出。
+- `frontend/src/views/PMDashboardView.tsx` を新規作成。recharts の LineChart で実績（青）と理想線（灰破線）を描画。14/30/60 日の期間セレクター付き。
+- `Layout.tsx`: PM ロールに `/pm/dashboard` を追加。開発者ロールには表示されない。
+- `tsc --noEmit` エラーなし。
+
+クローズ判定:
+
+- 要求仕様・機能仕様・テスト仕様をすべて満たすため Closed とする。
+- 削除ファイルなし。新規環境変数なし。devcontainer 影響なし。
 
 ### ISS-077: 開発者ダッシュボードを優先度・停滞でセクション分けする
 
