@@ -10,7 +10,9 @@ from db import get_connection
 router = APIRouter()
 
 DEMO_PASSWORD = os.getenv("DEMO_PASSWORD", "demo")
-JWT_SECRET = os.getenv("JWT_SECRET", "dev-secret-change-in-prod")
+JWT_SECRET = os.getenv("JWT_SECRET")
+if not JWT_SECRET:
+    raise RuntimeError("JWT_SECRET environment variable is required")
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRE_HOURS = 24
 

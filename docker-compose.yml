@@ -28,6 +28,8 @@ services:
       REDMINE_BASE_URL: http://redmine:3000
       REDMINE_API_KEY: ${REDMINE_API_KEY:-}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      DEMO_PASSWORD: ${DEMO_PASSWORD:-demo}
+      JWT_SECRET: ${JWT_SECRET}
       DOCS_ROOT: /project
     depends_on:
       - redmine
