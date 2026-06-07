@@ -2655,3 +2655,37 @@ Priority: High
 - PM Dashboard を開いてバーンダウン + 5 パネルが表示されることをブラウザで確認する。
 - 停滞 issue をクリックして詳細パネルが開くことを確認する。
 - `npx tsc --noEmit` エラーなし。
+
+### ISS-079: チャットから issue を新規作成できるようにする
+
+Status: Open
+Priority: High
+
+要求仕様:
+
+- 開発者・PM がチャットで「このバグを issue にして」「〇〇の機能追加を起票して」と依頼すると、AI が Redmine に issue を作成できるようにする。
+- 照会だけでなく入力・起票という操作をチャットから完結させ、Redmine を直接開く場面を減らす。
+- 既存の「提案 → 確認 → 実行」フローを踏む（AI が勝手に作成しない）。
+- 対象外: カスタムフィールドへの入力、添付ファイル。
+
+機能仕様:
+
+- `backend/services/tools.py` に `create_issue` ツールを追加する。
+  - 入力: `subject`（必須）、`description`、`project_id`、`assigned_to_id`、`priority_id`、`due_date`、`reason`。
+  - 戻り値: `{"confirmation_required": True, "action": "create_issue", ...}` を返す（実行しない）。
+- `backend/services/agent.py` で `create_issue` ブロックを処理し、提案に変換する。
+  - `change_summary` に「プロジェクト / 担当 / 優先度 / 期日」を要約する。
+- `backend/services/redmine_connector.py` に `create_issue(fields)` メソッドを追加する（`POST /issues.json`）。
+- `backend/models.py` に `CreateIssueRequest` を追加する。
+- `backend/routers/proposals.py` に `POST /api/proposals/create_issue` エンドポイントを追加する。
+- `frontend/src/api/types.ts` の `UpdateProposal.action` に `'create_issue'` を追加する。
+- `frontend/src/api/client.ts` に `postCreateIssueProposal()` を追加する。
+- `frontend/src/views/DeveloperChatView.tsx` の `ProposalCard` で `create_issue` アクションを表示・実行できるようにする。
+  - 「作成」ボタンを表示し、確認後に `postCreateIssueProposal()` を呼ぶ。
+
+テスト仕様:
+
+- チャットで「〇〇というタイトルで issue を作成して」と送信すると、提案カードに「作成」ボタンが表示されることを確認する。
+- 「作成」ボタンを押すと Redmine に issue が作成されることを確認する（Redmine モードで）。
+- モックモードでは `POST /api/proposals/create_issue` が `{"mode": "mock", ...}` を返すことを確認する。
+- `npx tsc --noEmit` エラーなし。
