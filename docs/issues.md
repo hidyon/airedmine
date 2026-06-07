@@ -1847,7 +1847,7 @@ Priority: High
 
 ### ISS-056: developer / pm ロール設計を docs に記録する
 
-Status: Open
+Status: Closed
 Priority: Low
 
 要求仕様:
@@ -1864,6 +1864,17 @@ Priority: Low
 テスト仕様:
 
 - docs/role-design.md が存在し、developer / pm ロールの設計が記録されていることを確認する。
+
+テスト結果:
+
+- `docs/role-design.md` を新規作成した。
+- developer / pm の View アクセス一覧、API アクセス一覧、操作権限の考え方を記録した。
+- 認証方式の検討候補（JWT / セッション / OAuth / Redmine API キー流用）を列挙した。
+- 実装時の対応方針を 4 ステップで記録した。
+
+クローズ判定:
+
+- 要求仕様、機能仕様、テスト仕様を満たすため Closed とする。
 
 ### ISS-057: `__pycache__` を `.gitignore` に追加する
 
