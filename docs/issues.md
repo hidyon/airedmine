@@ -1887,7 +1887,7 @@ Priority: High
 
 ### ISS-058: 旧 Node.js サーバー (`src/`) を削除する
 
-Status: Open
+Status: Closed
 Priority: Medium
 
 要求仕様:
@@ -1905,6 +1905,17 @@ Priority: Medium
 
 - `ls src/` でファイルが存在しないことを確認する。
 - フロントエンド（5173）、バックエンド（8000）が正常に起動していることを確認する。
+
+テスト結果:
+
+- `git rm -r src/` で `src/public/` と `src/server/` の 6 ファイルを削除した。
+- `package.json` から `dev`・`start` スクリプト（旧 `node src/server/index.js` 起動）を削除した。
+- `ls src/` が "No such file or directory" を返すことを確認した。
+- `http://localhost:5173/` が 200、`http://localhost:8000/health` が 200 を返すことを確認した。
+
+クローズ判定:
+
+- 要求仕様、機能仕様、テスト仕様を満たすため Closed とする。
 
 ### ISS-059: Proposal カードから Redmine コメントを実行できるようにする
 
