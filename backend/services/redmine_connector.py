@@ -46,12 +46,14 @@ class RedmineConnector:
         if not self.is_connected:
             return list_mock_issues(params)
 
-        query = {
-            "assigned_to_id": params.get("assigned_to_id", "me"),
+        query: dict[str, str] = {
             "status_id": params.get("status_id", "open"),
             "limit": str(params.get("limit", 100)),
             "sort": params.get("sort", "updated_on:desc"),
         }
+        assigned = params.get("assigned_to_id", "")
+        if assigned:
+            query["assigned_to_id"] = assigned
         url = f"{self._base_url}/issues.json"
         try:
             async with httpx.AsyncClient() as client:

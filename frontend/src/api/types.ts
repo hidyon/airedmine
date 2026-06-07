@@ -102,6 +102,7 @@ export interface ChatResponse {
   clarification: Clarification | null
   references: ChatReference[]
   proposal: UpdateProposal | null
+  tool_calls?: string[]
 }
 
 // Experience notes

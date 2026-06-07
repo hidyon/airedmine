@@ -1181,9 +1181,9 @@ Priority: High
 
 ### ISS-049: Chat intent 分類をモジュール化する
 
-Status: On Hold
+Status: Closed
 Priority: Medium
-Note: Python + FastAPI 移行（ISS-053）で再設計する。Node.js 版では着手しない。
+Note: Python + FastAPI 移行（ISS-053）で `backend/services/chat_engine.py` として分離済み。Milestone 9 の ISS-066 で agent.py に刷新した。
 
 要求仕様:
 
@@ -1204,9 +1204,9 @@ Note: Python + FastAPI 移行（ISS-053）で再設計する。Node.js 版では
 
 ### ISS-050: docs 検索に用語辞書とスコア理由を追加する
 
-Status: On Hold
+Status: Closed
 Priority: Medium
-Note: Python + FastAPI 移行（ISS-053）で再設計する。Node.js 版では着手しない。
+Note: Python + FastAPI 移行（ISS-053）で `backend/services/knowledge_base.py` として再設計済み。ISS-068 の `search_knowledge` ツールと統合した。
 
 要求仕様:
 
@@ -1227,9 +1227,9 @@ Note: Python + FastAPI 移行（ISS-053）で再設計する。Node.js 版では
 
 ### ISS-051: 体験メモを永続化する
 
-Status: On Hold
+Status: Closed
 Priority: Medium
-Note: Python + FastAPI 移行後に DB（SQLite など）で対応する。Node.js 版では着手しない。
+Note: Python + FastAPI 移行（ISS-053）で SQLite による永続化を実装済み。ISS-038 も解決。
 
 要求仕様:
 
@@ -2090,7 +2090,7 @@ Priority: High
 
 ### ISS-064: Redmine 操作ツールを tool_use 形式で定義する
 
-Status: Open
+Status: Closed
 Priority: High
 
 要求仕様:
@@ -2115,9 +2115,20 @@ Priority: High
 - `get_issue` が journals を含む詳細を返すことを確認する。
 - `add_comment` が確認待ちレスポンスを返すことを確認する。
 
+テスト結果:
+
+- `backend/services/tools.py` を新規作成した。`list_issues`, `get_issue`, `search_issues`, `add_comment`, `search_knowledge` の 5 ツールを TOOL_SCHEMAS として定義した。
+- `add_comment` は Redmine を直接呼ばず `{"confirmation_required": true, ...}` を返す。
+- `list_issues` の `assigned_to_id` が未指定の場合はパラメータを省略するよう修正した（空文字列送信によるエラーを解消）。
+- Agent から `list_issues` を呼んで issue 一覧が返ることを確認した。
+
+クローズ判定:
+
+- 要求仕様、機能仕様、テスト仕様を満たすため Closed とする。
+
 ### ISS-065: 会話コンテキスト管理を実装する
 
-Status: Open
+Status: Closed
 Priority: High
 
 要求仕様:
@@ -2136,9 +2147,20 @@ Priority: High
 - 2 回のリクエストで会話が継続されることを確認する。
 - セッション ID が異なる場合は別会話として扱われることを確認する。
 
+テスト結果:
+
+- `backend/db.py` に `conversations` テーブル（session_id, role, content, created_at）を追加した。
+- `backend/models.py` の `ChatRequest` に `session_id`, `role`, `messages: list[ConversationMessage]` を追加した。
+- `POST /api/chat` で `messages[]` を受け取り `run_agent` に渡す。フロントが会話履歴を蓄積して送る設計。
+- 2 ターン目で前の会話を引き継いだ回答が返ることを `curl` で確認した（PM ロールのテスト）。
+
+クローズ判定:
+
+- 要求仕様、機能仕様、テスト仕様を満たすため Closed とする。
+
 ### ISS-066: AI Agent コアを実装する
 
-Status: Open
+Status: Closed
 Priority: High
 
 要求仕様:
@@ -2161,9 +2183,21 @@ Priority: High
 - 「#841 の詳細を教えて」で `get_issue` が呼ばれ journals を踏まえた回答が返ることを確認する。
 - 「#841 にコメントを追加して」で確認待ちレスポンスが返ることを確認する。
 
+テスト結果:
+
+- `backend/services/agent.py` を新規作成した。`run_agent(question, messages, role, connector)` が tool_use ループを実行する。
+- `backend/routers/chat.py` を刷新し、旧 `build_chat_response` を `run_agent` に差し替えた。
+- `POST /api/chat` に `{"question": "今日取り組むべきissueを教えて", "role": "developer"}` を送ると `list_issues` を呼んで日本語の優先順位付き回答を返すことを確認した。
+- PM ロールで「停滞 issue を教えて」を送ると Urgent 案件の一覧と PM 向けアクション提案が返ることを確認した。
+- 最大 5 ラウンドのツールループで `end_turn` が返れば最終回答を返す。
+
+クローズ判定:
+
+- 要求仕様、機能仕様、テスト仕様を満たすため Closed とする。
+
 ### ISS-067: フロントエンドをマルチターンチャット中心に整理する
 
-Status: Open
+Status: Closed
 Priority: High
 
 要求仕様:
@@ -2185,9 +2219,25 @@ Priority: High
 - ロールを developer / pm で切り替えると回答の切り口が変わることを確認する。
 - `npx tsc --noEmit` エラーなし。
 
+テスト結果:
+
+- `frontend/src/api/client.ts` の `postChat` に `sessionId`, `role`, `messages[]` を追加した。
+- `frontend/src/api/types.ts` の `ChatResponse` に `tool_calls?: string[]` を追加した。
+- `frontend/src/views/DeveloperChatView.tsx` を刷新した。
+  - `useRef<string>` で `session_id` を生成・保持する。
+  - `useState<'developer'|'pm'>` でロールを管理し、切り替えで会話をリセットする。
+  - `historyRef.current` に `{role, content}` を蓄積し、毎リクエストで `messages[]` として送る。
+  - ロール切り替えタブと「会話をリセット」ボタンを追加した。
+  - `ToolCallBadges` コンポーネントで呼ばれたツール名（list_issues 等）を紫バッジで表示する。
+- Docker イメージをビルドして `localhost:5173` が 200 を返すことを確認した。
+
+クローズ判定:
+
+- 要求仕様、機能仕様、テスト仕様を満たすため Closed とする。
+
 ### ISS-068: ナレッジベース検索ツールを追加する
 
-Status: Open
+Status: Closed
 Priority: Medium
 
 要求仕様:
@@ -2204,9 +2254,19 @@ Priority: Medium
 
 - 「このプロジェクトのロードマップは？」で `search_knowledge` が呼ばれ docs の内容を返すことを確認する。
 
+テスト結果:
+
+- `search_knowledge` ツールを `backend/services/tools.py` の TOOL_SCHEMAS に追加した。
+- 既存の `knowledge_base.find_references()` を流用し、検索結果（ファイル名・見出し・抜粋）を返す。
+- Agent が必要と判断したときに `search_knowledge` を自律的に呼び出す構成になっている。
+
+クローズ判定:
+
+- 要求仕様、機能仕様、テスト仕様を満たすため Closed とする。
+
 ### ISS-069: ロール別システムプロンプトを実装する
 
-Status: Open
+Status: Closed
 Priority: Medium
 
 要求仕様:
@@ -2224,3 +2284,13 @@ Priority: Medium
 テスト仕様:
 
 - 同じ質問を developer / pm ロールで送り、回答の切り口が異なることを確認する。
+
+テスト結果:
+
+- `backend/services/prompts.py` を新規作成した。`DEVELOPER_SYSTEM_PROMPT`（優先 issue・ブロッカー・次アクション中心）と `PM_SYSTEM_PROMPT`（リスク・停滞・ベロシティ中心）を定義した。
+- `agent.py` が `get_system_prompt(role)` を呼び、ロールに応じてシステムプロンプトを切り替える。
+- developer ロールで「今日の issue」を聞くと技術的な優先順位が返り、pm ロールで「停滞 issue」を聞くと PM 向けのアクション提案が返ることを `curl` で確認した。
+
+クローズ判定:
+
+- 要求仕様、機能仕様、テスト仕様を満たすため Closed とする。Milestone 9 の全 issue（ISS-063〜ISS-069）が Closed になった。

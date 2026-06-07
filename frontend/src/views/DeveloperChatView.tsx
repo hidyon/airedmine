@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { postChat, postCommentProposal } from '../api/client'
+import type { ChatHistoryMessage } from '../api/client'
 import type { ChatResponse, ChatReference, UpdateProposal } from '../api/types'
 import IssueDetailPanel from '../components/IssueDetailPanel'
 
@@ -10,22 +11,45 @@ interface Message {
   content: ChatResponse | null
 }
 
-const EXAMPLES = [
-  '今日まず何からやればいい？',
-  '停滞している issue は？',
-  '#1208 の背景を教えて',
-]
+type Role = 'developer' | 'pm'
+
+const EXAMPLES: Record<Role, string[]> = {
+  developer: [
+    '今日まず何からやればいい？',
+    '停滞している issue は？',
+    '#1208 の背景を教えて',
+  ],
+  pm: [
+    'プロジェクト全体のリスクは？',
+    '今週リリースに影響するブロッカーは？',
+    '担当者の負荷バランスを教えて',
+  ],
+}
+
+function generateSessionId(): string {
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
+}
 
 export default function DeveloperChatView() {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
+  const [role, setRole] = useState<Role>('developer')
   const [selectedIssueId, setSelectedIssueId] = useState<number | null>(null)
+  const sessionIdRef = useRef<string>(generateSessionId())
+  const historyRef = useRef<ChatHistoryMessage[]>([])
   const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, loading])
+
+  function switchRole(next: Role) {
+    setRole(next)
+    setMessages([])
+    historyRef.current = []
+    sessionIdRef.current = generateSessionId()
+  }
 
   async function send() {
     const q = input.trim()
@@ -34,7 +58,13 @@ export default function DeveloperChatView() {
     setMessages(prev => [...prev, { id: `u-${Date.now()}`, role: 'user', text: q, content: null }])
     setLoading(true)
     try {
-      const res = await postChat(q)
+      const res = await postChat(q, sessionIdRef.current, role, historyRef.current)
+      // 会話履歴を更新
+      historyRef.current = [
+        ...historyRef.current,
+        { role: 'user', content: q },
+        { role: 'assistant', content: res.answer ?? '' },
+      ]
       setMessages(prev => [
         ...prev,
         { id: `a-${Date.now()}`, role: 'assistant', text: res.answer ?? '', content: res },
@@ -62,17 +92,44 @@ export default function DeveloperChatView() {
 
   return (
     <div className="flex h-full overflow-hidden">
-      {/* Chat thread + input */}
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
+        {/* Role selector */}
+        <div className="flex items-center gap-2 px-4 py-2 border-b border-slate-200 bg-slate-50 flex-shrink-0">
+          <span className="text-xs text-slate-500">ロール:</span>
+          {(['developer', 'pm'] as Role[]).map(r => (
+            <button
+              key={r}
+              onClick={() => switchRole(r)}
+              className={`px-3 py-1 text-xs font-medium rounded-full border transition-colors cursor-pointer ${
+                role === r
+                  ? 'bg-blue-500 text-white border-blue-500'
+                  : 'bg-white text-slate-600 border-slate-300 hover:border-blue-300'
+              }`}
+            >
+              {r === 'developer' ? '開発者' : 'PM'}
+            </button>
+          ))}
+          {messages.length > 0 && (
+            <button
+              onClick={() => { setMessages([]); historyRef.current = []; sessionIdRef.current = generateSessionId() }}
+              className="ml-auto text-xs text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
+            >
+              会話をリセット
+            </button>
+          )}
+        </div>
+
         <div className="flex-1 overflow-y-auto px-4 py-6 flex flex-col gap-4">
           {messages.length === 0 && (
             <div className="flex flex-col items-center justify-center flex-1 py-16 text-center">
               <p className="text-xl font-bold text-slate-800 mb-2">AIRedmine Chat</p>
               <p className="text-sm text-slate-500 mb-6">
-                issue の状況、今日の優先度、リスクなど自由に聞いてください。
+                {role === 'developer'
+                  ? '今日の優先 issue・ブロッカー・技術的な質問を聞いてください。'
+                  : 'プロジェクトのリスク・進捗・PM 判断が必要な事項を聞いてください。'}
               </p>
               <div className="flex flex-wrap gap-2 justify-center">
-                {EXAMPLES.map(ex => (
+                {EXAMPLES[role].map(ex => (
                   <button
                     key={ex}
                     onClick={() => setInput(ex)}
@@ -109,7 +166,7 @@ export default function DeveloperChatView() {
                   />
                 ))}
               </div>
-              <span className="text-sm text-slate-400 italic">考えています…</span>
+              <span className="text-sm text-slate-400 italic">Redmine を確認しています…</span>
             </div>
           )}
           <div ref={bottomRef} />
@@ -135,7 +192,6 @@ export default function DeveloperChatView() {
         </div>
       </div>
 
-      {/* Issue detail panel */}
       <IssueDetailPanel issueId={selectedIssueId} onClose={() => setSelectedIssueId(null)} />
     </div>
   )
@@ -202,6 +258,28 @@ function ProposalCard({ proposal }: { proposal: UpdateProposal }) {
   )
 }
 
+function ToolCallBadges({ toolCalls }: { toolCalls: string[] }) {
+  const labels: Record<string, string> = {
+    list_issues: 'issue 一覧',
+    get_issue: 'issue 詳細',
+    search_issues: 'issue 検索',
+    add_comment: 'コメント作成',
+    search_knowledge: 'ドキュメント検索',
+  }
+  return (
+    <div className="flex flex-wrap gap-1 mt-1">
+      {toolCalls.map((name, i) => (
+        <span
+          key={i}
+          className="text-[10px] px-2 py-0.5 bg-violet-50 text-violet-600 border border-violet-200 rounded-full"
+        >
+          {labels[name] ?? name}
+        </span>
+      ))}
+    </div>
+  )
+}
+
 function UserBubble({ text }: { text: string }) {
   return (
     <div className="flex justify-end">
@@ -244,12 +322,15 @@ function AssistantBubble({
       ) : (
         <div className="bg-white border border-slate-200 rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm">
           <p className="text-sm text-slate-800 leading-relaxed whitespace-pre-wrap m-0">{res.answer}</p>
+          {res.tool_calls && res.tool_calls.length > 0 && (
+            <ToolCallBadges toolCalls={res.tool_calls} />
+          )}
         </div>
       )}
 
       {res.proposal && <ProposalCard proposal={res.proposal} />}
 
-      {res.references.length > 0 && (
+      {res.references && res.references.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
           {res.references.map((ref: ChatReference, i: number) =>
             ref.type === 'issue' ? (

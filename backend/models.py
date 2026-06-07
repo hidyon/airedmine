@@ -131,8 +131,16 @@ class ChatResponse(BaseModel):
     proposal: Optional[UpdateProposal] = None
 
 
+class ConversationMessage(BaseModel):
+    role: Literal["user", "assistant"]
+    content: str
+
+
 class ChatRequest(BaseModel):
     question: str
+    session_id: str = ""
+    role: str = "developer"
+    messages: list[ConversationMessage] = []
 
 
 class CommentProposalRequest(BaseModel):

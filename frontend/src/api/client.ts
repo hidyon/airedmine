@@ -47,8 +47,21 @@ export function fetchIssueDetail(issueId: number): Promise<IssueDetail> {
   return request(`/issues/${issueId}`)
 }
 
-export function postChat(question: string): Promise<ChatResponse> {
-  return request('/chat', { method: 'POST', body: JSON.stringify({ question }) })
+export interface ChatHistoryMessage {
+  role: 'user' | 'assistant'
+  content: string
+}
+
+export function postChat(
+  question: string,
+  sessionId: string,
+  role: string,
+  messages: ChatHistoryMessage[],
+): Promise<ChatResponse> {
+  return request('/chat', {
+    method: 'POST',
+    body: JSON.stringify({ question, session_id: sessionId, role, messages }),
+  })
 }
 
 export function postCommentProposal(
