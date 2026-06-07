@@ -69,10 +69,19 @@ export function postChat(
   sessionId: string,
   role: string,
   messages: ChatHistoryMessage[],
+  redmineUserId?: number | null,
+  displayName?: string,
 ): Promise<ChatResponse> {
   return request('/chat', {
     method: 'POST',
-    body: JSON.stringify({ question, session_id: sessionId, role, messages }),
+    body: JSON.stringify({
+      question,
+      session_id: sessionId,
+      role,
+      messages,
+      redmine_user_id: redmineUserId ?? null,
+      display_name: displayName ?? '',
+    }),
   })
 }
 

@@ -6,6 +6,7 @@ export interface AuthUser {
   username: string
   display_name: string
   role: 'developer' | 'pm'
+  redmine_user_id: number | null
 }
 
 export function getToken(): string | null {

@@ -46,11 +46,16 @@ def init_db() -> None:
         """)
         conn.execute("""
             CREATE TABLE IF NOT EXISTS users (
-                id           INTEGER PRIMARY KEY AUTOINCREMENT,
-                username     TEXT NOT NULL UNIQUE,
-                display_name TEXT NOT NULL,
-                role         TEXT NOT NULL CHECK(role IN ('developer', 'pm')),
-                created_at   TEXT NOT NULL
+                id              INTEGER PRIMARY KEY AUTOINCREMENT,
+                username        TEXT NOT NULL UNIQUE,
+                display_name    TEXT NOT NULL,
+                role            TEXT NOT NULL CHECK(role IN ('developer', 'pm')),
+                redmine_user_id INTEGER,
+                created_at      TEXT NOT NULL
             )
         """)
+        try:
+            conn.execute("ALTER TABLE users ADD COLUMN redmine_user_id INTEGER")
+        except Exception:
+            pass  # column already exists
         conn.commit()

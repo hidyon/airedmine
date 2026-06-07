@@ -26,6 +26,7 @@ def _make_token(user: dict) -> str:
         "username": user["username"],
         "display_name": user["display_name"],
         "role": user["role"],
+        "redmine_user_id": user.get("redmine_user_id"),
         "exp": datetime.now(timezone.utc) + timedelta(hours=JWT_EXPIRE_HOURS),
     }
     return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
@@ -47,7 +48,7 @@ def login(req: LoginRequest) -> dict:
 
     with get_connection() as conn:
         row = conn.execute(
-            "SELECT id, username, display_name, role FROM users WHERE username = ?",
+            "SELECT id, username, display_name, role, redmine_user_id FROM users WHERE username = ?",
             (req.username,),
         ).fetchone()
 
@@ -70,5 +71,6 @@ def me(authorization: str | None = Header(default=None)) -> dict:
             "username": payload["username"],
             "display_name": payload["display_name"],
             "role": payload["role"],
+            "redmine_user_id": payload.get("redmine_user_id"),
         }
     }

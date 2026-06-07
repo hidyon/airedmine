@@ -62,7 +62,15 @@ export default function DeveloperChatView() {
     setMessages(prev => [...prev, { id: `u-${Date.now()}`, role: 'user', text: q, content: null }])
     setLoading(true)
     try {
-      const res = await postChat(q, sessionIdRef.current, role, historyRef.current)
+      const currentUser = getUser()
+      const res = await postChat(
+        q,
+        sessionIdRef.current,
+        role,
+        historyRef.current,
+        currentUser?.redmine_user_id,
+        currentUser?.display_name,
+      )
       // 会話履歴を更新
       historyRef.current = [
         ...historyRef.current,

@@ -23,6 +23,8 @@ async def chat(request: ChatRequest, connector: ConnectorDep) -> dict:
             messages=messages,
             role=request.role,
             connector=connector,
+            display_name=request.display_name,
+            redmine_user_id=request.redmine_user_id,
         )
         return result
     except RedmineApiError as exc:

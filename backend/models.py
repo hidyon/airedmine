@@ -141,6 +141,8 @@ class ChatRequest(BaseModel):
     session_id: str = ""
     role: str = "developer"
     messages: list[ConversationMessage] = []
+    redmine_user_id: Optional[int] = None
+    display_name: str = ""
 
 
 class CommentProposalRequest(BaseModel):
