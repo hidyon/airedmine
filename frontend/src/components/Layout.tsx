@@ -2,13 +2,12 @@ import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { fetchConfig } from '../api/client'
 import type { ConfigResponse } from '../api/types'
-import styles from './Layout.module.css'
 
 const NAV_ITEMS = [
-  { to: '/developer/chat', icon: '💬', label: 'Chat' },
-  { to: '/developer/dashboard', icon: '📋', label: 'Dashboard' },
-  { to: '/pm', icon: '🎯', label: 'PM View' },
-  { to: '/audit', icon: '📝', label: 'Audit' },
+  { to: '/developer/chat', icon: '💬', label: 'Chat', section: 'developer' },
+  { to: '/developer/dashboard', icon: '📋', label: 'Dashboard', section: 'developer' },
+  { to: '/pm', icon: '🎯', label: 'PM View', section: 'management' },
+  { to: '/audit', icon: '📝', label: 'Audit', section: 'management' },
 ]
 
 const VIEW_LABELS: Record<string, string> = {
@@ -27,51 +26,75 @@ export default function Layout() {
   }, [])
 
   const viewTitle = VIEW_LABELS[pathname] ?? 'AIRedmine'
-  const mode = config?.mode ?? 'loading'
+  const mode = config?.mode
 
   return (
-    <div className={styles.root}>
-      <aside className={styles.sidebar}>
-        <div className={styles.sidebarHeader}>
-          <p className={styles.sidebarTitle}>AIRedmine</p>
-          <p className={styles.sidebarMode}>{mode === 'mock' ? 'Mock mode' : mode === 'redmine' ? 'Redmine' : '…'}</p>
+    <div className="flex h-screen overflow-hidden bg-slate-50">
+      <aside className="w-56 flex-shrink-0 bg-slate-800 flex flex-col overflow-y-auto">
+        <div className="px-4 py-5 border-b border-slate-700">
+          <p className="text-white font-bold text-[15px] tracking-wide m-0">AIRedmine</p>
+          <p className="text-slate-400 text-[11px] mt-0.5 m-0">
+            {mode === 'mock' ? 'Mock mode' : mode === 'redmine' ? 'Redmine' : '…'}
+          </p>
         </div>
-        <nav className={styles.nav}>
-          <span className={styles.navSection}>Developer</span>
+        <nav className="p-2 flex flex-col gap-0.5">
+          <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest px-2 pt-3 pb-1">
+            Developer
+          </span>
           {NAV_ITEMS.slice(0, 2).map(({ to, icon, label }) => (
             <NavLink
               key={to}
               to={to}
-              className={({ isActive }) => `${styles.navLink}${isActive ? ' ' + styles.active : ''}`}
+              className={({ isActive }) =>
+                `flex items-center gap-2.5 px-3 py-2 rounded-md text-[13.5px] font-medium no-underline transition-colors ${
+                  isActive
+                    ? 'bg-slate-600 text-white'
+                    : 'text-slate-300 hover:bg-slate-700 hover:text-white'
+                }`
+              }
             >
-              <span className={styles.navIcon}>{icon}</span>
+              <span className="text-[15px] w-5 text-center">{icon}</span>
               {label}
             </NavLink>
           ))}
-          <span className={styles.navSection}>Management</span>
+          <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest px-2 pt-3 pb-1">
+            Management
+          </span>
           {NAV_ITEMS.slice(2).map(({ to, icon, label }) => (
             <NavLink
               key={to}
               to={to}
-              className={({ isActive }) => `${styles.navLink}${isActive ? ' ' + styles.active : ''}`}
+              className={({ isActive }) =>
+                `flex items-center gap-2.5 px-3 py-2 rounded-md text-[13.5px] font-medium no-underline transition-colors ${
+                  isActive
+                    ? 'bg-slate-600 text-white'
+                    : 'text-slate-300 hover:bg-slate-700 hover:text-white'
+                }`
+              }
             >
-              <span className={styles.navIcon}>{icon}</span>
+              <span className="text-[15px] w-5 text-center">{icon}</span>
               {label}
             </NavLink>
           ))}
         </nav>
       </aside>
 
-      <div className={styles.main}>
-        <header className={styles.topbar}>
-          <span className={styles.topbarTitle}>{viewTitle}</span>
-          {config && (
-            <span className={`${styles.topbarBadge}${mode === 'mock' ? ' ' + styles.topbarBadgeMock : ''}`}>
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <header className="h-12 flex-shrink-0 border-b border-slate-200 bg-white flex items-center px-5 gap-3">
+          <span className="text-sm font-semibold text-slate-800">{viewTitle}</span>
+          {mode && (
+            <span
+              className={`text-[11px] px-2 py-0.5 rounded-full font-semibold ${
+                mode === 'mock'
+                  ? 'bg-amber-100 text-amber-800'
+                  : 'bg-blue-100 text-blue-700'
+              }`}
+            >
               {mode === 'mock' ? 'Mock' : 'Redmine'}
             </span>
           )}
         </header>
-        <div className={styles.content}>
+        <div className="flex-1 overflow-hidden">
           <Outlet />
         </div>
       </div>

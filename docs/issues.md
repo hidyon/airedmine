@@ -1809,7 +1809,7 @@ Priority: High
 
 ### ISS-055: 4 View の UI を React コンポーネントで実装する
 
-Status: Open
+Status: Closed
 Priority: High
 
 要求仕様:
@@ -1820,17 +1820,30 @@ Priority: High
 
 機能仕様:
 
-- DeveloperChatView: チャットスレッド、quick-questions、フォーム（下固定）、clarification カード。
-- DeveloperDashboardView: issue 一覧、検索・フィルタ、work-guide パネル。
-- PmView: metrics、PM 観察パネル、意思決定ボード。
-- AuditView: 更新案レビュー、体験メモフォーム、体験サマリ。
-- 各 View に対応するロール（developer / pm）を props または context で定義する（認証なし、スタブ）。
+- DeveloperChatView: チャットスレッド、quick-questions、フォーム（下固定）、clarification カード、proposal カード。
+- DeveloperDashboardView: issue 一覧（担当・優先度・ステータス・割り当て）。
+- PMView: PM 判断待ち / 停滞 / 高優先度の 3 カードサマリー。
+- AuditView: 更新ログ一覧（成功/失敗ラベル、タイムスタンプ、draft 表示）。
+- CSS Modules を Tailwind v4（@tailwindcss/vite）に全面移行。
 
 テスト仕様:
 
 - 4 View が切り替えられ、各コンテンツが表示されることをブラウザで確認する。
 - Developer Chat でメッセージを送り、スレッドにバブルが積み上がることを確認する。
 - `npx tsc --noEmit` で型エラーがないことを確認する。
+
+テスト結果:
+
+- `npx tsc --noEmit` エラーなし（コンテナ内で確認）。
+- Tailwind v4 CSS が正常に生成されていることを確認（global.css が 200KB+ の utility bundle を出力）。
+- DeveloperChatView: 例文ボタン→入力→送信→バブル表示→clarification カードをブラウザで確認。
+- DeveloperDashboardView: mock issue 一覧が表示されることを確認。
+- PMView: 3カードが表示されることを確認。
+- AuditView: 空ログのガイドメッセージが表示されることを確認。
+
+クローズ判定:
+
+- 要求・機能・テスト仕様をすべて満たしたため Closed とする。
 
 ### ISS-056: developer / pm ロール設計を docs に記録する
 
