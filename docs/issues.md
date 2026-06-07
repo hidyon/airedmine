@@ -2689,3 +2689,122 @@ Priority: High
 - 「作成」ボタンを押すと Redmine に issue が作成されることを確認する（Redmine モードで）。
 - モックモードでは `POST /api/proposals/create_issue` が `{"mode": "mock", ...}` を返すことを確認する。
 - `npx tsc --noEmit` エラーなし。
+
+### ISS-080: チャットから期日・優先度を変更できるようにする
+
+Status: Open
+Priority: High
+
+要求仕様:
+
+- 「この issue の期限を来週末にして」「このバグを Urgent にして」とチャットで依頼すると、AI が提案を作り確認後に Redmine に反映できるようにする。
+- 対象外: カスタムフィールド、期日・優先度以外のフィールド。
+
+機能仕様:
+
+- `backend/services/tools.py` に `update_due_date` ツールと `update_priority` ツールを追加する。
+  - `update_due_date`: 入力 `issue_id`、`due_date`（YYYY-MM-DD）、`reason`。
+  - `update_priority`: 入力 `issue_id`、`priority_id`、`priority_name`、`reason`。
+  - 両方とも `{"confirmation_required": True, "action": "update_due_date" / "update_priority", ...}` を返す。
+- `backend/services/agent.py` で両ツールのブロックを処理し提案に変換する。
+- `backend/services/redmine_connector.py` は既存の `update_issue(issue_id, fields)` を流用する。
+- `backend/models.py` に `UpdateDueDateRequest`・`UpdatePriorityRequest` を追加する。
+- `backend/routers/proposals.py` に `POST /api/proposals/update_due_date` と `POST /api/proposals/update_priority` を追加する。
+- フロントエンドの `UpdateProposal.action` に両アクションを追加し、`ProposalCard` で「更新」ボタンを表示する。
+
+テスト仕様:
+
+- 「#123 の期日を 2026-07-01 にして」で提案カードが表示され、確認後に Redmine に反映されることを確認する。
+- 「#123 を Urgent にして」で優先度変更の提案カードが表示されることを確認する。
+- `npx tsc --noEmit` エラーなし。
+
+### ISS-081: チャットから進捗率を更新できるようにする
+
+Status: Open
+Priority: Medium
+
+要求仕様:
+
+- 「API 実装が 60% 終わったのでチケットに記録して」とチャットで依頼すると、AI が進捗率（done_ratio）の更新を提案し確認後に反映できるようにする。
+- 対象外: 0〜100 の範囲外の値（バリデーションエラーとして返す）。
+
+機能仕様:
+
+- `backend/services/tools.py` に `update_done_ratio` ツールを追加する（入力: `issue_id`、`done_ratio`（0〜100）、`reason`）。
+- 既存の `update_issue` を流用。`backend/models.py` に `UpdateDoneRatioRequest`、`backend/routers/proposals.py` に `POST /api/proposals/update_done_ratio` を追加する。
+- フロントエンドで `done_ratio` アクションを `ProposalCard` に追加する。
+
+テスト仕様:
+
+- 「#123 の進捗を 60% にして」で提案カードが表示されることを確認する。
+- `npx tsc --noEmit` エラーなし。
+
+### ISS-082: チャットから issue をバージョン（スプリント）に割り当てられるようにする
+
+Status: Open
+Priority: Medium
+
+要求仕様:
+
+- 「この issue を次のスプリントに移して」とチャットで依頼すると、AI がバージョン一覧を参照して割り当て提案を作り、確認後に反映できるようにする。
+- 対象外: バージョンの新規作成。
+
+機能仕様:
+
+- `backend/services/redmine_connector.py` に `list_versions(project_id)` を追加する（`GET /projects/{id}/versions.json`）。
+- `backend/services/tools.py` に `list_versions` ツールと `assign_version` ツールを追加する。
+  - `assign_version`: 入力 `issue_id`、`version_id`、`version_name`、`reason`。
+- 既存の `update_issue` を流用。`backend/models.py` に `AssignVersionRequest`、`backend/routers/proposals.py` に `POST /api/proposals/assign_version` を追加する。
+- フロントエンドで `assign_version` アクションを `ProposalCard` に追加する。
+
+テスト仕様:
+
+- 「#123 を v2.0 に割り当てて」で提案カードが表示されることを確認する。
+- バージョンが存在しないプロジェクトでも適切なエラーメッセージが返ることを確認する。
+- `npx tsc --noEmit` エラーなし。
+
+### ISS-083: チャットから issue の関連を設定できるようにする
+
+Status: Open
+Priority: Medium
+
+要求仕様:
+
+- 「#123 は #456 に依存しているので関連付けて」とチャットで依頼すると、AI が関連（relates、blocks、blocked_by など）を提案し確認後に Redmine に反映できるようにする。
+- 対象外: 関連の削除。
+
+機能仕様:
+
+- `backend/services/tools.py` に `add_relation` ツールを追加する（入力: `issue_id`、`related_issue_id`、`relation_type`（relates/blocks/blocked_by/duplicates/duplicated_by）、`reason`）。
+- `backend/services/redmine_connector.py` に `add_relation(issue_id, related_issue_id, relation_type)` を追加する（`POST /issues/{id}/relations.json`）。
+- `backend/models.py` に `AddRelationRequest`、`backend/routers/proposals.py` に `POST /api/proposals/add_relation` を追加する。
+- フロントエンドで `add_relation` アクションを `ProposalCard` に追加し、関連タイプと対象 issue を表示する。
+
+テスト仕様:
+
+- 「#123 は #456 をブロックしているので設定して」で提案カードが表示されることを確認する。
+- `npx tsc --noEmit` エラーなし。
+
+### ISS-084: チャットから複数 issue を一括操作できるようにする
+
+Status: Open
+Priority: Low
+
+要求仕様:
+
+- 「停滞している issue を全部 Feedback に戻して」のように、条件に合う複数 issue を一括でステータス変更・担当変更できるようにする。
+- 誤操作リスクが高いため、操作対象の issue 一覧と件数を必ず確認画面に表示してから実行する。
+- 対象外: 件数が 20 件を超える場合は分割実行を要求する。
+
+機能仕様:
+
+- `backend/services/tools.py` に `bulk_update` ツールを追加する（入力: `issue_ids[]`、`action`（status_change/assignee_change）、変更フィールド、`reason`）。
+- `backend/services/agent.py` で `bulk_update` を処理し、`issue_ids` リストと変更内容を含む提案を返す。
+- `backend/routers/proposals.py` に `POST /api/proposals/bulk_update` を追加し、ループで各 issue に `update_issue` を適用する。
+- フロントエンドの `ProposalCard` で対象 issue リストを表示し、「{n} 件を一括更新」ボタンを表示する。
+
+テスト仕様:
+
+- 「停滞 issue を全部 Feedback にして」で対象 issue リストが提案カードに表示されることを確認する。
+- 21 件以上を指定した場合にエラーメッセージが返ることを確認する。
+- `npx tsc --noEmit` エラーなし。
