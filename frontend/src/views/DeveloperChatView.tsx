@@ -15,6 +15,7 @@ type Role = 'developer' | 'pm'
 
 const EXAMPLES: Record<Role, string[]> = {
   developer: [
+    '今日の作業ダッシュボードを見せて',
     '今日まず何からやればいい？',
     '停滞している issue は？',
     '#1208 の背景を教えて',
