@@ -2050,3 +2050,165 @@ Priority: High
 クローズ判定:
 
 - 要求仕様、機能仕様、テスト仕様を満たすため Closed とする。
+
+## Milestone 9: AI Agent + Anthropic API 統合
+
+### ISS-063: Anthropic API を接続してヘルスチェックする
+
+Status: Open
+Priority: High
+
+要求仕様:
+
+- backend から Anthropic API を呼び出せる環境を整える。
+- API キーの設定・接続確認を開発者が迷わず行えるようにする。
+
+機能仕様:
+
+- `backend/requirements.txt` に `anthropic` を追加する。
+- `.env` に `ANTHROPIC_API_KEY` を追加する（`.env.example` にも追記）。
+- `GET /api/ai/health` で Anthropic API への接続確認を返す。
+- 使用モデル: `claude-haiku-4-5-20251001`。
+- API キー未設定時はエラーメッセージを返す。
+
+テスト仕様:
+
+- `GET /api/ai/health` が `{"status": "ok", "model": "claude-haiku-4-5-20251001"}` を返すことを確認する。
+- API キー未設定時に適切なエラーが返ることを確認する。
+
+### ISS-064: Redmine 操作ツールを tool_use 形式で定義する
+
+Status: Open
+Priority: High
+
+要求仕様:
+
+- Claude が Redmine を検索・参照・更新できるツール群を定義する。
+- 既存の `redmine_connector.py` を流用し、tool_use のラッパーを作る。
+
+機能仕様:
+
+- `backend/services/tools.py` を新規作成する。
+- 定義するツール:
+  - `list_issues`: issue 一覧取得（status_id / assigned_to_id / limit）
+  - `get_issue`: issue 詳細・journals 取得
+  - `search_issues`: キーワードで issue 検索
+  - `add_comment`: issue へのコメント追加（確認待ちフラグ付き）
+- 各ツールの JSON スキーマと実行関数を定義する。
+- `add_comment` は即時実行せず、確認待ちフラグを返す。
+
+テスト仕様:
+
+- `list_issues` が issue 一覧を返すことを確認する。
+- `get_issue` が journals を含む詳細を返すことを確認する。
+- `add_comment` が確認待ちレスポンスを返すことを確認する。
+
+### ISS-065: 会話コンテキスト管理を実装する
+
+Status: Open
+Priority: High
+
+要求仕様:
+
+- セッション内の会話履歴を保持し、前の発言を踏まえた回答ができるようにする。
+- サーバー再起動後も履歴を復元できるようにする。
+
+機能仕様:
+
+- `db.py` に `conversations` テーブルを追加する（session_id, role, content, created_at）。
+- `POST /api/chat` のリクエストに `session_id` と `messages[]` を追加する。
+- セッション ID はフロントエンドが生成して保持する（UUID）。
+
+テスト仕様:
+
+- 2 回のリクエストで会話が継続されることを確認する。
+- セッション ID が異なる場合は別会話として扱われることを確認する。
+
+### ISS-066: AI Agent コアを実装する
+
+Status: Open
+Priority: High
+
+要求仕様:
+
+- `POST /api/chat` を Anthropic API + tool_use を使った AI Agent に刷新する。
+- Claude がツールを自律的に呼び出し、Redmine 情報を参照した上で回答を返す。
+
+機能仕様:
+
+- `backend/services/agent.py` を新規作成する。
+- Anthropic API の tool_use ループを実装する（ツール呼び出し → 結果返却 → 最終回答）。
+- 会話履歴（messages[]）を Anthropic API に渡す。
+- `add_comment` ツール実行時は確認待ちレスポンスを返す。
+- エラー時は分類して UI に返す（auth / connection / rate_limit / unknown）。
+- 既存の `POST /api/proposals/comment` による実行フローは維持する。
+
+テスト仕様:
+
+- 「今日の担当 issue を教えて」で Claude が `list_issues` を呼び出して回答することを確認する。
+- 「#841 の詳細を教えて」で `get_issue` が呼ばれ journals を踏まえた回答が返ることを確認する。
+- 「#841 にコメントを追加して」で確認待ちレスポンスが返ることを確認する。
+
+### ISS-067: フロントエンドをマルチターンチャット中心に整理する
+
+Status: Open
+Priority: High
+
+要求仕様:
+
+- 開発者も PM も同じチャット UI を入口として使う。
+- 前の発言・回答がスレッドに残り、文脈を意識した追加質問ができる。
+
+機能仕様:
+
+- `session_id`（UUID）をフロントエンドで生成・保持する。
+- `POST /api/chat` のリクエストに `messages[]` と `session_id` を含める。
+- ツール呼び出し状況（「Redmine を検索中…」等）をスレッド内に表示する。
+- ロール選択（developer / pm）を UI に追加し、リクエストに含める。
+- チャットをデフォルトビューにする。
+
+テスト仕様:
+
+- 「停滞 issue は？」→「そのうち優先度が高いものは？」で文脈が引き継がれることを確認する。
+- ロールを developer / pm で切り替えると回答の切り口が変わることを確認する。
+- `npx tsc --noEmit` エラーなし。
+
+### ISS-068: ナレッジベース検索ツールを追加する
+
+Status: Open
+Priority: Medium
+
+要求仕様:
+
+- Claude が docs（ロードマップ・方針・仕様）を検索して回答の根拠にできる。
+
+機能仕様:
+
+- `search_knowledge` ツールを `tools.py` に追加する。
+- 既存の `knowledge_base.py` の `find_references` を流用する。
+- 検索結果（ファイル名・見出し・抜粋）をツール結果として返す。
+
+テスト仕様:
+
+- 「このプロジェクトのロードマップは？」で `search_knowledge` が呼ばれ docs の内容を返すことを確認する。
+
+### ISS-069: ロール別システムプロンプトを実装する
+
+Status: Open
+Priority: Medium
+
+要求仕様:
+
+- developer と pm で Claude の回答の切り口が変わる。
+- developer には技術的な次アクション、pm にはリスクと判断材料を返す。
+
+機能仕様:
+
+- `backend/services/prompts.py` を新規作成する。
+- `developer` プロンプト: 担当 issue の進め方・ブロッカー・今日やること中心。
+- `pm` プロンプト: リスク・停滞・PM 判断が必要な issue・プロジェクト全体の状態中心。
+- `agent.py` がロールに応じてシステムプロンプトを切り替える。
+
+テスト仕様:
+
+- 同じ質問を developer / pm ロールで送り、回答の切り口が異なることを確認する。

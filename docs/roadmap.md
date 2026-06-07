@@ -251,6 +251,40 @@ developer / pm ロール概念を設計に織り込む（認証実装は後続 M
 - React + TypeScript で 4 View が切り替えられる。
 - developer / pm ロール設計が docs に記録されている。
 
+## Milestone 9: AI Agent + Anthropic API 統合
+
+優先度: High
+状態: Open
+
+背景: チャット UI を唯一の対話インターフェースとし、バックエンドを真の AI Agent に刷新する。
+Anthropic API（claude-haiku-4-5）と tool_use を使い、Redmine 操作・知識検索・会話コンテキスト保持を実現する。
+開発者も PM も同じチャット UI を使い、ロール別のシステムプロンプトで応答を最適化する。
+
+関連 issue:
+
+- `ISS-063` Open: Anthropic API を接続してヘルスチェックする。
+- `ISS-064` Open: Redmine 操作ツールを tool_use 形式で定義する。
+- `ISS-065` Open: 会話コンテキスト管理を実装する。
+- `ISS-066` Open: AI Agent コアを実装する。
+- `ISS-067` Open: フロントエンドをマルチターンチャット中心に整理する。
+- `ISS-068` Open: ナレッジベース検索ツールを追加する。
+- `ISS-069` Open: ロール別システムプロンプトを実装する。
+
+期待成果:
+
+- Chat がルールベースから本物の Claude 回答に変わる。
+- 前の質問・回答を踏まえた連続対話ができる。
+- Claude が Redmine を自律的に検索・参照し、必要に応じてコメント追加を提案できる。
+- 開発者と PM で回答の切り口が変わる。
+
+完了条件:
+
+- `POST /api/chat` が Anthropic API を通じて Claude の回答を返す。
+- 会話履歴が保持され、前の文脈を踏まえた回答ができる。
+- Redmine ツール（list_issues / get_issue / add_comment）が tool_use で動く。
+- フロントエンドが会話スレッドを表示し、messages[] をバックエンドに送る。
+- developer / pm ロール別のシステムプロンプトが機能する。
+
 ## Milestone 10: 体験評価と改善ループ
 
 優先度: Medium
@@ -316,3 +350,4 @@ developer / pm ロール概念を設計に織り込む（認証実装は後続 M
 - 2026-06-07: フロントエンドを React + TypeScript + Vite、バックエンドを Python + FastAPI に移行する方針を決定。Milestone 8 を追加し `ISS-052`〜`ISS-056` を候補 issue とした。ISS-049〜051 は On Hold とし Milestone 8 で再設計する。
 - 2026-06-07: `ISS-052` Closed。frontend/（Vite + React + TS）と backend/（FastAPI）のスケルトンを作成し Docker Compose で両サービスが起動することを確認した。
 - 2026-06-07: `ISS-062` Closed。`docs/spec.md` を新規作成し、要求仕様・機能仕様（エンドポイント一覧・View 構成・データ・Chat Engine・エラー処理）・テスト仕様（自動テスト一覧・手動確認チェックリスト）を文書化した。
+- 2026-06-07: Milestone 9 を追加。チャット UI 一本化・Anthropic API tool_use による AI Agent 化・会話コンテキスト保持の方針を決定し、`ISS-063`〜`ISS-069` を候補 issue とした。
