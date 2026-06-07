@@ -1771,7 +1771,7 @@ Priority: High
 
 ### ISS-054: React + TypeScript フロントエンドの基盤を作る
 
-Status: Open
+Status: Closed
 Priority: High
 
 要求仕様:
@@ -1785,13 +1785,27 @@ Priority: High
 - React Router で /developer/chat, /developer/dashboard, /pm, /audit の 4 ルートを定義する。
 - API クライアント (src/api/) に各エンドポイントの型定義と fetch wrapper を実装する。
 - 共通レイアウト（サイドバー、ナビ、トップバー）をコンポーネント化する。
-- 既存の CSS 設計（カラー変数、レイアウト）を CSS Modules または Tailwind に移行するか決定する。
+- CSS Modules を採用。グローバル変数は `styles/global.css`、コンポーネント固有は `*.module.css`。
 
 テスト仕様:
 
 - 4 ルートが切り替えられることをブラウザで確認する。
 - `npx tsc --noEmit` で型エラーがないことを確認する。
 - /developer/chat にアクセスしたとき Developer Chat の枠が表示されることを確認する。
+
+テスト結果:
+
+- `npx tsc --noEmit` エラーなし（コンテナ内で確認）。
+- Vite dev server が `http://localhost:5173/` で起動、`/developer/chat` にアクセスでチャット枠表示。
+- サイドバーから 4 View へのナビゲーションが動作することをブラウザで確認。
+- DeveloperChatView: バブル UI + 入力欄 + 例文ボタンを実装。
+- DeveloperDashboardView: issue 一覧表示（API 連携）。
+- PMView: PM 判断待ち / 停滞 / 高優先度の 3 カードサマリー。
+- AuditView: 更新ログ一覧（空の場合はガイドメッセージ表示）。
+
+クローズ判定:
+
+- 要求・機能・テスト仕様をすべて満たしたため Closed とする。
 
 ### ISS-055: 4 View の UI を React コンポーネントで実装する
 

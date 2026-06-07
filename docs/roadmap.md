@@ -226,7 +226,7 @@ developer / pm ロール概念を設計に織り込む（認証実装は後続 M
 
 - `ISS-052` Closed: プロジェクト構成の再編とビルド環境をセットアップする。
 - `ISS-053` Closed: Python + FastAPI バックエンドに既存 API を移行する。
-- `ISS-054` Open: React + TypeScript フロントエンドの基盤を作る。
+- `ISS-054` Closed: React + TypeScript フロントエンドの基盤を作る。
 - `ISS-055` Open: 4 View の UI を React コンポーネントで実装する。
 - `ISS-056` Open: developer / pm ロール設計を docs に記録する。
 
