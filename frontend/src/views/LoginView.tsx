@@ -41,7 +41,7 @@ export default function LoginView() {
               type="text"
               value={username}
               onChange={e => setUsername(e.target.value)}
-              placeholder="alice"
+              placeholder="tanaka"
               autoFocus
               disabled={loading}
               className="border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-500 disabled:bg-slate-50 transition-colors"
@@ -75,7 +75,7 @@ export default function LoginView() {
         </form>
 
         <p className="text-[11px] text-slate-400 text-center mt-6">
-          ユーザー: alice / bob（開発者）、carol（PM）
+          ユーザー: tanaka / sato / ito / yamada（開発者）、nakamura（PM）
         </p>
       </div>
     </div>
