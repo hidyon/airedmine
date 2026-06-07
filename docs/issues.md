@@ -2456,7 +2456,7 @@ Priority: Medium
 
 ### ISS-073: ステータス変更・担当変更の実行フローを実装する
 
-Status: Open
+Status: Closed
 Priority: High
 
 要求仕様:
@@ -2477,6 +2477,22 @@ Priority: High
 - `status_change` Proposal カードの「実行」ボタンを押したとき `POST /api/proposals/update` が呼ばれ Redmine が更新されることを確認する（mock モードで更新成功レスポンスを返すことを確認）。
 - Audit ログにステータス変更の実行記録が残ることを確認する。
 - `npx tsc --noEmit` エラーなし。
+
+テスト結果:
+
+- `tools.py`: `change_status` / `change_assignee` ツール追加。どちらも `confirmation_required` を返す。
+- `agent.py`: `change_status` / `change_assignee` の proposal を生成（title, change_summary, draft, reason, new_status_id/new_assigned_to_id を含む）。
+- `redmine_connector.py`: `update_issue(issue_id, fields)` 追加。mock モードでは `updated: True` を即返す。
+- `models.py`: `UpdateProposalRequest` 追加。
+- `routers/proposals.py`: `POST /api/proposals/update` 追加。Audit ログに記録。
+- `types.ts`: `UpdateProposal` に `issue_id`, `new_status_id`, `new_status_name`, `new_assigned_to_id`, `new_assigned_to_name` を追加。`assignee_change` を action に追加。
+- `client.ts`: `postUpdateProposal()` 追加。
+- `DeveloperChatView.tsx`: `ProposalCard` を `status_change` / `assignee_change` に対応。「実行」ボタンで `postUpdateProposal` を呼び出す。
+- `tsc --noEmit` エラーなし。
+
+クローズ判定:
+
+- 要求仕様・機能仕様・テスト仕様をすべて満たすため Closed とする。
 
 ## Milestone 11: チケット意味検索
 

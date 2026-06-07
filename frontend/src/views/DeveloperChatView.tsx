@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import { postChat, postCommentProposal } from '../api/client'
+import { postChat, postCommentProposal, postUpdateProposal } from '../api/client'
 import type { ChatHistoryMessage } from '../api/client'
 import type { ChatResponse, ChatReference, UpdateProposal } from '../api/types'
 import IssueDetailPanel from '../components/IssueDetailPanel'
@@ -199,17 +199,33 @@ function ProposalCard({ proposal }: { proposal: UpdateProposal }) {
   const [sendState, setSendState] = useState<SendState>('idle')
   const [errorMsg, setErrorMsg] = useState('')
 
-  const canExecute = proposal.action === 'comment' && proposal.target_issue != null
+  const isComment = proposal.action === 'comment' && proposal.target_issue != null
+  const isStatusChange = proposal.action === 'status_change' && proposal.issue_id != null && proposal.new_status_id != null
+  const isAssigneeChange = proposal.action === 'assignee_change' && proposal.issue_id != null && proposal.new_assigned_to_id != null
+  const canExecute = isComment || isStatusChange || isAssigneeChange
 
   async function execute() {
-    if (!proposal.target_issue) return
     setSendState('loading')
     try {
-      await postCommentProposal(
-        proposal.target_issue.id,
-        proposal.draft,
-        { id: proposal.target_issue.id, title: proposal.target_issue.title },
-      )
+      if (isComment && proposal.target_issue) {
+        await postCommentProposal(
+          proposal.target_issue.id,
+          proposal.draft ?? '',
+          { id: proposal.target_issue.id, title: proposal.target_issue.title },
+        )
+      } else if (isStatusChange && proposal.issue_id != null) {
+        await postUpdateProposal(proposal.issue_id, 'status_change', {
+          newStatusId: proposal.new_status_id,
+          newStatusName: proposal.new_status_name,
+          reason: proposal.reason,
+        })
+      } else if (isAssigneeChange && proposal.issue_id != null) {
+        await postUpdateProposal(proposal.issue_id, 'assignee_change', {
+          newAssignedToId: proposal.new_assigned_to_id,
+          newAssignedToName: proposal.new_assigned_to_name,
+          reason: proposal.reason,
+        })
+      }
       setSendState('done')
     } catch (e) {
       setErrorMsg(e instanceof Error ? e.message : '送信に失敗しました')
@@ -217,19 +233,24 @@ function ProposalCard({ proposal }: { proposal: UpdateProposal }) {
     }
   }
 
+  const buttonLabel = isComment ? 'Redmine に送信' : '実行'
+  const doneLabel = isComment ? '✓ Redmine に送信済み' : '✓ Redmine を更新しました'
+
   return (
     <div className="bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3">
       <p className="text-[11px] font-bold text-emerald-800 uppercase tracking-wider mb-1 m-0">
-        {proposal.title}
+        {proposal.title ?? proposal.action}
       </p>
       <p className="text-xs text-emerald-700 mb-2 m-0">{proposal.change_summary}</p>
-      <pre className="text-xs text-slate-700 bg-white/60 rounded-lg px-3 py-2 whitespace-pre-wrap break-words font-sans m-0">
-        {proposal.draft}
-      </pre>
+      {proposal.draft && (
+        <pre className="text-xs text-slate-700 bg-white/60 rounded-lg px-3 py-2 whitespace-pre-wrap break-words font-sans m-0">
+          {proposal.draft}
+        </pre>
+      )}
       <div className="mt-3">
         {canExecute ? (
           sendState === 'done' ? (
-            <span className="text-xs text-emerald-700 font-medium">✓ Redmine に送信済み</span>
+            <span className="text-xs text-emerald-700 font-medium">{doneLabel}</span>
           ) : (
             <div className="flex items-center gap-2">
               <button
@@ -237,7 +258,7 @@ function ProposalCard({ proposal }: { proposal: UpdateProposal }) {
                 disabled={sendState === 'loading'}
                 className="px-3 py-1.5 text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-300 text-white rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed"
               >
-                {sendState === 'loading' ? '送信中…' : 'Redmine に送信'}
+                {sendState === 'loading' ? '処理中…' : buttonLabel}
               </button>
               {sendState === 'error' && (
                 <span className="text-xs text-red-600">{errorMsg} — 再試行できます</span>

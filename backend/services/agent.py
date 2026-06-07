@@ -87,7 +87,7 @@ async def run_agent(
                 block.name, block.input, connector, knowledge_base
             )
 
-            # add_comment は確認待ち proposal として保存
+            # 書き込み系ツールは確認待ち proposal として保存
             if block.name == "add_comment":
                 result_json = json.loads(result_str)
                 if result_json.get("confirmation_required"):
@@ -96,6 +96,42 @@ async def run_agent(
                         "action": "comment",
                         "issue_id": result_json["issue_id"],
                         "notes": result_json["notes"],
+                    }
+
+            if block.name == "change_status":
+                result_json = json.loads(result_str)
+                if result_json.get("confirmation_required"):
+                    status_name = result_json.get("new_status_name", "")
+                    proposal = {
+                        "status": "confirmation_required",
+                        "action": "status_change",
+                        "issue_id": result_json["issue_id"],
+                        "new_status_id": result_json["new_status_id"],
+                        "new_status_name": status_name,
+                        "reason": result_json.get("reason", ""),
+                        "title": f"ステータス変更 #{result_json['issue_id']}",
+                        "change_summary": f"ステータスを「{status_name}」に変更",
+                        "draft": result_json.get("reason", ""),
+                        "checklist": [],
+                        "next_step": "",
+                    }
+
+            if block.name == "change_assignee":
+                result_json = json.loads(result_str)
+                if result_json.get("confirmation_required"):
+                    assignee_name = result_json.get("new_assigned_to_name", "")
+                    proposal = {
+                        "status": "confirmation_required",
+                        "action": "assignee_change",
+                        "issue_id": result_json["issue_id"],
+                        "new_assigned_to_id": result_json["new_assigned_to_id"],
+                        "new_assigned_to_name": assignee_name,
+                        "reason": result_json.get("reason", ""),
+                        "title": f"担当者変更 #{result_json['issue_id']}",
+                        "change_summary": f"担当者を「{assignee_name}」に変更",
+                        "draft": result_json.get("reason", ""),
+                        "checklist": [],
+                        "next_step": "",
                     }
 
             tool_results.append({

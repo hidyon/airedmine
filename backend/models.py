@@ -152,6 +152,16 @@ class CommentProposalRequest(BaseModel):
     target_issue: Optional[dict[str, Any]] = None
 
 
+class UpdateProposalRequest(BaseModel):
+    issue_id: int
+    action: Literal["status_change", "assignee_change"]
+    new_status_id: Optional[int] = None
+    new_status_name: Optional[str] = None
+    new_assigned_to_id: Optional[int] = None
+    new_assigned_to_name: Optional[str] = None
+    reason: Optional[str] = None
+
+
 class UpdateLog(BaseModel):
     id: str
     created_at: str

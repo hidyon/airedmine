@@ -87,14 +87,23 @@ export interface Clarification {
 
 export interface UpdateProposal {
   status: 'confirmation_required'
-  title: string
-  action: 'comment' | 'close_candidate' | 'status_change'
-  target_issue: IssueReference | null
-  change_summary: string
-  draft: string
-  reason: string
-  checklist: string[]
-  next_step: string
+  action: 'comment' | 'close_candidate' | 'status_change' | 'assignee_change'
+  // comment
+  target_issue?: IssueReference | null
+  notes?: string
+  // status_change / assignee_change
+  issue_id?: number
+  new_status_id?: number
+  new_status_name?: string
+  new_assigned_to_id?: number
+  new_assigned_to_name?: string
+  // display
+  title?: string
+  change_summary?: string
+  draft?: string
+  reason?: string
+  checklist?: string[]
+  next_step?: string
 }
 
 export interface ChatResponse {

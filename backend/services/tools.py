@@ -78,6 +78,58 @@ TOOL_SCHEMAS = [
         },
     },
     {
+        "name": "change_status",
+        "description": "Redmine の issue のステータスを変更する提案を作成する。実行前にユーザーの確認を求める。",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "issue_id": {
+                    "type": "integer",
+                    "description": "対象 issue の番号",
+                },
+                "new_status_id": {
+                    "type": "integer",
+                    "description": "新しいステータス ID（Redmine の status.id）",
+                },
+                "new_status_name": {
+                    "type": "string",
+                    "description": "新しいステータスの表示名（例: '進行中'、'解決済み'）",
+                },
+                "reason": {
+                    "type": "string",
+                    "description": "変更理由",
+                },
+            },
+            "required": ["issue_id", "new_status_id", "new_status_name"],
+        },
+    },
+    {
+        "name": "change_assignee",
+        "description": "Redmine の issue の担当者を変更する提案を作成する。実行前にユーザーの確認を求める。",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "issue_id": {
+                    "type": "integer",
+                    "description": "対象 issue の番号",
+                },
+                "new_assigned_to_id": {
+                    "type": "integer",
+                    "description": "新しい担当者の Redmine user_id",
+                },
+                "new_assigned_to_name": {
+                    "type": "string",
+                    "description": "新しい担当者の表示名",
+                },
+                "reason": {
+                    "type": "string",
+                    "description": "変更理由",
+                },
+            },
+            "required": ["issue_id", "new_assigned_to_id", "new_assigned_to_name"],
+        },
+    },
+    {
         "name": "search_knowledge",
         "description": "プロジェクトの docs（ロードマップ・方針・仕様）をキーワード検索する。",
         "input_schema": {
@@ -155,6 +207,26 @@ async def execute_tool(name: str, tool_input: dict[str, Any], connector: Any, kn
             "issue_id": tool_input["issue_id"],
             "notes": tool_input["notes"],
             "message": "コメント追加の準備ができました。ユーザーの確認後に実行します。",
+        }, ensure_ascii=False)
+
+    if name == "change_status":
+        return json.dumps({
+            "confirmation_required": True,
+            "issue_id": tool_input["issue_id"],
+            "new_status_id": tool_input["new_status_id"],
+            "new_status_name": tool_input["new_status_name"],
+            "reason": tool_input.get("reason", ""),
+            "message": "ステータス変更の準備ができました。ユーザーの確認後に実行します。",
+        }, ensure_ascii=False)
+
+    if name == "change_assignee":
+        return json.dumps({
+            "confirmation_required": True,
+            "issue_id": tool_input["issue_id"],
+            "new_assigned_to_id": tool_input["new_assigned_to_id"],
+            "new_assigned_to_name": tool_input["new_assigned_to_name"],
+            "reason": tool_input.get("reason", ""),
+            "message": "担当者変更の準備ができました。ユーザーの確認後に実行します。",
         }, ensure_ascii=False)
 
     if name == "search_knowledge":

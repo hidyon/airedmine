@@ -85,6 +85,31 @@ export function postChat(
   })
 }
 
+export function postUpdateProposal(
+  issueId: number,
+  action: 'status_change' | 'assignee_change',
+  opts: {
+    newStatusId?: number
+    newStatusName?: string
+    newAssignedToId?: number
+    newAssignedToName?: string
+    reason?: string
+  },
+): Promise<unknown> {
+  return request('/proposals/update', {
+    method: 'POST',
+    body: JSON.stringify({
+      issue_id: issueId,
+      action,
+      new_status_id: opts.newStatusId,
+      new_status_name: opts.newStatusName,
+      new_assigned_to_id: opts.newAssignedToId,
+      new_assigned_to_name: opts.newAssignedToName,
+      reason: opts.reason,
+    }),
+  })
+}
+
 export function postCommentProposal(
   issueId: number,
   notes: string,
