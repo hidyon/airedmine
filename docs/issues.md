@@ -1867,7 +1867,7 @@ Priority: Low
 
 ### ISS-057: `__pycache__` を `.gitignore` に追加する
 
-Status: Open
+Status: Closed
 Priority: High
 
 要求仕様:
