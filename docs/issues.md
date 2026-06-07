@@ -1908,7 +1908,7 @@ Priority: Medium
 
 ### ISS-059: Proposal カードから Redmine コメントを実行できるようにする
 
-Status: Open
+Status: Closed
 Priority: Medium
 
 要求仕様:
@@ -1928,6 +1928,19 @@ Priority: Medium
 - Chat で `#1208 にコメントを追加して: テスト送信` と入力 → Proposal カードが表示される。
 - 「Redmine に送信」をクリック → API が呼ばれ、カードが「送信済み」になる（mock モードで確認）。
 - Audit View の更新ログに実行記録が表示されることを確認する。
+
+テスト結果:
+
+- `#841 にコメントを追加して: テスト送信` で action: comment、target_issue あり の Proposal カードが返ることを確認した。
+- `ProposalCard` コンポーネントを `DeveloperChatView.tsx` に追加した。`action === 'comment'` かつ `target_issue != null` のとき「Redmine に送信」ボタンを表示する。
+- `action === 'close_candidate'` / `status_change` は「Audit ビューで確認」案内のみ表示する。
+- `POST /api/proposals/comment` が成功し、カードが「✓ Redmine に送信済み」状態に変わることを確認した。
+- Audit ログに success / 841 / comment が記録されることを確認した。
+- `npx tsc --noEmit` エラーなし。
+
+クローズ判定:
+
+- 要求仕様、機能仕様、テスト仕様を満たすため Closed とする。
 
 ### ISS-060: Issue 詳細パネルを正式 issue として記録する
 

@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
-import { postChat } from '../api/client'
-import type { ChatResponse, ChatReference } from '../api/types'
+import { postChat, postCommentProposal } from '../api/client'
+import type { ChatResponse, ChatReference, UpdateProposal } from '../api/types'
 import IssueDetailPanel from '../components/IssueDetailPanel'
 
 interface Message {
@@ -141,6 +141,67 @@ export default function DeveloperChatView() {
   )
 }
 
+type SendState = 'idle' | 'loading' | 'done' | 'error'
+
+function ProposalCard({ proposal }: { proposal: UpdateProposal }) {
+  const [sendState, setSendState] = useState<SendState>('idle')
+  const [errorMsg, setErrorMsg] = useState('')
+
+  const canExecute = proposal.action === 'comment' && proposal.target_issue != null
+
+  async function execute() {
+    if (!proposal.target_issue) return
+    setSendState('loading')
+    try {
+      await postCommentProposal(
+        proposal.target_issue.id,
+        proposal.draft,
+        { id: proposal.target_issue.id, title: proposal.target_issue.title },
+      )
+      setSendState('done')
+    } catch (e) {
+      setErrorMsg(e instanceof Error ? e.message : '送信に失敗しました')
+      setSendState('error')
+    }
+  }
+
+  return (
+    <div className="bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3">
+      <p className="text-[11px] font-bold text-emerald-800 uppercase tracking-wider mb-1 m-0">
+        {proposal.title}
+      </p>
+      <p className="text-xs text-emerald-700 mb-2 m-0">{proposal.change_summary}</p>
+      <pre className="text-xs text-slate-700 bg-white/60 rounded-lg px-3 py-2 whitespace-pre-wrap break-words font-sans m-0">
+        {proposal.draft}
+      </pre>
+      <div className="mt-3">
+        {canExecute ? (
+          sendState === 'done' ? (
+            <span className="text-xs text-emerald-700 font-medium">✓ Redmine に送信済み</span>
+          ) : (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={execute}
+                disabled={sendState === 'loading'}
+                className="px-3 py-1.5 text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-300 text-white rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed"
+              >
+                {sendState === 'loading' ? '送信中…' : 'Redmine に送信'}
+              </button>
+              {sendState === 'error' && (
+                <span className="text-xs text-red-600">{errorMsg} — 再試行できます</span>
+              )}
+            </div>
+          )
+        ) : (
+          <p className="text-xs text-emerald-600 italic m-0">
+            この操作は Audit ビューで確認してください。
+          </p>
+        )}
+      </div>
+    </div>
+  )
+}
+
 function UserBubble({ text }: { text: string }) {
   return (
     <div className="flex justify-end">
@@ -186,17 +247,7 @@ function AssistantBubble({
         </div>
       )}
 
-      {res.proposal && (
-        <div className="bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3">
-          <p className="text-[11px] font-bold text-emerald-800 uppercase tracking-wider mb-1 m-0">
-            {res.proposal.title}
-          </p>
-          <p className="text-xs text-emerald-700 mb-2 m-0">{res.proposal.change_summary}</p>
-          <pre className="text-xs text-slate-700 bg-white/60 rounded-lg px-3 py-2 whitespace-pre-wrap break-words font-sans m-0">
-            {res.proposal.draft}
-          </pre>
-        </div>
-      )}
+      {res.proposal && <ProposalCard proposal={res.proposal} />}
 
       {res.references.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
