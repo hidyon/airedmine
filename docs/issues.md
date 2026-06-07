@@ -1251,9 +1251,9 @@ Note: Python + FastAPI 移行（ISS-053）で SQLite による永続化を実装
 
 ### ISS-038: 体験メモを永続化する
 
-Status: Open
+Status: Closed
 Priority: Medium
-Note: ISS-051 として Milestone 7 に再掲。ISS-051 で解決済みとなった場合は本 issue を Closed とする。
+Note: ISS-051 の SQLite 実装で対応済み。
 
 要求仕様:
 
@@ -1275,8 +1275,9 @@ Note: ISS-051 として Milestone 7 に再掲。ISS-051 で解決済みとなっ
 
 ### ISS-039: 体験メモから改善 issue 下書きを作る
 
-Status: Open
+Status: Won't Do
 Priority: Medium
+Note: Milestone 10 を Won't Do とした判断に伴い対象外とする（2026-06-07）。
 
 要求仕様:
 
@@ -1297,8 +1298,9 @@ Priority: Medium
 
 ### ISS-040: 体験評価テンプレートを整備する
 
-Status: Open
+Status: Won't Do
 Priority: Medium
+Note: Milestone 10 を Won't Do とした判断に伴い対象外とする（2026-06-07）。
 
 要求仕様:
 
@@ -1319,8 +1321,9 @@ Priority: Medium
 
 ### ISS-041: 体験評価サマリを役割別に可視化する
 
-Status: Open
+Status: Won't Do
 Priority: Medium
+Note: Milestone 10 を Won't Do とした判断に伴い対象外とする（2026-06-07）。
 
 要求仕様:
 
@@ -2294,6 +2297,78 @@ Priority: Medium
 クローズ判定:
 
 - 要求仕様、機能仕様、テスト仕様を満たすため Closed とする。Milestone 9 の全 issue（ISS-063〜ISS-069）が Closed になった。
+
+## Milestone 12: 体験品質強化と Redmine 書き込み拡張
+
+### ISS-071: Chat 回答をマークダウンレンダリングする
+
+Status: Open
+Priority: High
+
+要求仕様:
+
+- Claude の回答は箇条書き・太字・コードブロックなどのマークダウンを使って返るが、現在の Chat UI はプレーンテキストとして表示している。
+- マークダウンを正しくレンダリングして可読性を高める。
+
+機能仕様:
+
+- `frontend/` に `react-markdown` を追加する。
+- `DeveloperChatView.tsx` のアシスタントバブルで `react-markdown` を使ってレンダリングする。
+- ul/li、code/pre、strong、em のスタイルを Tailwind v4 で適用する。
+- XSS 対策は react-markdown のデフォルト（HTML タグ無効化）で対応する。
+
+テスト仕様:
+
+- 「今日の issue を優先度順に教えて」で返ってくる箇条書きが `<ul><li>` としてレンダリングされることをブラウザで確認する。
+- コードスニペットを含む回答でコードブロックが整形されることを確認する。
+- `npx tsc --noEmit` エラーなし。
+
+### ISS-072: PM View を Claude Agent に刷新する
+
+Status: Open
+Priority: Medium
+
+要求仕様:
+
+- 現在の PM View はルールベース（更新日・優先度から機械的に分類）でのカード表示のみ。
+- PM が AI の洞察（停滞の根本原因・優先判断・定例アジェンダ候補）を PM View から直接受け取れるようにする。
+
+機能仕様:
+
+- PM View の上部に「AI 分析を取得」ボタンを追加する。
+- ボタンクリックで `POST /api/chat` に `role=pm` で固定の分析依頼（「プロジェクトの現状、停滞 issue、PM が今日判断すべきことを教えて」）を送る。
+- Claude の回答をマークダウンレンダリングして AI 分析カードとして表示する。
+- 既存のルールベースカード（判断待ち・停滞・高優先度）は残す。
+
+テスト仕様:
+
+- 「AI 分析を取得」ボタンを押したとき Claude が Redmine を参照して PM 向けの分析を返すことを確認する。
+- 分析カードにマークダウンがレンダリングされることを確認する。
+- `npx tsc --noEmit` エラーなし。
+
+### ISS-073: ステータス変更・担当変更の実行フローを実装する
+
+Status: Open
+Priority: High
+
+要求仕様:
+
+- ISS-030 で「後続 Milestone で実施」とした、ステータス変更と担当変更の確認・実行フローを完成させる。
+- コメント追加と同様に、確認後に実 Redmine へ反映できる。
+
+機能仕様:
+
+- `backend/services/redmine_connector.py` に `update_issue(issue_id, fields)` を追加する。`fields` は `{"status_id": X}` または `{"assigned_to_id": X}` を受け取る（既存の `PUT /issues/{id}.json` を使用）。
+- `POST /api/proposals/update` を追加する。`type` に `status` または `assignee` を受け取り、Redmine を更新する。
+- `DeveloperChatView.tsx` の `ProposalCard` で `status_change` Proposal に「実行」ボタンを追加する（現在は「Audit ビューで確認」案内のみ）。
+- 担当変更は `assigned_to_id` を数値で指定して実行する。
+- 実行後に Audit ログへ記録する（既存の `audit.py` の仕組みを流用）。
+
+テスト仕様:
+
+- `status_change` Proposal カードの「実行」ボタンを押したとき `POST /api/proposals/update` が呼ばれ Redmine が更新されることを確認する（mock モードで更新成功レスポンスを返すことを確認）。
+- Audit ログにステータス変更の実行記録が残ることを確認する。
+- `npx tsc --noEmit` エラーなし。
 
 ## Milestone 11: チケット意味検索
 
