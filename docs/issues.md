@@ -2294,3 +2294,48 @@ Priority: Medium
 クローズ判定:
 
 - 要求仕様、機能仕様、テスト仕様を満たすため Closed とする。Milestone 9 の全 issue（ISS-063〜ISS-069）が Closed になった。
+
+## Milestone 11: チケット意味検索
+
+### ISS-070: チケット意味検索を実装する
+
+Status: Closed
+Priority: High
+
+要求仕様:
+
+- キーワード完全一致ではなく、意味的に近いチケットを検索できる。
+- 「認証」で検索したとき「ログイン」「セキュリティ」「アクセス制御」関連チケットも返る。
+- Claude が自律的に意味検索を使い、より質の高い回答ができる。
+
+機能仕様:
+
+- `backend/requirements.txt` に `sentence-transformers` と `numpy` を追加する。
+- `backend/services/embedder.py`: モデル（paraphrase-multilingual-MiniLM-L12-v2）の遅延ロードと埋め込み計算。
+- `backend/db.py` に `issue_embeddings` テーブルを追加する（issue_id, subject, body, embedding, indexed_at）。
+- `backend/services/issue_index.py`: Redmine から全 issue を取得して埋め込みインデックスを構築・検索する。インデックスが空のとき初回呼び出しで自動構築する。
+- `backend/services/tools.py` に `search_issues_semantic` ツールを追加する。
+- `GET /api/ai/index/status`: インデックス件数を返す。
+- `POST /api/ai/index/build`: インデックスを強制再構築する。
+
+テスト仕様:
+
+- `POST /api/ai/index/build` でインデックスを構築し、`GET /api/ai/index/status` が `indexed_issues > 0` を返すことを確認する。
+- 「認証」で意味検索して、件名に「認証」を含まないがセキュリティ・ログイン関連のチケットが返ることを確認する。
+- Claude との会話で意味検索が必要な質問を送り、`search_issues_semantic` が tool_calls に含まれることを確認する。
+
+テスト結果:
+
+- `backend/services/embedder.py` を新規作成した。paraphrase-multilingual-MiniLM-L12-v2 を遅延ロードし、埋め込み計算・SQLite BLOB 変換・コサイン類似度計算を提供する。
+- `backend/db.py` に `issue_embeddings` テーブルを追加した。
+- `backend/services/issue_index.py` を新規作成した。ページネーション（`offset`）で全 issue を取得してインデックスを構築する。`build_index(force=False)` は空のときのみ実行、`force=True` で強制再構築。
+- `backend/services/redmine_connector.py` に `offset` パラメータを追加した。
+- `backend/services/tools.py` に `search_issues_semantic` ツールを追加した。インデックスが空の場合は初回呼び出し時に自動構築する。
+- `backend/routers/ai.py` に `GET /api/ai/index/status` と `POST /api/ai/index/build` を追加した。
+- `POST /api/ai/index/build` で 517 件のインデックスを構築できることを確認した。
+- 「認証やログインに関係する issue を意味検索で探して」で `#986 認証バイパスの試みを検証する`・`#685 パスワードリセットフローのバックエンドを実装する`・`#683 API キーによる外部サービス認証を実装する` など意味的に近い issue が返ることを確認した。
+- 「パフォーマンスが遅い」という口語表現でも `#756 打刻 API のレスポンスタイムを 200ms 以下にする`・`#856 フロントエンドのバンドルサイズを分析して削減する` が返ることを確認した。
+
+クローズ判定:
+
+- 要求仕様、機能仕様、テスト仕様を満たすため Closed とする。

@@ -54,6 +54,9 @@ class RedmineConnector:
         assigned = params.get("assigned_to_id", "")
         if assigned:
             query["assigned_to_id"] = assigned
+        offset = params.get("offset", 0)
+        if offset:
+            query["offset"] = str(offset)
         url = f"{self._base_url}/issues.json"
         try:
             async with httpx.AsyncClient() as client:

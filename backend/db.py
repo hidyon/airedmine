@@ -35,4 +35,13 @@ def init_db() -> None:
             )
         """)
         conn.execute("CREATE INDEX IF NOT EXISTS idx_conv_session ON conversations(session_id)")
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS issue_embeddings (
+                issue_id   INTEGER PRIMARY KEY,
+                subject    TEXT NOT NULL,
+                body       TEXT NOT NULL DEFAULT '',
+                embedding  BLOB NOT NULL,
+                indexed_at TEXT NOT NULL
+            )
+        """)
         conn.commit()

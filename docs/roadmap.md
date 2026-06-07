@@ -285,6 +285,29 @@ Anthropic API（claude-haiku-4-5）と tool_use を使い、Redmine 操作・知
 - フロントエンドが会話スレッドを表示し、messages[] をバックエンドに送る。
 - developer / pm ロール別のシステムプロンプトが機能する。
 
+## Milestone 11: チケット意味検索
+
+優先度: High
+状態: Completed
+
+背景: `search_issues` はキーワード完全一致のみ。「認証」で「ログイン」「セキュリティ」関連チケットを拾えない。
+sentence-transformers（paraphrase-multilingual-MiniLM-L12-v2）でベクトル埋め込みを生成し、意味的な近さで検索できるようにする。
+
+関連 issue:
+
+- `ISS-070` Closed: チケット意味検索を実装する。
+
+期待成果:
+
+- Claude が意味検索ツールを使い、キーワードが異なっていても関連チケットを見つけられる。
+- 「このバグに似た過去の issue は？」「セキュリティ関連の issue をまとめて」のような質問に答えられる。
+
+完了条件:
+
+- `search_issues_semantic` ツールが tool_use で動く。
+- 510 件の Redmine チケットの埋め込みインデックスが SQLite に保存される。
+- 意味的に近いチケットがキーワード不一致でも返る。
+
 ## Milestone 10: 体験評価と改善ループ
 
 優先度: Medium
@@ -352,3 +375,4 @@ Anthropic API（claude-haiku-4-5）と tool_use を使い、Redmine 操作・知
 - 2026-06-07: `ISS-062` Closed。`docs/spec.md` を新規作成し、要求仕様・機能仕様（エンドポイント一覧・View 構成・データ・Chat Engine・エラー処理）・テスト仕様（自動テスト一覧・手動確認チェックリスト）を文書化した。
 - 2026-06-07: Milestone 9 を追加。チャット UI 一本化・Anthropic API tool_use による AI Agent 化・会話コンテキスト保持の方針を決定し、`ISS-063`〜`ISS-069` を候補 issue とした。
 - 2026-06-07: Milestone 9 Completed。ISS-063〜069 をすべてクローズした。backend に tools.py / prompts.py / agent.py を追加し、chat router を run_agent に刷新。frontend にロール切り替え・マルチターン会話・ツール呼び出し表示を追加。ISS-049〜051 も Python 移行で解決済みとし Milestone 7 を Completed とした。
+- 2026-06-07: Milestone 11 追加・Completed。ISS-070 をクローズした。sentence-transformers (paraphrase-multilingual-MiniLM-L12-v2) で 517 件の埋め込みインデックスを構築し、`search_issues_semantic` ツールを agent に追加。「認証」→「パスワードリセット・API キー認証」などの意味検索が動作することを確認した。
