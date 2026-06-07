@@ -1,17 +1,33 @@
 version: "3.3"
 
 services:
-  app:
+  frontend:
     build:
-      context: .
-      dockerfile: Dockerfile
-    image: airedmine-app:local
-    environment:
-      PORT: 5173
-      REDMINE_BASE_URL: http://redmine:3000
-      REDMINE_API_KEY: ${REDMINE_API_KEY}
+      context: ./frontend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
     ports:
       - "5173:5173"
+    environment:
+      BACKEND_URL: http://backend:8000
+    depends_on:
+      - backend
+
+  backend:
+    build:
+      context: ./backend
+    volumes:
+      - ./backend:/app
+      - ./docs:/project/docs:ro
+      - ./README.md:/project/README.md:ro
+      - backend-data:/app/data
+    ports:
+      - "8000:8000"
+    environment:
+      REDMINE_BASE_URL: http://redmine:3000
+      REDMINE_API_KEY: ${REDMINE_API_KEY:-}
+      DOCS_ROOT: /project
     depends_on:
       - redmine
 
@@ -42,3 +58,4 @@ services:
 volumes:
   redmine-files:
   redmine-db-data:
+  backend-data:

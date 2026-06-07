@@ -1,3 +1,12 @@
+export function getMockIssueDetail(issueId) {
+  const issues = getMockIssues();
+  const base = issues.find((issue) => issue.id === issueId);
+  if (!base) return null;
+  const details = getMockDetails();
+  const extra = details[issueId] || { description: "", journals: [] };
+  return { ...base, ...extra };
+}
+
 export function listMockIssues({ statusId = "open", limit = 100 } = {}) {
   const issues = getMockIssues()
     .filter((issue) => matchesMockStatus(issue, statusId))
@@ -96,6 +105,63 @@ function getMockIssues() {
       updated_on: dateAgo(now, { days: 4 })
     }
   ];
+}
+
+function getMockDetails() {
+  const now = new Date();
+  return {
+    1208: {
+      description: "認証 API の §3.2 パラメータ仕様について、ドキュメントの記述が古くなっている可能性がある。担当者に確認し、最新仕様を Redmine に反映してからテストを進める。",
+      journals: [
+        { id: 101, user: { id: 3, name: "田中" }, notes: "§3.2 のトークン有効期限についてドキュメントオーナーに質問を送りました。返信待ちです。", created_on: dateAgo(now, { days: 3 }) },
+        { id: 102, user: { id: 7, name: "You" }, notes: "返信がまだ来ていないため、今週中に再確認します。ブロッカーになっています。", created_on: dateAgo(now, { hours: 4 }) }
+      ]
+    },
+    1207: {
+      description: "v2.1 リリースで通知連携機能を含めるか決定が必要。含める場合は工数が +3 日、外す場合は次バージョンへ持ち越し。PM が最終判断する。",
+      journals: [
+        { id: 201, user: { id: 2, name: "PM 鈴木" }, notes: "通知連携はスコープ外にする案が出ています。ステークホルダーと調整中。", created_on: dateAgo(now, { days: 2 }) },
+        { id: 202, user: { id: 7, name: "You" }, notes: "判断が出次第、チケットを更新します。", created_on: dateAgo(now, { hours: 6 }) }
+      ]
+    },
+    1206: {
+      description: "Redmine の journals を解析し、未回答の質問を抽出する機能を追加する。「？」で終わる文や「確認お願いします」を含むコメントを検出対象とする。",
+      journals: [
+        { id: 301, user: { id: 7, name: "You" }, notes: "コメント取得の API 調査を完了。journals の notes フィールドを解析すれば実装可能。", created_on: dateAgo(now, { days: 1 }) }
+      ]
+    },
+    1205: {
+      description: "請求 CSV の金額フォーマットに不具合があり、税込み金額が正しく出力されない。修正済みだがレビューが止まっている。",
+      journals: [
+        { id: 401, user: { id: 5, name: "レビュワー 佐藤" }, notes: "フォーマット修正は確認しました。テストケースの追加を要望します。", created_on: dateAgo(now, { days: 7 }) },
+        { id: 402, user: { id: 7, name: "You" }, notes: "テストケースを追加しました。再レビューをお願いします。", created_on: dateAgo(now, { days: 6 }) }
+      ]
+    },
+    1204: {
+      description: "仕様書 v1.4 と Redmine の issue 説明が一致していない箇所がある。特に認証フローと API レスポンス形式について確認が必要。",
+      journals: [
+        { id: 501, user: { id: 7, name: "You" }, notes: "仕様書 §5 と issue #1208 の説明に矛盾を発見。docs 側を更新するか Redmine を更新するか確認が必要。", created_on: dateAgo(now, { days: 8 }) }
+      ]
+    },
+    1203: {
+      description: "バグ修正が完了し、テスト済み。クローズ候補として挙がっているが、テスト結果の記録が Redmine に残っていない。",
+      journals: [
+        { id: 601, user: { id: 7, name: "You" }, notes: "単体テストと結合テストを実施。すべてパス。クローズしてよいか確認をお願いします。", created_on: dateAgo(now, { days: 2 }) }
+      ]
+    },
+    1202: {
+      description: "AI エージェントが自然言語対話の起点として提示する質問例を整理する。開発者向けと PM 向けを分けて定義。",
+      journals: [
+        { id: 701, user: { id: 7, name: "You" }, notes: "質問例を 5 パターン定義し、UI に反映しました。完了。", created_on: dateAgo(now, { days: 3 }) }
+      ]
+    },
+    1201: {
+      description: "モックデータで起動している場合に、実 Redmine 接続との違いをユーザーが明確に分かるようにする。",
+      journals: [
+        { id: 801, user: { id: 7, name: "You" }, notes: "接続状態パネルを追加し、モックと実接続を区別して表示するようにしました。完了。", created_on: dateAgo(now, { days: 4 }) }
+      ]
+    }
+  };
 }
 
 function matchesMockStatus(issue, statusId) {

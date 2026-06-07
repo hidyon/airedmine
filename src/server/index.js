@@ -18,6 +18,8 @@ const redmine = createRedmineConnector({
 });
 const updateLogs = [];
 let updateLogSequence = 0;
+const experienceNotes = [];
+let experienceNoteSequence = 0;
 
 const mimeTypes = {
   ".html": "text/html; charset=utf-8",
@@ -49,6 +51,11 @@ const server = createServer(async (req, res) => {
       return handleIssues(url, res);
     }
 
+    const issueDetailMatch = url.pathname.match(/^\/api\/issues\/(\d+)$/u);
+    if (issueDetailMatch) {
+      return handleIssueDetail(Number(issueDetailMatch[1]), res);
+    }
+
     if (url.pathname === "/api/chat" && req.method === "POST") {
       return handleChat(req, res);
     }
@@ -61,6 +68,16 @@ const server = createServer(async (req, res) => {
       return sendJson(res, {
         logs: updateLogs.slice(0, 20)
       });
+    }
+
+    if (url.pathname === "/api/experience/notes") {
+      if (req.method === "GET") {
+        return sendJson(res, buildExperienceSummary());
+      }
+
+      if (req.method === "POST") {
+        return handleExperienceNote(req, res);
+      }
     }
 
     return serveStatic(url.pathname, res);
@@ -88,6 +105,21 @@ async function handleIssues(url, res) {
   }
 }
 
+async function handleIssueDetail(issueId, res) {
+  try {
+    const detail = await redmine.getIssueDetail(issueId);
+    if (!detail) {
+      return sendJson(res, { error: `Issue #${issueId} not found` }, 404);
+    }
+    return sendJson(res, detail);
+  } catch (error) {
+    if (error instanceof RedmineApiError) {
+      return sendJson(res, redmineErrorPayload(error, "Redmine issue detail fetch failed"), error.status);
+    }
+    throw error;
+  }
+}
+
 async function handleChat(req, res) {
   const body = await readJsonBody(req);
   const question = String(body.question || "").trim();
@@ -97,6 +129,7 @@ async function handleChat(req, res) {
   }
 
   try {
+    const requestedIssueId = extractIssueId(question);
     const [issues, knowledge] = await Promise.all([
       redmine.listIssues(new URLSearchParams({
         assigned_to_id: "me",
@@ -106,7 +139,16 @@ async function handleChat(req, res) {
       readKnowledgeBase()
     ]);
 
-    return sendJson(res, buildChatResponse(question, issues.issues || [], knowledge));
+    let requestedDetail = null;
+    if (requestedIssueId) {
+      try {
+        requestedDetail = await redmine.getIssueDetail(requestedIssueId);
+      } catch {
+        // 詳細取得失敗は無視して一覧データで回答する
+      }
+    }
+
+    return sendJson(res, buildChatResponse(question, issues.issues || [], knowledge, requestedDetail));
   } catch (error) {
     if (error instanceof RedmineApiError) {
       return sendJson(res, redmineErrorPayload(error, "Redmine chat context fetch failed"), error.status);
@@ -169,6 +211,40 @@ async function handleCommentProposal(req, res) {
   }
 }
 
+async function handleExperienceNote(req, res) {
+  const body = await readJsonBody(req);
+  const role = normalizeChoice(body.role, ["developer", "pm", "observer"], "developer");
+  const moment = normalizeChoice(body.moment, ["morning", "triage", "handoff", "update", "review"], "triage");
+  const signal = normalizeChoice(body.signal, ["lighter", "clearer", "blocked", "risky", "unclear"], "clearer");
+  const note = String(body.note || "").trim();
+  const nextAction = String(body.nextAction || "").trim();
+
+  if (!note) {
+    return sendJson(res, {
+      error: "note is required",
+      message: "体験メモを入力してください。"
+    }, 400);
+  }
+
+  const entry = {
+    id: `exp-${Date.now()}-${experienceNoteSequence++}`,
+    createdAt: new Date().toISOString(),
+    role,
+    moment,
+    signal,
+    note: note.slice(0, 600),
+    nextAction: nextAction.slice(0, 240)
+  };
+
+  experienceNotes.unshift(entry);
+  if (experienceNotes.length > 50) experienceNotes.length = 50;
+
+  return sendJson(res, {
+    note: entry,
+    summary: buildExperienceSummary()
+  }, 201);
+}
+
 function connectionDiagnostics(config) {
   if (!config.connected) {
     return {
@@ -189,6 +265,47 @@ function connectionDiagnostics(config) {
       "チケットが取得できない場合は API キー権限と REST API 有効化を確認する"
     ]
   };
+}
+
+function buildExperienceSummary() {
+  const notes = experienceNotes.slice(0, 20);
+  return {
+    notes,
+    total: experienceNotes.length,
+    summary: {
+      byRole: countEntries(experienceNotes, (entry) => entry.role),
+      byMoment: countEntries(experienceNotes, (entry) => entry.moment),
+      bySignal: countEntries(experienceNotes, (entry) => entry.signal),
+      improvementCandidates: experienceNotes
+        .filter((entry) => entry.nextAction)
+        .slice(0, 5)
+        .map((entry) => ({
+          id: entry.id,
+          createdAt: entry.createdAt,
+          signal: entry.signal,
+          nextAction: entry.nextAction,
+          sourceNote: entry.note
+        }))
+    },
+    prompts: [
+      "Redmine を直接見るより、判断までの時間は短くなったか",
+      "AI の根拠と人間確認の境界は分かりやすかったか",
+      "次に issue 化すべき摩擦や不安は何か"
+    ]
+  };
+}
+
+function normalizeChoice(value, allowed, fallback) {
+  const normalized = String(value || "").trim();
+  return allowed.includes(normalized) ? normalized : fallback;
+}
+
+function countEntries(entries, getKey) {
+  return entries.reduce((counts, entry) => {
+    const key = getKey(entry);
+    counts[key] = (counts[key] || 0) + 1;
+    return counts;
+  }, {});
 }
 
 function recordUpdateLog(entry) {
@@ -331,12 +448,16 @@ async function readKnowledgeBase() {
   return entries;
 }
 
-function buildChatResponse(question, issues, knowledge) {
+function buildChatResponse(question, issues, knowledge, requestedDetail = null) {
+  if (isClarificationNeeded(question)) {
+    return buildClarificationResponse(question);
+  }
+
   const normalized = question.toLowerCase();
   const updateIntent = isUpdateRequest(normalized);
   const requestedIssueId = extractIssueId(question);
   const requestedIssue = requestedIssueId
-    ? issues.find((issue) => issue.id === requestedIssueId)
+    ? (issues.find((issue) => issue.id === requestedIssueId) || (requestedDetail ? { id: requestedDetail.id, subject: requestedDetail.subject, status: requestedDetail.status, priority: requestedDetail.priority, assigned_to: requestedDetail.assigned_to, updated_on: requestedDetail.updated_on } : null))
     : null;
   const staleIssues = issues.filter((issue) => daysSince(issue.updated_on) >= 5);
   const pmIssues = issues.filter((issue) => includesAny(issue.subject, ["pm判断", "判断待ち", "確認待ち"]));
@@ -348,8 +469,10 @@ function buildChatResponse(question, issues, knowledge) {
   if (requestedIssueId && !requestedIssue) {
     answer = `#${requestedIssueId} に該当する issue は、現在取得できる Redmine issue の中では見つかりませんでした。番号、担当、状態フィルタを確認してください。`;
   } else if (requestedIssue) {
-    answer = issueSpecificAnswer(question, requestedIssue);
-    references.push(issueReference(requestedIssue));
+    answer = requestedDetail
+      ? issueSpecificAnswerWithDetail(question, requestedIssue, requestedDetail)
+      : issueSpecificAnswer(question, requestedIssue);
+    references.push(issueReference(requestedIssue, requestedDetail));
   } else if (includesAny(normalized, ["今日", "まず", "何から", "優先"])) {
     const target = rankedIssues[0];
     answer = target
@@ -412,11 +535,57 @@ function extractIssueId(question) {
   return null;
 }
 
+function isClarificationNeeded(question) {
+  const normalized = question.toLowerCase();
+  if (!isUpdateRequest(normalized)) return false;
+  if (!extractIssueId(question)) return true;
+  if (includesAny(normalized, ["なんか", "適当に", "何か", "とりあえず", "なんでも", "いい感じに"])) return true;
+  return false;
+}
+
+function buildClarificationResponse(question) {
+  const normalized = question.toLowerCase();
+  const hasIssueId = extractIssueId(question) !== null;
+  let message;
+  let hints;
+
+  if (!hasIssueId) {
+    message = "どの issue を更新するか指定されていません。issue 番号を含めて依頼してください。";
+    hints = [
+      "「#番号 に〜」のように issue 番号を含めてください",
+      "コメントを追加する場合は内容も一緒に書くと正確に更新案を作れます",
+      "例: 「#1208 にコメントを追加して: ブロッカーが解消しました」",
+      "例: 「#1205 をクローズ候補にして」"
+    ];
+    if (includesAny(normalized, ["コメント", "comment"])) {
+      hints[1] = "コメントの内容も「: 〜」で追記すると、そのまま下書きになります";
+    }
+  } else {
+    message = "更新の内容が明確でないため、確認が必要です。";
+    hints = [
+      "何をしたいか（コメント追加・ステータス変更・クローズなど）を具体的に書いてください",
+      "コメントを追加する場合は「: 内容」を末尾に追記してください",
+      "例: 「#1208 にコメントを追加して: 確認済みです」"
+    ];
+  }
+
+  return {
+    answer: null,
+    clarification: {
+      type: "clarification_required",
+      message,
+      hints
+    },
+    references: [],
+    proposal: null
+  };
+}
+
 function isUpdateRequest(normalized) {
   if (includesAny(normalized, ["クローズして", "close", "閉じて"])) return true;
-  if (includesAny(normalized, ["コメント案", "コメントを書", "投稿して"])) return true;
+  if (includesAny(normalized, ["コメント案", "コメントを書", "コメントを追加", "投稿して"])) return true;
   if (includesAny(normalized, ["ステータス変更案", "ステータスを", "状態を変更"])) return true;
-  if (includesAny(normalized, ["更新案", "反映して", "下書き", "作って"])) return true;
+  if (includesAny(normalized, ["更新案", "更新して", "反映して", "下書き", "作って"])) return true;
   return false;
 }
 
@@ -673,7 +842,7 @@ function uniqueReferences(references) {
   });
 }
 
-function issueReference(issue) {
+function issueReference(issue, detail = null) {
   return {
     type: "issue",
     id: issue.id,
@@ -684,8 +853,43 @@ function issueReference(issue) {
     assignee: issue.assigned_to?.name || "未割り当て",
     updated: issue.updated_on || null,
     updatedLabel: formatReferenceDate(issue.updated_on),
-    reason: issueIntent(issue)
+    reason: issueIntent(issue),
+    journalCount: detail ? (detail.journals?.length ?? 0) : null
   };
+}
+
+function issueSpecificAnswerWithDetail(question, issue, detail) {
+  const normalized = question.toLowerCase();
+  const journals = detail.journals || [];
+  const latestJournal = journals[journals.length - 1];
+  const status = issue.status?.name || "Unknown";
+  const priority = issue.priority?.name || "Normal";
+  const updated = daysSince(issue.updated_on);
+  const base = `#${issue.id}「${issue.subject}」は、状態が ${status}、優先度が ${priority}、最終更新が ${updated} 日前の issue です。`;
+
+  if (includesAny(normalized, ["背景", "なぜ", "context", "理由"])) {
+    const descPart = detail.description
+      ? `\n\n説明: ${detail.description.slice(0, 200)}${detail.description.length > 200 ? "…" : ""}`
+      : "";
+    const commentPart = latestJournal
+      ? `\n\n最新コメント（${latestJournal.user?.name || "不明"}）: ${latestJournal.notes.slice(0, 200)}${latestJournal.notes.length > 200 ? "…" : ""}`
+      : "";
+    return `${base}${descPart}${commentPart}\n\nコメント履歴が ${journals.length} 件あります。`;
+  }
+
+  if (includesAny(normalized, ["次", "アクション", "どうする", "何を"])) {
+    const commentPart = latestJournal
+      ? `最新コメント（${daysSince(latestJournal.created_on)} 日前、${latestJournal.user?.name || "不明"}）: 「${latestJournal.notes.slice(0, 120)}」`
+      : "まだコメントがありません。";
+    return `${base}\n\n${commentPart}\n\n次アクションは「${nextIssueAction(issue)}」です。`;
+  }
+
+  if (includesAny(normalized, ["クローズ", "close", "完了", "閉じ"])) {
+    const commentCount = journals.length;
+    return `${base}\n\nコメント履歴 ${commentCount} 件。クローズ可否は、完了条件・テスト結果・残リスクが揃っているかで判断してください。AIRedmine は直接クローズせず、確認待ちの更新案として扱います。`;
+  }
+
+  return issueSpecificAnswer(question, issue);
 }
 
 function formatReferenceDate(value) {

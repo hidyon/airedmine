@@ -1,4 +1,4 @@
-import { listMockIssues } from "./mockRedmine.js";
+import { listMockIssues, getMockIssueDetail } from "./mockRedmine.js";
 
 export class RedmineApiError extends Error {
   constructor(message, { status, body, contentType }) {
@@ -64,6 +64,41 @@ export function createRedmineConnector({ baseUrl, apiKey }) {
         offset: data.offset || 0,
         limit: data.limit || params.limit
       };
+    },
+
+    async getIssueDetail(issueId) {
+      if (!redmineBaseUrl || !redmineApiKey) {
+        return getMockIssueDetail(issueId);
+      }
+
+      const redmineUrl = `${redmineBaseUrl}/issues/${issueId}.json?include=journals`;
+      let response;
+
+      try {
+        response = await fetch(redmineUrl, {
+          headers: {
+            "Accept": "application/json",
+            "X-Redmine-API-Key": redmineApiKey
+          }
+        });
+      } catch (error) {
+        throw new RedmineApiError("Redmine connection error", {
+          status: 503,
+          body: error.message || "Failed to fetch Redmine",
+          contentType: "text/plain; charset=utf-8"
+        });
+      }
+
+      if (!response.ok) {
+        throw new RedmineApiError(`Redmine API error: ${response.status}`, {
+          status: response.status,
+          body: await response.text(),
+          contentType: response.headers.get("content-type") || "text/plain; charset=utf-8"
+        });
+      }
+
+      const data = await response.json();
+      return normalizeIssueDetail(data.issue);
     },
 
     async addIssueComment(issueId, notes) {
@@ -134,6 +169,29 @@ function toRedmineSearchParams(params) {
     limit: String(params.limit),
     sort: params.sort
   });
+}
+
+function normalizeIssueDetail(issue) {
+  return {
+    id: issue.id,
+    subject: issue.subject || "",
+    description: issue.description || "",
+    project: issue.project || null,
+    tracker: issue.tracker || null,
+    status: issue.status || null,
+    priority: issue.priority || null,
+    assigned_to: issue.assigned_to || null,
+    updated_on: issue.updated_on || null,
+    due_date: issue.due_date || null,
+    journals: (issue.journals || [])
+      .map((j) => ({
+        id: j.id,
+        user: j.user || null,
+        notes: j.notes || "",
+        created_on: j.created_on || null
+      }))
+      .filter((j) => j.notes)
+  };
 }
 
 function normalizeIssue(issue) {

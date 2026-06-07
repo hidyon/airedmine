@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>AIRedmine</title>
-    <link rel="stylesheet" href="/styles.css?v=20260607-env">
+    <link rel="stylesheet" href="/styles.css?v=20260607-iss048">
   </head>
   <body>
     <div class="app-shell">
@@ -14,9 +14,9 @@
           <h1>AIRedmine</h1>
         </div>
         <nav class="nav-list" aria-label="Primary">
-          <button class="nav-item active" type="button">チケット</button>
-          <button class="nav-item" type="button">サマリ</button>
-          <button class="nav-item" type="button">設定</button>
+          <button class="nav-item active" type="button" data-view="developer">開発者</button>
+          <button class="nav-item" type="button" data-view="pm">PM</button>
+          <button class="nav-item" type="button" data-view="audit">更新監査</button>
         </nav>
         <div class="connection-card" id="connectionStatus">接続確認中</div>
       </aside>
@@ -24,19 +24,19 @@
       <main class="main-panel">
         <header class="topbar">
           <div>
-            <p class="eyebrow">Assigned to me</p>
-            <h2>今日見るチケット</h2>
+            <p class="eyebrow" id="topbarEyebrow">Developer view</p>
+            <h2 id="topbarTitle">今日見るチケット</h2>
           </div>
           <button class="icon-button" id="refreshButton" type="button" aria-label="更新" title="更新">
             <span aria-hidden="true">↻</span>
           </button>
         </header>
 
-        <section class="setup-panel" id="setupPanel" aria-live="polite"></section>
+        <section class="setup-panel" id="setupPanel" aria-live="polite" data-views="developer pm"></section>
 
-        <section class="metrics" id="metrics"></section>
+        <section class="metrics" id="metrics" data-views="pm"></section>
 
-        <section class="chat-panel" aria-labelledby="chatTitle">
+        <section class="chat-panel" aria-labelledby="chatTitle" data-views="developer">
           <div class="section-heading">
             <div>
               <p class="eyebrow">Natural language</p>
@@ -68,7 +68,7 @@
           </div>
         </section>
 
-        <section class="proposal-panel" aria-labelledby="proposalReviewTitle">
+        <section class="proposal-panel" aria-labelledby="proposalReviewTitle" data-views="audit">
           <div class="section-heading">
             <div>
               <p class="eyebrow">Proposal review</p>
@@ -80,7 +80,58 @@
           </div>
         </section>
 
-        <section class="work-guide-panel" aria-labelledby="workGuideTitle">
+        <section class="experience-panel" aria-labelledby="experienceTitle" data-views="audit">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Experience loop</p>
+              <h3 id="experienceTitle">体験メモ</h3>
+            </div>
+          </div>
+          <div class="experience-grid">
+            <form class="experience-form" id="experienceForm">
+              <label>
+                <span>役割</span>
+                <select id="experienceRole">
+                  <option value="developer">開発者</option>
+                  <option value="pm">PM</option>
+                  <option value="observer">観察者</option>
+                </select>
+              </label>
+              <label>
+                <span>場面</span>
+                <select id="experienceMoment">
+                  <option value="morning">朝の作業開始</option>
+                  <option value="triage">優先順位整理</option>
+                  <option value="handoff">引き継ぎ</option>
+                  <option value="update">Redmine 更新</option>
+                  <option value="review">完了確認</option>
+                </select>
+              </label>
+              <label>
+                <span>変化</span>
+                <select id="experienceSignal">
+                  <option value="clearer">判断しやすい</option>
+                  <option value="lighter">負担が軽い</option>
+                  <option value="blocked">まだ詰まる</option>
+                  <option value="risky">不安がある</option>
+                  <option value="unclear">効果不明</option>
+                </select>
+              </label>
+              <label class="experience-wide">
+                <span>観察メモ</span>
+                <textarea id="experienceNote" rows="3" placeholder="何が楽になったか、どこで迷ったか"></textarea>
+              </label>
+              <label class="experience-wide">
+                <span>改善候補</span>
+                <input id="experienceNextAction" type="text" placeholder="次に issue 化したい改善">
+              </label>
+              <button class="primary-button" type="submit">記録</button>
+            </form>
+            <div class="experience-output" id="experienceOutput" aria-live="polite"></div>
+          </div>
+        </section>
+
+        <section class="work-guide-panel" aria-labelledby="workGuideTitle" data-views="developer">
           <div class="section-heading">
             <div>
               <p class="eyebrow">Agent work guide</p>
@@ -90,7 +141,7 @@
           <div class="work-guide" id="workGuide"></div>
         </section>
 
-        <section class="pm-panel" aria-labelledby="pmPanelTitle">
+        <section class="pm-panel" aria-labelledby="pmPanelTitle" data-views="pm">
           <div class="section-heading">
             <div>
               <p class="eyebrow">PM overview</p>
@@ -100,7 +151,7 @@
           <div class="pm-grid" id="pmOverview"></div>
         </section>
 
-        <section class="toolbar" aria-label="Filters">
+        <section class="toolbar" aria-label="Filters" data-views="developer">
           <label class="search-box">
             <span>検索</span>
             <input id="searchInput" type="search" placeholder="件名、プロジェクト、状態">
@@ -115,9 +166,9 @@
           </label>
         </section>
 
-        <section class="issue-list" id="issueList" aria-live="polite"></section>
+        <section class="issue-list" id="issueList" aria-live="polite" data-views="developer"></section>
       </main>
     </div>
-    <script src="/app.js?v=20260607-env" type="module"></script>
+    <script src="/app.js?v=20260607-iss048" type="module"></script>
   </body>
 </html>

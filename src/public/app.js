@@ -11,9 +11,20 @@ const state = {
   proposalResult: null,
   proposalRunning: false,
   proposalLogs: [],
-  proposalLogsLoading: false
+  proposalLogsLoading: false,
+  experience: null,
+  experienceSaving: false,
+  currentView: "developer"
 };
 
+const VIEWS = {
+  developer: { eyebrow: "Developer view", title: "今日見るチケット" },
+  pm: { eyebrow: "PM view", title: "プロジェクト観測" },
+  audit: { eyebrow: "Audit view", title: "更新・体験の記録" }
+};
+
+const topbarEyebrow = document.querySelector("#topbarEyebrow");
+const topbarTitle = document.querySelector("#topbarTitle");
 const issueList = document.querySelector("#issueList");
 const metrics = document.querySelector("#metrics");
 const searchInput = document.querySelector("#searchInput");
@@ -28,6 +39,20 @@ const chatInput = document.querySelector("#chatInput");
 const chatOutput = document.querySelector("#chatOutput");
 const chatHistory = document.querySelector("#chatHistory");
 const proposalReview = document.querySelector("#proposalReview");
+const experienceForm = document.querySelector("#experienceForm");
+const experienceRole = document.querySelector("#experienceRole");
+const experienceMoment = document.querySelector("#experienceMoment");
+const experienceSignal = document.querySelector("#experienceSignal");
+const experienceNote = document.querySelector("#experienceNote");
+const experienceNextAction = document.querySelector("#experienceNextAction");
+const experienceOutput = document.querySelector("#experienceOutput");
+
+document.querySelectorAll("[data-view]").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    state.currentView = btn.dataset.view;
+    renderView();
+  });
+});
 
 searchInput.addEventListener("input", () => {
   state.query = searchInput.value.trim().toLowerCase();
@@ -81,14 +106,35 @@ proposalReview.addEventListener("click", (event) => {
   }
 });
 
+experienceForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  saveExperienceNote();
+});
+
 init();
 
 async function init() {
+  renderView();
   renderChatHistory();
   renderProposalReview();
+  renderExperience();
   await loadConfig();
   await loadIssues();
   await loadProposalLogs();
+  await loadExperienceNotes();
+}
+
+function renderView() {
+  const view = state.currentView;
+  document.querySelectorAll("[data-view]").forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.view === view);
+  });
+  document.querySelectorAll("[data-views]").forEach((section) => {
+    section.hidden = !section.dataset.views.split(" ").includes(view);
+  });
+  const config = VIEWS[view] || VIEWS.developer;
+  topbarEyebrow.textContent = config.eyebrow;
+  topbarTitle.textContent = config.title;
 }
 
 async function loadConfig() {
@@ -244,6 +290,69 @@ async function loadProposalLogs() {
   }
 }
 
+async function loadExperienceNotes() {
+  try {
+    const response = await fetch("/api/experience/notes");
+    if (!response.ok) throw new Error(`Experience API error: ${response.status}`);
+    state.experience = await response.json();
+  } catch (error) {
+    console.error(error);
+    state.experience = {
+      error: error.message || "体験メモを取得できませんでした。",
+      notes: [],
+      summary: {}
+    };
+  } finally {
+    renderExperience();
+  }
+}
+
+async function saveExperienceNote() {
+  const note = experienceNote.value.trim();
+  if (!note) {
+    experienceOutput.innerHTML = `<div class="error-state">観察メモを入力してください。</div>`;
+    return;
+  }
+
+  state.experienceSaving = true;
+  renderExperience();
+
+  try {
+    const response = await fetch("/api/experience/notes", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        role: experienceRole.value,
+        moment: experienceMoment.value,
+        signal: experienceSignal.value,
+        note,
+        nextAction: experienceNextAction.value.trim()
+      })
+    });
+
+    if (!response.ok) {
+      const body = await readResponseBody(response);
+      throw new Error(body.message || `Experience API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    state.experience = data.summary;
+    experienceNote.value = "";
+    experienceNextAction.value = "";
+  } catch (error) {
+    console.error(error);
+    state.experience = {
+      ...(state.experience || {}),
+      error: error.message || "体験メモを保存できませんでした。"
+    };
+  } finally {
+    state.experienceSaving = false;
+    renderExperience();
+  }
+}
+
 function renderProposalReview() {
   if (!state.pendingProposal) {
     proposalReview.innerHTML = `
@@ -311,6 +420,99 @@ function renderProposalReview() {
     </article>
     ${proposalLogsTemplate()}
   `;
+}
+
+function renderExperience() {
+  if (!state.experience) {
+    experienceOutput.innerHTML = `<div class="empty-state">体験メモを読み込み中...</div>`;
+    return;
+  }
+
+  const notes = state.experience.notes || [];
+  const summary = state.experience.summary || {};
+  const signals = summary.bySignal || {};
+  const candidates = summary.improvementCandidates || [];
+
+  experienceOutput.innerHTML = `
+    ${state.experience.error ? `<div class="error-state">${escapeHtml(state.experience.error)}</div>` : ""}
+    <div class="experience-summary">
+      ${experienceMetricTemplate("記録", state.experience.total || 0)}
+      ${experienceMetricTemplate("判断しやすい", signals.clearer || 0)}
+      ${experienceMetricTemplate("負担が軽い", signals.lighter || 0)}
+      ${experienceMetricTemplate("摩擦あり", (signals.blocked || 0) + (signals.risky || 0) + (signals.unclear || 0))}
+    </div>
+    <article class="experience-prompts">
+      <span>観察観点</span>
+      <ul>${(state.experience.prompts || []).map((prompt) => `<li>${escapeHtml(prompt)}</li>`).join("")}</ul>
+    </article>
+    <article class="experience-candidates">
+      <span>改善候補</span>
+      ${candidates.length ? candidates.map((candidate) => `
+        <section>
+          <strong>${escapeHtml(signalLabel(candidate.signal))}</strong>
+          <p>${escapeHtml(candidate.nextAction)}</p>
+          <small>${escapeHtml(candidate.sourceNote)}</small>
+        </section>
+      `).join("") : `<p>改善候補はまだありません。</p>`}
+    </article>
+    <div class="experience-notes">
+      ${notes.length ? notes.slice(0, 5).map(experienceNoteTemplate).join("") : `<div class="empty-state">AIRedmine を使ったあと、短く観察を残せます。</div>`}
+    </div>
+  `;
+
+  const button = experienceForm.querySelector("button[type='submit']");
+  button.textContent = state.experienceSaving ? "記録中..." : "記録";
+  button.disabled = state.experienceSaving;
+}
+
+function experienceMetricTemplate(label, value) {
+  return `
+    <div class="experience-metric">
+      <span>${escapeHtml(label)}</span>
+      <strong>${value}</strong>
+    </div>
+  `;
+}
+
+function experienceNoteTemplate(note) {
+  return `
+    <article class="experience-note">
+      <div>
+        <strong>${escapeHtml(signalLabel(note.signal))}</strong>
+        <span>${escapeHtml(roleLabel(note.role))} / ${escapeHtml(momentLabel(note.moment))} / ${escapeHtml(formatDateTime(note.createdAt))}</span>
+      </div>
+      <p>${escapeHtml(note.note)}</p>
+      ${note.nextAction ? `<small>改善候補: ${escapeHtml(note.nextAction)}</small>` : ""}
+    </article>
+  `;
+}
+
+function roleLabel(value) {
+  return {
+    developer: "開発者",
+    pm: "PM",
+    observer: "観察者"
+  }[value] || value || "不明";
+}
+
+function momentLabel(value) {
+  return {
+    morning: "朝の作業開始",
+    triage: "優先順位整理",
+    handoff: "引き継ぎ",
+    update: "Redmine 更新",
+    review: "完了確認"
+  }[value] || value || "不明";
+}
+
+function signalLabel(value) {
+  return {
+    clearer: "判断しやすい",
+    lighter: "負担が軽い",
+    blocked: "まだ詰まる",
+    risky: "不安がある",
+    unclear: "効果不明"
+  }[value] || value || "不明";
 }
 
 function proposalDiffTemplate(proposal) {
@@ -728,6 +930,24 @@ function candidateTemplate(candidate) {
 function renderChatAnswer(question, data) {
   const references = data.references || [];
   const proposal = data.proposal;
+
+  if (data.clarification) {
+    const hints = data.clarification.hints || [];
+    chatOutput.innerHTML = `
+      <article class="chat-answer">
+        <div class="chat-question">
+          <span>質問</span>
+          <strong>${escapeHtml(question)}</strong>
+        </div>
+        <div class="chat-clarification">
+          <span>確認が必要です</span>
+          <p>${escapeHtml(data.clarification.message)}</p>
+          ${hints.length ? `<ul>${hints.map((hint) => `<li>${escapeHtml(hint)}</li>`).join("")}</ul>` : ""}
+        </div>
+      </article>
+    `;
+    return;
+  }
 
   chatOutput.innerHTML = `
     <article class="chat-answer">

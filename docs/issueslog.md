@@ -811,3 +811,328 @@ Compose v2 移行準備を `ISS-037` として追加し、Milestone 5 の残り 
 
 - 初回設定、起動確認、デモデータ投入、開発起動、devcontainer、Compose v2 移行準備が一通り揃った。
 - 新しい開発者や PM がローカルで AIRedmine と Redmine を試す導線が整ったため、`ISS-032` から `ISS-037` を Closed とし、Milestone 5 を Completed とする。
+
+## 2026-06-07: ISS-012 クローズ
+
+Milestone 6 の体験評価と改善ループとして、AIRedmine を使ったあとに観察メモを残す UI / API を追加した。
+
+実装内容:
+
+- Browser UI に `体験メモ` パネルを追加した。
+- 役割、場面、体験変化、観察メモ、改善候補を入力できるようにした。
+- 記録数、判断しやすさ、負担軽減、摩擦の件数を集計表示するようにした。
+- 改善候補を最新 5 件まで見返せるようにした。
+- `GET /api/experience/notes` と `POST /api/experience/notes` を追加した。
+- 体験メモは検証用プロトタイプとしてアプリサーバーのメモリ上に保持する。
+
+確認結果:
+
+- `node --check src/server/index.js` が成功した。
+- `node --check src/public/app.js` が成功した。
+- `GET /api/experience/notes` が観察観点と空の集計を返すことを確認した。
+- `POST /api/experience/notes` が体験メモを保存し、改善候補を含む集計を返すことを確認した。
+- 配信 HTML に `体験メモ` パネルと最新キャッシュキーが含まれることを確認した。
+
+クローズ判定:
+
+- 体験メモ、観察観点、改善候補を AIRedmine の画面から記録できる。
+- 記録した改善候補を後続 issue 化の材料として見返せる。
+- 以上により `ISS-012` を Closed とし、Milestone 6 を Completed とする。
+
+## 2026-06-07: Milestone 6 再オープンと候補 issue 提案
+
+`ISS-012` で体験メモの入口はできたが、体験評価と改善ループ全体としてはまだ未完了と判断した。
+特に、記録の永続化、改善 issue 化、評価テンプレート、役割別サマリが残っている。
+
+判断:
+
+- Milestone 6 の状態を `Completed` から `Open` に戻す。
+- `ISS-012` は体験メモの入口として `Closed` のまま残す。
+- Milestone 6 の候補 issue として `ISS-038` から `ISS-041` を追加する。
+
+候補 issue:
+
+- `ISS-038`: 体験メモを永続化する。
+- `ISS-039`: 体験メモから改善 issue 下書きを作る。
+- `ISS-040`: 体験評価テンプレートを整備する。
+- `ISS-041`: 体験評価サマリを役割別に可視化する。
+
+優先順:
+
+- まず `ISS-038` で記録が消えないようにする。
+- 次に `ISS-039` で改善候補を issue 化しやすくする。
+- その後 `ISS-040` と `ISS-041` で観察品質と振り返りの見やすさを上げる。
+
+## 2026-06-07: Milestone 7 追加
+
+機能追加が進み、Browser UI、Chat、Proposal review、PM overview、Work guide、Redmine Connector、docs 検索、体験評価が同じプロトタイプ内に増えてきた。
+次に実装する前に、改善候補とアーキテクチャ上の責務を整理するマイルストーンを追加する。
+
+追加したマイルストーン:
+
+- Milestone 7: 機能改善の洗い出しとアーキテクチャの検討
+
+追加した issue:
+
+- `ISS-042`: 既存機能の改善候補を棚卸しする。
+- `ISS-043`: 現在のアーキテクチャを記録する。
+- `ISS-044`: 次に分離すべき責務を検討する。
+- `ISS-045`: 改善候補の優先順位付け方法を決める。
+
+優先順:
+
+- まず `ISS-042` で機能ごとの改善候補を洗い出す。
+- 次に `ISS-043` で現在の構成と責務を記録する。
+- その後 `ISS-044` で分離すべき責務を検討する。
+- 最後に `ISS-045` で改善候補を選ぶ基準を固める。
+
+判断理由:
+
+- 既存機能の増加に対して、場当たり的に改修を続けると体験検証の意図が薄くなる。
+- アーキテクチャを先に巨大化させるのではなく、現状の痛みと次の改善候補を見て必要な分離を決める。
+- Milestone 6 の体験評価ループともつながり、記録された体験メモを改善候補の根拠にできる。
+
+## 2026-06-07: Milestone 6 と 7 の入れ替え
+
+実施順を見直し、機能改善の洗い出しとアーキテクチャ検討を先に行うことにした。
+体験評価ループは重要だが、既存機能と責務を整理してから進めるほうが、改善候補の質が上がると判断した。
+
+変更内容:
+
+- `Milestone 6`: 機能改善の洗い出しとアーキテクチャの検討。
+- `Milestone 7`: 体験評価と改善ループ。
+- `ISS-042` から `ISS-045` は Milestone 6 の候補 issue とする。
+- `ISS-012` と `ISS-038` から `ISS-041` は Milestone 7 の候補 issue とする。
+
+判断理由:
+
+- 既存機能の改善候補を先に棚卸しすると、体験メモから出る改善候補も分類しやすくなる。
+- アーキテクチャ上の責務を整理してから永続化や役割別サマリを進めるほうが、後戻りが少ない。
+- Milestone 7 は、Milestone 6 で整理した改善候補と責務を使って、より継続的な評価ループにできる。
+
+## 2026-06-07: ISS-042 開始
+
+Milestone 6 の最初の作業として、既存機能の改善候補を棚卸しする。
+実装を増やす前に、現在の UI、Chat、更新案レビュー、PM overview、Work guide、Redmine Connector、開発環境、体験評価の痛みを整理する。
+
+仕様:
+
+- 対象機能ごとに、現状、課題、改善案、影響範囲、検証方法を記録する。
+- 改善候補は後続 issue に変換しやすい粒度で書く。
+- 成果物は `docs/improvement-inventory.md` とする。
+
+判断理由:
+
+- Milestone 6 はアーキテクチャ検討の前に、まず既存機能の痛みを集める必要がある。
+- 先に棚卸しを行うことで、`ISS-043` 以降のアーキテクチャ記録や責務分離の判断材料になる。
+
+## 2026-06-07: ISS-042 クローズ
+
+既存機能ごとの改善候補を `docs/improvement-inventory.md` に整理した。
+
+実装内容:
+
+- Browser UI、Chat、Proposal review、PM overview、Work guide、Redmine Connector、開発環境、体験評価に分けて棚卸しした。
+- 各機能について、現状、課題、改善案、影響範囲、検証方法、後続 issue 候補を記録した。
+- 優先して扱う改善候補を 5 件に絞った。
+
+確認結果:
+
+- `rg` で `docs/improvement-inventory.md` に各機能の必須見出しが存在することを確認した。
+- `docs/roadmap.md` の Milestone 6 に `ISS-042` が関連 issue として記載されていることを確認した。
+
+クローズ判定:
+
+- 機能追加、使いにくさ、説明不足、保守しにくさ、検証しにくさを含めて改善候補を棚卸しできた。
+- 後続 issue に変換しやすい形式で記録できたため `ISS-042` を Closed とする。
+
+## 2026-06-07: ISS-042 棚卸し観点の追補
+
+改善候補の棚卸しに、次の観点を追加した。
+
+- 対話型のインターフェイス
+- ダッシュボードの充実
+- 意味検索の高度化
+
+反映内容:
+
+- `docs/improvement-inventory.md` に専用セクションを追加した。
+- 優先して扱う改善候補に、ダッシュボードビュー分割、確認質問ステップ、docs 検索のスコア理由を追加した。
+- `ISS-042` のテスト結果に、追加観点を反映した。
+
+## 2026-06-07: 対話型インターフェイスの Agent Backend 方針
+
+対話型インターフェイスは、将来的に Codex のような AI エージェントがバックエンドで稼働する構成を前提に検討する。
+ただし Redmine 更新を自律実行するのではなく、調査、整理、提案を行い、人間の確認を通して反映する確認型エージェントとして扱う。
+
+方針:
+
+- App Server 内に Agent Orchestrator を置く構成を検討する。
+- Agent は Redmine Connector、Knowledge Connector、Proposal Builder、Experience Notes などの tool を使う。
+- Agent の出力は自由文だけでなく、根拠、次アクション、更新案、人間承認要否を含む構造化レスポンスにする。
+- Redmine 更新は Proposal review と Audit log を経由し、Agent が直接反映しない。
+- Agent session と audit trail を記録し、どの根拠と tool から提案が生まれたかを追えるようにする。
+
+反映:
+
+- `docs/improvement-inventory.md` の `対話型インターフェイス` に Agent Orchestrator、tool 境界、human approval、audit trail の観点を追加した。
+- 詳細な責務整理は `ISS-043` のアーキテクチャ記録で扱う。
+
+## 2026-06-07: ISS-043 クローズ
+
+現在の AIRedmine のアーキテクチャを `docs/architecture.md` に記録した。
+
+実装内容:
+
+- Human Interface Layer、App Server / Agent API、Redmine Connector、Knowledge Connector prototype、Agent Layer prototype、Proposal & Audit Layer prototype、Experience Loop prototype の責務を整理した。
+- `/api/config`、`/api/issues`、`/api/chat`、`/api/proposals/*`、`/api/experience/notes` の用途を記録した。
+- issue 一覧表示、Chat 回答、コメント追加 Proposal、体験メモのデータの流れを記録した。
+- 実装済み、仮実装、未実装の境界を整理した。
+- Agent Orchestrator、tool registry、Agent session / audit trail を未実装の将来層として明記した。
+
+確認結果:
+
+- `rg --files src scripts .devcontainer` で実ファイル構成を確認した。
+- `rg` で主要 API と Connector の実装箇所を確認した。
+- README のアーキテクチャ方針と `docs/architecture.md` のレイヤー構成が矛盾していないことを確認した。
+
+クローズ判定:
+
+- 現在の構成と責務、主要 API、データの流れ、実装済みと未実装の境界を後から見返せる形で記録できた。
+- `ISS-044` の責務分離検討に進む材料が揃ったため `ISS-043` を Closed とする。
+
+## 2026-06-07: ISS-044 クローズ
+
+次に分離すべき責務を `docs/responsibility-separation.md` に整理した。
+
+実装内容:
+
+- Chat / Agent Orchestrator、Knowledge Connector、Browser UI Views、Proposal & Audit、Experience Notes、Redmine Connector、Error Handling を分離候補として整理した。
+- 各候補に、現在の場所、分離する理由、推奨タイミング、先送り条件、分離後の候補、既存 / 新規 issue とのつながりを記録した。
+- 今すぐ分離したいもの、関連機能を触るタイミングで分離したいもの、今は分離しないものに分類した。
+
+判断:
+
+- 今すぐ分離したいものは、Chat / Agent Orchestrator、Knowledge Connector、Browser UI Views とする。
+- Proposal & Audit、Experience Notes、Redmine Connector は関連機能を触るタイミングで分離する。
+- Error Handling は対象 API が増えるまで分離しない。
+
+確認結果:
+
+- `wc -l` で `src/server/index.js` と `src/public/app.js` が大きくなっていることを確認した。
+- `docs/architecture.md` と `docs/improvement-inventory.md` を参照し、分離候補が既存課題と対応していることを確認した。
+- `rg` で各候補に `推奨タイミング` と `先送り条件` が存在することを確認した。
+
+クローズ判定:
+
+- 何をいつ分離すべきか、どこまで先送りできるかを判断できる材料が揃ったため `ISS-044` を Closed とする。
+
+## 2026-06-07: ISS-045 着手 — 改善候補の優先順位付け方法を決める
+
+`docs/improvement-inventory.md` に 7 件の改善候補が揃った。
+次の Milestone 7 でどれから着手するかを、思いつきではなく一貫した基準で選べるようにする。
+
+### 評価軸の定義
+
+各改善候補を以下 5 軸で評価する。
+
+| 軸 | 意味 | 高い (H) | 中 (M) | 低い (L) |
+| --- | --- | --- | --- | --- |
+| ユーザー価値 | 開発者・PM の判断・探索・確認・承認がどれだけ楽になるか | 体験が大きく変わる | 部分的に改善 | 内部改善のみ |
+| 技術リスク | 既存機能への影響範囲、失敗時の影響 | 広範囲に影響の可能性 | 一部機能に影響の可能性 | 追加変更のみで影響小 |
+| 実装コスト | 変更規模・複数ファイルへの影響・新規設計の必要性 | 大規模な設計変更が必要 | 複数ファイルの修正が必要 | 小規模な追加・修正で済む |
+| 検証容易性 | モックデータ・API 確認・ブラウザー確認で完了確認できるか | ブラウザー or API で即確認 | 複数手順が必要 | 環境や条件が限られる |
+| ロードマップ適合度 | 次のマイルストーン目標と直接つながるか | M7 の核心になる | M7 の補助になる | M8 以降が適切 |
+
+優先しやすい候補の特徴: ユーザー価値 H、技術リスク L-M、実装コスト L-M、検証容易性 H、ロードマップ適合度 H。
+
+### 改善候補の比較
+
+`docs/improvement-inventory.md` の「優先して扱う改善候補」7 件を評価軸で比較する。
+
+| # | 改善候補 | ユーザー価値 | 技術リスク | 実装コスト | 検証容易性 | ロードマップ適合度 | 推奨時期 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 1 | ダッシュボードビューを分ける | H | M | M | H | H | M7 前半 |
+| 2 | 対話フローに確認質問ステップを追加する | H | L | M | H | H | M7 前半 |
+| 3 | Redmine issue 詳細と journals を取得する | H | L | M | H | H | M7 前半 |
+| 4 | Chat intent 分類をモジュール化する | L | M | M | H | M | M7 後半 |
+| 5 | docs 検索に用語辞書とスコア理由を追加する | M | L | L | H | M | M7 後半 |
+| 6 | 体験メモを永続化する（ISS-038） | M | L | L | H | H | M7 後半 |
+| 7 | Proposal と Chat 履歴を関連付ける | M | M | M | M | M | M8 以降 |
+
+### 判断理由
+
+**M7 前半候補（#1, #2, #3）を先に進める理由:**
+
+- #1 ダッシュボードビュー分割: 現状は全機能が 1 画面に並んでおり、開発者と PM がそれぞれの目的で使いにくい。最初に役割ごとの導線を整えることで、後続の改善が「誰向けか」を意識しやすくなる。
+- #2 確認質問ステップ: 曖昧な依頼に AI が即答する現状は、誤解や不適切な更新案の起点になりやすい。早期に対話の質を上げることで体験リスクを下げられる。
+- #3 Redmine 詳細 + journals: Work Guide、PM Overview、Chat の全員が件名だけで判断している。詳細とコメント履歴を取得することで、複数の後続改善（#2, #5, #7）の判断材料が同時に整う。
+
+**M7 後半候補（#4, #5, #6）の位置付け:**
+
+- #4 Chat モジュール化: ユーザーには直接見えないが、#2 や #3 の実装で `src/server/index.js` がさらに肥大化することが予想されるため、関連機能を触るタイミングで分離する。
+- #5 docs 検索改善: #3 の journals 取得と組み合わせると効果が大きい。コスト低なので #3 完了後に連続して進める。
+- #6 体験メモ永続化: Milestone 10 の改善ループの前提。M7 後半に進めて M10 への準備を整える。
+
+**M8 以降（#7）:**
+
+- #7 Proposal/Chat 関連付け: 監査性の改善として価値はあるが、ステータス変更・クローズの実行フローが整ってから取り組む方が効果的。現段階では先送りできる。
+
+### Milestone 7 推奨構成
+
+M7 前半（最初に着手する issue）:
+
+- `ISS-046`: ダッシュボードビューを分ける（開発者 / PM / 更新監査）
+- `ISS-047`: Redmine issue 詳細と journals を取得する
+- `ISS-048`: 対話フローに確認質問ステップを追加する
+
+M7 後半（前半完了後に着手する issue）:
+
+- `ISS-049`: Chat intent 分類をモジュール化する（#3 完了後のタイミング）
+- `ISS-050`: docs 検索に用語辞書とスコア理由を追加する
+- `ISS-051`: 体験メモを永続化する（ISS-038 に統合）
+
+issue 番号と詳細仕様は Milestone 7 着手時に確定する。
+
+## 2026-06-07: ISS-045 クローズ
+
+評価軸の定義と 7 件の改善候補比較を issueslog.md に記録した。
+
+確認結果:
+
+- issueslog.md に評価軸定義（5 軸・3 段階）が存在することを確認した。
+- 7 件の改善候補すべてを評価軸で比較した表が存在することを確認する。
+- 次に取り組む issue を選ぶ判断理由を M7 前半・後半・M8 以降に分けて記録した。
+
+クローズ判定:
+
+- 改善候補を一貫した基準で選べるようになった。
+- 少なくとも 3 件（実際は 7 件）の比較と判断理由を記録できた。
+- Milestone 7 の推奨構成まで導ける状態になったため `ISS-045` を Closed とする。
+- Milestone 6 の全 issue が Closed になったため、Milestone 6 を Completed とする。
+
+## 2026-06-07: ISS-048 クローズ
+
+対話フローに確認質問ステップを追加した。
+
+実装内容:
+
+- `isClarificationNeeded(question)`: `isUpdateRequest` が true かつ issue ID が未指定のとき、または曖昧ワード（「なんか」「適当に」「とりあえず」など）が含まれるとき `true` を返す。
+- `buildClarificationResponse(question)`: `clarification_required` 型レスポンスを構築する。issue ID の有無に応じてメッセージとヒントを分岐する。
+- `buildChatResponse` の先頭で `isClarificationNeeded` を評価し、該当すれば早期 return する。
+- `isUpdateRequest` に「更新して」「コメントを追加」を追加し、口語的な依頼を捕捉するようにした。
+- `renderChatAnswer`（app.js）に `data.clarification` ブランチを追加し、`.chat-clarification` カードを描画する。
+- `.chat-clarification` スタイルを styles.css に追加した（青系、`#eff6ff` 背景）。
+
+確認結果:
+
+- 「なんか更新して」→ `clarification: true`、メッセージとヒント 4 件を返す。
+- 「#1 にコメントを追加して: 実装完了しました」→ `clarification: false`、`proposal: true`。
+- 「コメントを追加して」（issue ID なし、コメント系）→ `clarification: true`、コメント向けヒントに分岐する。
+- 「#1201 を更新して」（issue ID あり、曖昧ワードなし）→ `clarification: false`、`proposal: true`。
+
+クローズ判定:
+
+- 曖昧な依頼で確認質問が返ることを確認した。
+- 明確な依頼では確認質問が出ないことを確認した。
+- `ISS-048` を Closed とする。

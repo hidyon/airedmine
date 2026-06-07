@@ -26,7 +26,8 @@ body {
 
 button,
 input,
-select {
+select,
+textarea {
   font: inherit;
 }
 
@@ -305,6 +306,11 @@ h3 {
   gap: 10px;
 }
 
+.experience-panel {
+  display: grid;
+  gap: 10px;
+}
+
 .section-heading {
   display: flex;
   align-items: end;
@@ -547,6 +553,39 @@ h3 {
 .proposal-checklist {
   display: grid;
   gap: 6px;
+}
+
+.chat-clarification {
+  display: grid;
+  gap: 7px;
+  border: 1px solid rgba(59, 130, 246, 0.32);
+  border-radius: 8px;
+  padding: 12px;
+  background: #eff6ff;
+}
+
+.chat-clarification > span {
+  color: #1d4ed8;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.chat-clarification p {
+  margin: 0;
+  color: var(--ink);
+  line-height: 1.55;
+}
+
+.chat-clarification ul {
+  margin: 2px 0 0;
+  padding-left: 1.2em;
+}
+
+.chat-clarification li {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.55;
+  margin-bottom: 3px;
 }
 
 .proposal-checklist ul {
@@ -1103,7 +1142,8 @@ h3 {
 }
 
 input,
-select {
+select,
+textarea {
   width: 100%;
   min-height: 42px;
   border: 1px solid var(--line);
@@ -1113,10 +1153,153 @@ select {
   color: var(--ink);
 }
 
+textarea {
+  min-height: 84px;
+  padding: 10px 12px;
+  line-height: 1.5;
+  resize: vertical;
+}
+
 input:focus,
-select:focus {
+select:focus,
+textarea:focus {
   border-color: var(--accent);
   outline: 3px solid rgba(15, 118, 110, 0.16);
+}
+
+.experience-grid {
+  display: grid;
+  grid-template-columns: minmax(320px, 0.74fr) minmax(0, 1.26fr);
+  gap: 12px;
+  align-items: start;
+}
+
+.experience-form,
+.experience-output {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 16px;
+  background: var(--panel);
+  box-shadow: 0 8px 24px rgba(24, 35, 52, 0.04);
+}
+
+.experience-form {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.experience-form label {
+  display: grid;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.experience-form .experience-wide {
+  grid-column: 1 / -1;
+}
+
+.experience-form .primary-button {
+  grid-column: 1 / -1;
+  width: fit-content;
+}
+
+.experience-output {
+  display: grid;
+  gap: 10px;
+}
+
+.experience-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.experience-metric {
+  min-height: 72px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px;
+  background: #f8fafc;
+}
+
+.experience-metric span,
+.experience-prompts span,
+.experience-candidates > span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.experience-metric strong {
+  display: block;
+  margin-top: 6px;
+  color: var(--accent-strong);
+  font-size: 24px;
+  line-height: 1;
+}
+
+.experience-prompts,
+.experience-candidates {
+  display: grid;
+  gap: 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px;
+  background: #f8fafc;
+}
+
+.experience-prompts ul {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding-left: 18px;
+  color: var(--ink);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.experience-candidates section,
+.experience-note {
+  display: grid;
+  gap: 6px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px;
+  background: #ffffff;
+}
+
+.experience-candidates p,
+.experience-note p {
+  margin: 0;
+  color: var(--ink);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.experience-candidates small,
+.experience-note span,
+.experience-note small {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.experience-notes {
+  display: grid;
+  gap: 8px;
+}
+
+.experience-note div {
+  display: grid;
+  gap: 3px;
+}
+
+.experience-note strong {
+  color: var(--accent-strong);
+  font-size: 13px;
 }
 
 .issue-list {
@@ -1222,8 +1405,14 @@ select:focus {
   .work-guide,
   .pm-decision-board,
   .chat-form,
+  .experience-grid,
   .guide-split,
   .issue-agent {
+    grid-template-columns: 1fr;
+  }
+
+  .experience-form,
+  .experience-summary {
     grid-template-columns: 1fr;
   }
 

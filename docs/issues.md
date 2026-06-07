@@ -1034,24 +1034,451 @@ Priority: Medium
 
 ### ISS-012: 体験評価と改善ループの記録方法を作る
 
-Status: Open
+Status: Closed
 Priority: Medium
 
 要求仕様:
 
 - 開発者と PM が AIRedmine を使ったときの体験変化を記録できる。
 - 改善候補を後続 issue として継続的に扱える。
-- ロードマップ上で Milestone 6 と対応していることが分かる。
+- ロードマップ上で Milestone 10 と対応していることが分かる。
 
 機能仕様:
 
 - 体験メモ、観察項目、改善候補の記録場所を決める。
 - 定期的に `agent.md` や docs の改善提案につなげる手順を決める。
+- Browser UI に、役割、場面、体験変化、観察メモ、改善候補を入力できる体験メモ欄を追加する。
+- アプリサーバーに体験メモの保存・集計 API を追加し、改善候補を見返せるようにする。
 
 テスト仕様:
 
 - 体験評価の記録テンプレートが存在することを確認する。
 - 改善候補を issue 化する流れが docs に記載されていることを確認する。
+- `POST /api/experience/notes` で体験メモを保存できることを確認する。
+- `GET /api/experience/notes` で集計、観察観点、改善候補を取得できることを確認する。
+- `node --check src/server/index.js` と `node --check src/public/app.js` で構文エラーがないことを確認する。
+
+テスト結果:
+
+- Browser UI に `体験メモ` パネルを追加した。
+- 役割、場面、体験変化、観察メモ、改善候補を記録できるようにした。
+- 記録数、ポジティブな変化、摩擦、改善候補を画面で確認できるようにした。
+- `/api/experience/notes` で体験メモをメモリ上に保存し、集計を返すようにした。
+- `node --check src/server/index.js` が成功した。
+- `node --check src/public/app.js` が成功した。
+- `GET /api/experience/notes` が観察観点と空の集計を返すことを確認した。
+- `POST /api/experience/notes` が体験メモを保存し、改善候補を含む集計を返すことを確認した。
+- 配信 HTML に `体験メモ` パネルと最新キャッシュキーが含まれることを確認した。
+
+クローズ判定:
+
+- 体験メモ、観察項目、改善候補を AIRedmine の画面から記録でき、後続 issue 化の材料を残せるため Closed とする。
+
+### ISS-046: ダッシュボードビューを分ける
+
+Status: Closed
+Priority: High
+
+要求仕様:
+
+- 開発者が「今日の作業候補」へ、PM が「プロジェクト観測」へ素早く移動できる。
+- Chat、更新案レビュー、体験メモを目的別のビューとして整理する。
+- サイドバーのナビゲーションが実際のビュー切り替えとして機能する。
+
+機能仕様:
+
+- 開発者ビュー、PM ビュー、更新監査ビューを主要ビューとして分ける。
+- サイドバーのナビゲーションで各ビューへ切り替えられる。
+- 現在表示中のビューがナビゲーション上で分かる。
+- モバイル幅でもナビゲーションと主要コンテンツが崩れない。
+
+テスト仕様:
+
+- 各ナビゲーション項目をクリックすると対応するビューが表示されることを確認する。
+- モバイル幅（375px 相当）でナビゲーションとコンテンツが崩れないことを確認する。
+- `node --check src/public/app.js` で構文エラーがないことを確認する。
+
+テスト結果:
+
+- `index.html` のナビゲーションに `data-view="developer/pm/audit"` を追加した。
+- 各 section に `data-views` 属性でどのビューに属するかを指定した。
+- `app.js` に `VIEWS` 設定と `renderView()` を追加し、nav クリックでビューが切り替わるようにした。
+- `state.currentView` でビュー状態を管理し、`init()` で初期描画するようにした。
+- `node --check src/public/app.js` が成功した。
+- 既存のモバイル breakpoint（820px）でナビが横並びになるスタイルは既に実装済みで崩れないことを確認した。
+
+クローズ判定:
+
+- 開発者 / PM / 更新監査の 3 ビューに切り替えられる。
+- サイドバーのナビゲーションがアクティブビューを示す。
+- モバイル対応は既存 CSS で担保されている。
+- 以上により ISS-046 を Closed とする。
+
+### ISS-047: Redmine issue 詳細と journals を取得する
+
+Status: Closed
+Priority: High
+
+要求仕様:
+
+- Work Guide、PM Overview、Chat が件名だけでなく、詳細・コメント履歴を判断材料にできる。
+- issue 詳細と journals を取得する API を Redmine Connector に追加する。
+
+機能仕様:
+
+- `getIssueDetail(id)` を Redmine Connector に追加する。
+- 取得するフィールド: description、journals（コメント履歴）、status、priority、assigned_to、due_date。
+- モックモードでは同じ形式のモックデータを返す。
+- Chat の issue 番号指定質問で詳細を参照できるようにする。
+
+テスト仕様:
+
+- `GET /api/issues/:id` またはそれに準ずる API で issue 詳細が返ることを確認する。
+- モックと実 Redmine で同じレスポンス形式になることを確認する。
+- `node --check src/server/index.js` と `node --check src/server/redmineConnector.js` で構文エラーがないことを確認する。
+
+テスト結果:
+
+- `getMockIssueDetail` を `mockRedmine.js` に追加し、8 件のモック issue に description と journals を追加した。
+- `getIssueDetail(id)` を `redmineConnector.js` に追加した。実 Redmine では `GET /issues/:id.json?include=journals` を呼ぶ。
+- `normalizeIssueDetail` で description、journals（notes があるもののみ）を正規化するようにした。
+- `GET /api/issues/:id` ルートと `handleIssueDetail` を `index.js` に追加した。
+- `handleChat` で issue 番号が指定されている場合に `getIssueDetail` を追加取得するようにした。
+- `issueSpecificAnswerWithDetail` を追加し、背景・次アクション・クローズ質問で description と journals を使った回答を返すようにした。
+- `issueReference` に `journalCount` を追加した。
+- モック動作確認: `getMockIssueDetail(1208)` が description と journals 2 件を返した。存在しない ID では null を返した。
+- `node --check` で全サーバーファイルの構文エラーがないことを確認した。
+
+クローズ判定:
+
+- `GET /api/issues/:id` で詳細と journals が返る。
+- Chat の `#1208 の背景を教えて` が description とコメント履歴を使った回答を返せる。
+- モックと実 Redmine で同じレスポンス形式になっている。
+- 以上により ISS-047 を Closed とする。
+
+### ISS-048: 対話フローに確認質問ステップを追加する
+
+Status: Closed
+Priority: High
+
+要求仕様:
+
+- 曖昧な依頼に対して AI が先に確認質問を返し、誤解や不適切な更新案を防ぐ。
+- 明確な依頼では従来通り回答・更新案を作る。
+
+機能仕様:
+
+- Chat API が「曖昧」と判断した場合、回答の代わりに確認質問を返す。
+- 確認質問には対象 issue、確認したい点、選択肢または補足を含める。
+- 確認質問のレスポンスは `clarification_required` として UI で区別できる。
+- Chat UI で確認質問と通常回答を視覚的に区別して表示する。
+
+テスト仕様:
+
+- 「なんか更新して」のような曖昧な依頼で確認質問が返ることを確認する。
+- 「#1 にコメントを追加して: 実装完了しました」のような明確な依頼では確認質問が出ないことを確認する。
+- `node --check src/server/index.js` と `node --check src/public/app.js` で構文エラーがないことを確認する。
+
+### ISS-049: Chat intent 分類をモジュール化する
+
+Status: On Hold
+Priority: Medium
+Note: Python + FastAPI 移行（ISS-053）で再設計する。Node.js 版では着手しない。
+
+要求仕様:
+
+- `src/server/index.js` に集中している Chat の意図分類・docs 検索・回答組み立てを分離する。
+- 後続の Chat 改善が `index.js` を肥大化させずに進められる構造にする。
+
+機能仕様:
+
+- Chat intent 分類を独立した関数またはモジュールに分離する。
+- docs 検索ロジックを独立した関数またはモジュールに分離する。
+- 回答組み立てロジックを独立した関数またはモジュールに分離する。
+- `index.js` は HTTP ルーティングと各モジュールの呼び出しに集中する。
+
+テスト仕様:
+
+- 分離前後で代表質問への回答内容が変わらないことを確認する。
+- `node --check` で分離後の各モジュールに構文エラーがないことを確認する。
+
+### ISS-050: docs 検索に用語辞書とスコア理由を追加する
+
+Status: On Hold
+Priority: Medium
+Note: Python + FastAPI 移行（ISS-053）で再設計する。Node.js 版では着手しない。
+
+要求仕様:
+
+- 同義語・言い換えを含む質問でも関連 docs が拾えるようにする。
+- Chat 回答の根拠カードに、なぜその docs が選ばれたかが分かるスコア理由を表示する。
+
+機能仕様:
+
+- 主要な用語と同義語・関連語を定義した辞書を追加する。
+- docs 検索スコア計算に辞書一致を加味する。
+- docs 根拠カードにスコア理由（マッチした語、見出し）を表示する。
+
+テスト仕様:
+
+- 「ロードマップ」「マイルストーン」など同義語を含む質問で関連 docs が返ることを確認する。
+- docs 根拠カードにスコア理由が表示されることを確認する。
+- `node --check src/server/index.js` と `node --check src/public/app.js` で構文エラーがないことを確認する。
+
+### ISS-051: 体験メモを永続化する
+
+Status: On Hold
+Priority: Medium
+Note: Python + FastAPI 移行後に DB（SQLite など）で対応する。Node.js 版では着手しない。
+
+要求仕様:
+
+- AIRedmine app server を再起動しても、記録した体験メモが失われない。
+- 体験評価を継続的に蓄積し、後から振り返れる。
+
+機能仕様:
+
+- 体験メモの保存先をローカルファイル（JSON）にする。
+- 既存の `/api/experience/notes` のレスポンス形式は変えない。
+- 保存失敗時は UI に分かるエラーを表示する。
+- ISS-038 の仕様を引き継ぎ、ISS-038 はこの issue で解決済みとする。
+
+テスト仕様:
+
+- 体験メモを保存後、app server を再起動しても取得できることを確認する。
+- 保存先ファイルが存在しない場合は空の状態で起動することを確認する。
+- `node --check src/server/index.js` で構文エラーがないことを確認する。
+
+### ISS-038: 体験メモを永続化する
+
+Status: Open
+Priority: Medium
+Note: ISS-051 として Milestone 7 に再掲。ISS-051 で解決済みとなった場合は本 issue を Closed とする。
+
+要求仕様:
+
+- AIRedmine app server を再起動しても、記録した体験メモが失われない。
+- 体験評価を継続的に蓄積し、後から振り返れる。
+
+機能仕様:
+
+- 体験メモの保存先を決める。
+- 保存先は、まずローカル検証に向いた軽量な方式を優先する。
+- 既存の `/api/experience/notes` のレスポンス形式は大きく変えない。
+- 保存失敗時は UI に分かるエラーを表示する。
+
+テスト仕様:
+
+- 体験メモを保存後、app server を再起動しても取得できることを確認する。
+- 保存先が壊れている場合に、API と UI がエラーを表示できることを確認する。
+- `node --check src/server/index.js` と `node --check src/public/app.js` で構文エラーがないことを確認する。
+
+### ISS-039: 体験メモから改善 issue 下書きを作る
+
+Status: Open
+Priority: Medium
+
+要求仕様:
+
+- 記録した体験メモを、後続の改善 issue 候補へ変換しやすくする。
+- 改善候補が単なるメモで終わらず、要求仕様、機能仕様、テスト仕様に展開できる。
+
+機能仕様:
+
+- 体験メモの `改善候補` から issue 下書きを作る。
+- 下書きには要求仕様、機能仕様、テスト仕様の見出しを含める。
+- Redmine や docs へ自動反映せず、人間が確認してから転記する。
+
+テスト仕様:
+
+- 改善候補を含む体験メモから issue 下書きが表示されることを確認する。
+- 改善候補が空の場合は下書き作成対象にしないことを確認する。
+- 下書きが既存の `docs/issues.md` の形式に近いことを確認する。
+
+### ISS-040: 体験評価テンプレートを整備する
+
+Status: Open
+Priority: Medium
+
+要求仕様:
+
+- 開発者と PM が、毎回ばらばらな観点ではなく同じ観察軸で体験を記録できる。
+- Redmine を直接使った場合との比較がしやすい。
+
+機能仕様:
+
+- 体験メモの観察観点をテンプレートとして docs に整理する。
+- 開発者向け、PM 向け、共通観点を分ける。
+- UI の体験メモパネルにも、テンプレートの観点を反映する。
+
+テスト仕様:
+
+- docs に体験評価テンプレートが存在することを確認する。
+- UI の観察観点がテンプレートと矛盾しないことを確認する。
+- `README.md` または `docs/roadmap.md` からテンプレートへ辿れることを確認する。
+
+### ISS-041: 体験評価サマリを役割別に可視化する
+
+Status: Open
+Priority: Medium
+
+要求仕様:
+
+- 開発者と PM で、AIRedmine の効果や摩擦がどう違うかを見られる。
+- 次に改善すべき対象が、作業支援なのか PM 観測なのか判断しやすい。
+
+機能仕様:
+
+- 体験メモの集計を役割別に表示する。
+- 役割別に、負担軽減、判断しやすさ、摩擦、不安の件数を見られる。
+- 改善候補も役割ごとに確認できる。
+
+テスト仕様:
+
+- 開発者と PM の体験メモを保存したとき、役割別の集計が表示されることを確認する。
+- 役割が未指定または不正な値の場合の扱いを確認する。
+- モバイル幅でも集計表示が崩れないことを確認する。
+
+### ISS-042: 既存機能の改善候補を棚卸しする
+
+Status: Closed
+Priority: Medium
+
+要求仕様:
+
+- AIRedmine の既存機能について、改善候補を一覧化する。
+- 機能追加だけでなく、使いにくさ、説明不足、保守しにくさ、検証しにくさも扱う。
+
+機能仕様:
+
+- 対象機能を Browser UI、Chat、Proposal review、PM overview、Work guide、Redmine Connector、開発環境、体験評価に分ける。
+- 各機能について、現状、課題、改善案、影響範囲、検証方法を記録する。
+- 改善候補は後続 issue に変換しやすい形式で整理する。
+
+テスト仕様:
+
+- docs に機能別の改善候補一覧が存在することを確認する。
+- 各改善候補に、課題、改善案、検証方法が含まれることを確認する。
+- `docs/roadmap.md` の Milestone 6 と対応していることを確認する。
+
+テスト結果:
+
+- `docs/improvement-inventory.md` を追加した。
+- Browser UI、Chat、Proposal review、PM overview、Work guide、Redmine Connector、開発環境、体験評価の改善候補を整理した。
+- 対話型インターフェイス、ダッシュボードの充実、意味検索の高度化の観点を追加した。
+- 各機能に、現状、課題、改善案、影響範囲、検証方法、後続 issue 候補を記録した。
+- 優先して扱う改善候補を 5 件に絞って記録した。
+- `rg` で `docs/improvement-inventory.md` に各機能の必須見出しが存在することを確認した。
+- `docs/roadmap.md` の Milestone 6 に `ISS-042` が関連 issue として記載されていることを確認した。
+
+クローズ判定:
+
+- 既存機能ごとの改善候補を後続 issue に変換しやすい形式で棚卸しできたため Closed とする。
+
+### ISS-043: 現在のアーキテクチャを記録する
+
+Status: Closed
+Priority: Medium
+
+要求仕様:
+
+- 現在の AIRedmine の構成と責務を、後から見返せる形で記録する。
+- これから機能追加や分離を行う前に、どこに何があるかを明確にする。
+
+機能仕様:
+
+- Browser UI、App Server、Redmine Connector、Knowledge Connector、AI Agent Layer、Proposal & Audit Layer、体験評価ループの責務を整理する。
+- 現在は実装されていない、または仮実装の層も区別して記録する。
+- 主要 API とデータの流れを docs にまとめる。
+
+テスト仕様:
+
+- docs にアーキテクチャ記録が存在することを確認する。
+- 実際のファイル構成と docs の説明が矛盾していないことを確認する。
+- README のアーキテクチャ方針と矛盾していないことを確認する。
+
+テスト結果:
+
+- `docs/architecture.md` を追加した。
+- Human Interface Layer、App Server / Agent API、Redmine Connector、Knowledge Connector prototype、Agent Layer prototype、Proposal & Audit Layer prototype、Experience Loop prototype の責務を整理した。
+- 主要 API と issue 一覧、Chat 回答、Proposal、体験メモのデータの流れを記録した。
+- 実装済み、仮実装、未実装の境界を記録した。
+- `rg --files src scripts .devcontainer` で実際のファイル構成を確認した。
+- README のアーキテクチャ方針と `docs/architecture.md` のレイヤー構成が矛盾していないことを確認した。
+
+クローズ判定:
+
+- 現在の構成と責務を後から見返せる形で記録でき、次の責務分離検討の材料が揃ったため Closed とする。
+
+### ISS-044: 次に分離すべき責務を検討する
+
+Status: Closed
+Priority: Medium
+
+要求仕様:
+
+- 今後の機能追加で複雑になりそうな責務を事前に見つける。
+- 何をいつ分離すべきか、実装前に判断できるようにする。
+
+機能仕様:
+
+- `src/server/index.js`、`src/public/app.js`、Connector、docs 検索、Proposal、体験メモの責務を確認する。
+- 分離候補ごとに、分離する理由、今すぐやるべきか、先送りできる条件を記録する。
+- 不要な抽象化を避け、実際に複雑さを下げる分離だけを候補にする。
+
+テスト仕様:
+
+- docs に責務分離候補と判断理由が記録されていることを確認する。
+- 各候補に、実施タイミングと先送り条件が含まれることを確認する。
+- 既存 issue または新規 issue へのつながりが分かることを確認する。
+
+テスト結果:
+
+- `docs/responsibility-separation.md` を追加した。
+- Chat / Agent Orchestrator、Knowledge Connector、Browser UI Views、Proposal & Audit、Experience Notes、Redmine Connector、Error Handling の分離候補を整理した。
+- 各候補に、分離する理由、推奨タイミング、先送り条件、分離後の候補、既存 / 新規 issue とのつながりを記録した。
+- 今すぐ分離したいもの、関連機能を触るタイミングで分離したいもの、今は分離しないものに分けた。
+- `rg` で各候補に `推奨タイミング` と `先送り条件` が存在することを確認した。
+
+クローズ判定:
+
+- 今後の機能追加で複雑になりそうな責務と、分離タイミングを判断できる材料が揃ったため Closed とする。
+
+### ISS-045: 改善候補の優先順位付け方法を決める
+
+Status: Closed
+Priority: Medium
+
+要求仕様:
+
+- 改善候補を、思いつきではなく一貫した基準で並べられる。
+- 体験価値、実装コスト、リスク、依存関係、検証しやすさを踏まえて次の issue を選べる。
+
+機能仕様:
+
+- 改善候補に使う評価軸を決める。
+- 評価軸には、ユーザー価値、技術リスク、実装コスト、検証容易性、ロードマップ適合度を含める。
+- docs/issueslog.md に優先順位付けの判断例を残せるようにする。
+
+テスト仕様:
+
+- docs に優先順位付けの基準が存在することを確認する。
+- 少なくとも 3 件の改善候補を基準に沿って比較できることを確認する。
+- 次に取り組む issue を選ぶ判断理由が記録できることを確認する。
+
+テスト結果:
+
+- `docs/issueslog.md` に評価軸の定義（5 軸・3 段階）を記録した。
+- `docs/improvement-inventory.md` の改善候補 7 件すべてを評価軸で比較した表を記録した。
+- M7 前半・後半・M8 以降の推奨時期と判断理由を記録した。
+- Milestone 7 の推奨構成（ISS-046〜ISS-051）を issueslog.md に記録した。
+
+クローズ判定:
+
+- 改善候補を一貫した基準で選べるようになった。
+- 7 件の比較と判断理由、次の issue 選択の根拠を記録できた。
+- Milestone 6 の全 issue が Closed になったため Milestone 6 を Completed とする。
+- 以上により ISS-045 を Closed とする。
 
 ### ISS-013: ローカル Redmine にデモデータを投入する
 
@@ -1276,3 +1703,137 @@ Priority: High
 クローズ判定:
 
 - 要求仕様、機能仕様、テスト仕様を満たすため Closed とする。
+
+## Milestone 8: フロント/バック刷新
+
+### ISS-052: プロジェクト構成の再編とビルド環境をセットアップする
+
+Status: Closed
+Priority: High
+
+要求仕様:
+
+- frontend/ (React + TypeScript + Vite) と backend/ (Python + FastAPI) にディレクトリを分割する。
+- 開発時は Vite dev server が /api/* を FastAPI にプロキシする。
+- Docker Compose を新構成に更新し、既存の Redmine / DB コンテナとの接続を維持する。
+
+機能仕様:
+
+- frontend/ に Vite + React + TypeScript の初期構成を作る。
+- backend/ に FastAPI の初期構成を作る（uvicorn で起動）。
+- vite.config.ts に /api/* → `http://backend:8000` のプロキシを設定する。
+- docker-compose.yml の app サービスを FastAPI に変更し、frontend のビルドを別サービスまたは静的配信として扱う。
+- 既存の src/ は移行完了まで残す。
+
+テスト仕様:
+
+- `docker compose up` で FastAPI と Vite dev server が起動することを確認する。
+- ブラウザで localhost:5173 にアクセスし、Vite の初期画面が表示されることを確認する。
+- `curl http://localhost:8000/health` で FastAPI が応答することを確認する。
+
+### ISS-053: Python + FastAPI バックエンドに既存 API を移行する
+
+Status: Closed
+Priority: High
+
+要求仕様:
+
+- Node.js で実装されている全 API エンドポイントを Python + FastAPI で再実装する。
+- Pydantic スキーマで入出力の型を定義し、既存フロントとの互換性を保つ。
+- モックデータと Redmine 実接続の両モードを維持する。
+
+機能仕様:
+
+- 移行対象エンドポイント: GET /api/config, GET /api/issues, GET /api/issues/{id}, POST /api/chat, POST /api/proposals/comment, GET /api/proposals/logs, GET|POST /api/experience/notes。
+- Redmine connector を Python で再実装する（httpx を使用）。
+- Chat intent 分類・docs 検索・回答組み立てを backend/services/ に分離する（ISS-049 の再設計）。
+- 体験メモの永続化を SQLite（組み込み sqlite3）で実装する（ISS-051 の再設計）。
+- Pydantic モデルに `role: Literal["developer", "pm"]` を定義する（設計レベル）。
+- モック用データを backend/mock/ に移行する。
+
+テスト仕様:
+
+- 各エンドポイントに curl でリクエストし、Node.js 版と同等のレスポンス形式を確認する。
+- モックモードと実 Redmine モードが env 変数で切り替えられることを確認する。
+- `python -m pytest tests/ -v` で基本的なルートテストが通ることを確認する。
+
+テスト結果:
+
+- 全 7 エンドポイントが FastAPI で実装され、ヘルスチェックを含む HTTP 確認を通過。
+- モックモード（env 未設定）と実 Redmine モード（env 設定済み）の切り替えを確認。
+- `python -m pytest tests/ -v` で 12/12 テストパス。
+- 相対インポートを絶対インポートに変換し、uvicorn main:app での起動に対応。
+- chat_engine.py のネスト f-string 構文エラー（Python 3.12 上での `\"` エスケープ問題）を修正。
+
+クローズ判定:
+
+- 要求・機能・テスト仕様をすべて満たしたため Closed とする。
+
+### ISS-054: React + TypeScript フロントエンドの基盤を作る
+
+Status: Open
+Priority: High
+
+要求仕様:
+
+- React + TypeScript で型安全なフロントエンドの基盤を作る。
+- View ごとにルーティングを設定し、URL で View を切り替えられる。
+- API クライアントを typed fetch wrapper として分離する。
+
+機能仕様:
+
+- React Router で /developer/chat, /developer/dashboard, /pm, /audit の 4 ルートを定義する。
+- API クライアント (src/api/) に各エンドポイントの型定義と fetch wrapper を実装する。
+- 共通レイアウト（サイドバー、ナビ、トップバー）をコンポーネント化する。
+- 既存の CSS 設計（カラー変数、レイアウト）を CSS Modules または Tailwind に移行するか決定する。
+
+テスト仕様:
+
+- 4 ルートが切り替えられることをブラウザで確認する。
+- `npx tsc --noEmit` で型エラーがないことを確認する。
+- /developer/chat にアクセスしたとき Developer Chat の枠が表示されることを確認する。
+
+### ISS-055: 4 View の UI を React コンポーネントで実装する
+
+Status: Open
+Priority: High
+
+要求仕様:
+
+- Developer Chat / Developer Dashboard / PM / Audit の 4 View を React コンポーネントで実装する。
+- Developer Chat はスレッド型チャット UI（バブル積み上げ、入力欄下固定）にする。
+- 既存の Vanilla JS 版と同等の機能を持つ。
+
+機能仕様:
+
+- DeveloperChatView: チャットスレッド、quick-questions、フォーム（下固定）、clarification カード。
+- DeveloperDashboardView: issue 一覧、検索・フィルタ、work-guide パネル。
+- PmView: metrics、PM 観察パネル、意思決定ボード。
+- AuditView: 更新案レビュー、体験メモフォーム、体験サマリ。
+- 各 View に対応するロール（developer / pm）を props または context で定義する（認証なし、スタブ）。
+
+テスト仕様:
+
+- 4 View が切り替えられ、各コンテンツが表示されることをブラウザで確認する。
+- Developer Chat でメッセージを送り、スレッドにバブルが積み上がることを確認する。
+- `npx tsc --noEmit` で型エラーがないことを確認する。
+
+### ISS-056: developer / pm ロール設計を docs に記録する
+
+Status: Open
+Priority: Low
+
+要求仕様:
+
+- developer / pm の 2 ロールが何にアクセスできるかを設計レベルで定義する。
+- 将来の認証実装時に参照できる形で docs に残す。
+
+機能仕様:
+
+- docs/role-design.md を新規作成する。
+- 各ロールがアクセスできる View・API・操作を一覧にする。
+- 認証方式（JWT / OAuth など）の検討候補を列挙する（実装なし）。
+
+テスト仕様:
+
+- docs/role-design.md が存在し、developer / pm ロールの設計が記録されていることを確認する。
