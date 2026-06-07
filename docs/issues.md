@@ -2620,3 +2620,38 @@ Priority: Medium
 - Dashboard を開いたとき3セクションが表示されることを確認する。
 - 5日以上更新のない issue が「ブロッカー」セクションに表示されることを確認する（mock データで確認）。
 - `npx tsc --noEmit` エラーなし。
+
+### ISS-078: PM ダッシュボードに 5 パネルを追加する
+
+Status: Closed
+Priority: High
+
+要求仕様:
+
+- PM Dashboard にバーンダウンチャート以外の情報パネルを追加し、Chat を使わなくてもプロジェクトの状態を一目で把握できるようにする。
+- 追加する 5 パネル: 停滞 issue 一覧 / 担当者別負荷 / 優先度サマリー / 今週のクローズ数 / 期限切れ issue。
+
+機能仕様:
+
+- `GET /api/pm/stats` エンドポイントを追加する（`backend/routers/pm.py`）。
+  - open issue 全件・直近 7 日の closed issue・期限切れ issue を取得して集計する。
+  - レスポンス: `{ stalled, assignee_load, priority_summary, closed_this_week, overdue }`
+  - `stalled`: 7 日以上更新のない open issue 一覧（最大 20 件、updated_on 昇順）。
+  - `assignee_load`: 担当者名と open issue 件数のリスト（件数降順）。
+  - `priority_summary`: 優先度別 open issue 件数 `{ name, count }[]`。
+  - `closed_this_week`: 直近 7 日に closed された issue の件数。
+  - `overdue`: due_date が過去で open の issue 一覧（最大 20 件）。
+- `PMDashboardView.tsx` を更新する。
+  - バーンダウンチャートを上段に残す。
+  - 下段に 2 列グリッドで 5 パネルを配置する。
+  - 停滞・期限切れは issue 行リスト形式。クリックで `IssueDetailPanel` を開く。
+  - 担当者別負荷は recharts の `BarChart`（横棒）で表示する。
+  - 優先度サマリーは色付きバッジで件数を表示する。
+  - 今週のクローズ数は数値カードで表示する。
+
+テスト仕様:
+
+- `GET /api/pm/stats` が 5 フィールドすべてを含むレスポンスを返すことを確認する。
+- PM Dashboard を開いてバーンダウン + 5 パネルが表示されることをブラウザで確認する。
+- 停滞 issue をクリックして詳細パネルが開くことを確認する。
+- `npx tsc --noEmit` エラーなし。

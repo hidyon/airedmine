@@ -101,6 +101,22 @@ export function fetchBurndown(days: number): Promise<BurndownResponse> {
   return request(`/pm/burndown?days=${days}`)
 }
 
+export interface StallItem { id: number; subject: string; updated_on: string; assignee: string | null }
+export interface AssigneeLoad { name: string; count: number }
+export interface PrioritySummaryItem { name: string; count: number }
+export interface OverdueItem { id: number; subject: string; due_date: string; assignee: string | null }
+export interface PmStatsResponse {
+  stalled: StallItem[]
+  assignee_load: AssigneeLoad[]
+  priority_summary: PrioritySummaryItem[]
+  closed_this_week: number
+  overdue: OverdueItem[]
+}
+
+export function fetchPmStats(): Promise<PmStatsResponse> {
+  return request('/pm/stats')
+}
+
 export function postUpdateProposal(
   issueId: number,
   action: 'status_change' | 'assignee_change',
