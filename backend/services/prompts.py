@@ -46,18 +46,30 @@ def get_system_prompt(
     role: str,
     display_name: str = "",
     redmine_user_id: int | None = None,
+    users: list[dict] | None = None,
 ) -> str:
     base = PM_SYSTEM_PROMPT if role == "pm" else DEVELOPER_SYSTEM_PROMPT
-    if not display_name and not redmine_user_id:
-        return base
-    parts = [base, "---", "ログインユーザー情報:"]
-    if display_name:
-        parts.append(f"- 名前: {display_name}")
-    if redmine_user_id:
-        parts.append(f"- Redmine user_id: {redmine_user_id}")
-        parts.append(
-            f"「私の」「自分の」「今日の」などのキーワードが含まれる場合は"
-            f" list_issues の assigned_to_id=\"{redmine_user_id}\" を必ず使用してください。"
-            f" 絶対に assigned_to_id=\"me\" は使わないでください（me は API キーユーザーに解決されるため誤った結果になります）。"
-        )
+    parts = [base]
+
+    if display_name or redmine_user_id:
+        parts += ["---", "ログインユーザー情報:"]
+        if display_name:
+            parts.append(f"- 名前: {display_name}")
+        if redmine_user_id:
+            parts.append(f"- Redmine user_id: {redmine_user_id}")
+            parts.append(
+                f"「私の」「自分の」「今日の」などのキーワードが含まれる場合は"
+                f" list_issues の assigned_to_id=\"{redmine_user_id}\" を必ず使用してください。"
+                f" 絶対に assigned_to_id=\"me\" は使わないでください（me は API キーユーザーに解決されるため誤った結果になります）。"
+            )
+
+    if users:
+        parts += ["---", "チームメンバー一覧（名前や username で issue を検索するときに使用してください）:"]
+        for u in users:
+            uid = u.get("redmine_user_id")
+            if uid:
+                parts.append(
+                    f"- username: {u['username']}, 表示名: {u['display_name']}, Redmine user_id: {uid}"
+                )
+
     return "\n".join(parts)

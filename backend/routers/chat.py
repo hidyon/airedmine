@@ -5,6 +5,7 @@ from models import ChatRequest
 from services.redmine_connector import RedmineConnector, RedmineApiError
 from services.agent import run_agent
 from dependencies import get_connector
+from db import get_all_users
 
 router = APIRouter()
 ConnectorDep = Annotated[RedmineConnector, Depends(get_connector)]
@@ -18,6 +19,7 @@ async def chat(request: ChatRequest, connector: ConnectorDep) -> dict:
 
     try:
         messages = [m.model_dump() for m in request.messages]
+        users = get_all_users()
         result = await run_agent(
             question=question,
             messages=messages,
@@ -25,6 +27,7 @@ async def chat(request: ChatRequest, connector: ConnectorDep) -> dict:
             connector=connector,
             display_name=request.display_name,
             redmine_user_id=request.redmine_user_id,
+            users=users,
         )
         return result
     except RedmineApiError as exc:

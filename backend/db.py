@@ -59,3 +59,11 @@ def init_db() -> None:
         except Exception:
             pass  # column already exists
         conn.commit()
+
+
+def get_all_users() -> list[dict]:
+    with get_connection() as conn:
+        rows = conn.execute(
+            "SELECT username, display_name, role, redmine_user_id FROM users ORDER BY id"
+        ).fetchall()
+    return [dict(r) for r in rows]

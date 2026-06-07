@@ -36,6 +36,7 @@ async def run_agent(
     connector: Any,
     display_name: str = "",
     redmine_user_id: int | None = None,
+    users: list[dict] | None = None,
 ) -> dict:
     """
     tool_use ループを回して最終回答を返す。
@@ -48,7 +49,12 @@ async def run_agent(
         }
     """
     client = _client()
-    system = get_system_prompt(role, display_name=display_name, redmine_user_id=redmine_user_id)
+    system = get_system_prompt(
+        role,
+        display_name=display_name,
+        redmine_user_id=redmine_user_id,
+        users=users,
+    )
 
     # 会話履歴 + 今回の質問
     api_messages = _to_api_messages(messages)
