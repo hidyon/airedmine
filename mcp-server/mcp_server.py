@@ -175,6 +175,67 @@ async def change_assignee(issue_id: int, assigned_to_id: int) -> Any:
     return await _safe(client.update_issue(issue_id, {"assigned_to_id": assigned_to_id}))
 
 
+@mcp.tool()
+async def update_due_date(issue_id: int, due_date: str) -> Any:
+    """issue の期日を設定する。
+
+    Args:
+        issue_id: 対象 issue 番号。
+        due_date: 期日（YYYY-MM-DD）。
+    """
+    return await _safe(client.update_issue(issue_id, {"due_date": due_date}))
+
+
+@mcp.tool()
+async def update_priority(issue_id: int, priority_id: int) -> Any:
+    """issue の優先度を変更する。priority_id は list_priorities で調べられる。
+
+    Args:
+        issue_id: 対象 issue 番号。
+        priority_id: 優先度の数値 ID。
+    """
+    return await _safe(client.update_issue(issue_id, {"priority_id": priority_id}))
+
+
+@mcp.tool()
+async def update_done_ratio(issue_id: int, done_ratio: int) -> Any:
+    """issue の進捗率を更新する。
+
+    Args:
+        issue_id: 対象 issue 番号。
+        done_ratio: 進捗率（0〜100）。
+    """
+    if not 0 <= done_ratio <= 100:
+        return {"error": "done_ratio は 0〜100 で指定してください", "status": 0}
+    return await _safe(client.update_issue(issue_id, {"done_ratio": done_ratio}))
+
+
+@mcp.tool()
+async def assign_version(issue_id: int, version_id: int) -> Any:
+    """issue を対象バージョン（スプリント）に割り当てる。version_id は list_versions で調べられる。
+
+    Args:
+        issue_id: 対象 issue 番号。
+        version_id: バージョンの数値 ID。
+    """
+    return await _safe(client.update_issue(issue_id, {"fixed_version_id": version_id}))
+
+
+@mcp.tool()
+async def add_relation(
+    issue_id: int, related_issue_id: int, relation_type: str = "relates"
+) -> Any:
+    """2 つの issue に関連を設定する。
+
+    Args:
+        issue_id: 起点となる issue 番号。
+        related_issue_id: 関連先の issue 番号。
+        relation_type: 関連タイプ。relates / blocks / blocked / precedes / follows /
+            duplicates / duplicated / copied_to / copied_from のいずれか（既定 relates）。
+    """
+    return await _safe(client.add_relation(issue_id, related_issue_id, relation_type))
+
+
 def main() -> None:
     mcp.run()
 

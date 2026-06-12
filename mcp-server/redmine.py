@@ -180,6 +180,26 @@ class RedmineClient:
         )
         return {"updated": True, "issue_id": issue_id}
 
+    async def add_relation(
+        self, issue_id: int, related_issue_id: int, relation_type: str = "relates"
+    ) -> dict:
+        resp = await self._request(
+            "POST",
+            f"/issues/{issue_id}/relations.json",
+            json={"relation": {"issue_to_id": related_issue_id, "relation_type": relation_type}},
+            headers=self._headers(write=True),
+        )
+        rel = resp.json().get("relation", {})
+        return {
+            "created": True,
+            "relation": {
+                "id": rel.get("id"),
+                "issue_id": rel.get("issue_id"),
+                "issue_to_id": rel.get("issue_to_id"),
+                "relation_type": rel.get("relation_type"),
+            },
+        }
+
     async def update_issue(self, issue_id: int, fields: dict[str, Any]) -> dict:
         clean = {k: v for k, v in fields.items() if v is not None}
         await self._request(

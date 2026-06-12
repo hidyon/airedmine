@@ -2902,7 +2902,7 @@ Priority: High
 
 ### ISS-087: MCP に更新系ツールを追加する
 
-Status: Open
+Status: Closed
 Priority: Medium
 
 要求仕様:
@@ -2926,3 +2926,10 @@ Priority: Medium
 - 各ツールをローカル Redmine に対して実行し、反映を確認する。
 - `update_done_ratio` に 0〜100 範囲外を渡した場合の挙動を確認する。
 - `add_relation` で 2 つの issue が関連付けられることを確認する。
+
+実装結果:
+
+- `redmine.py` に `add_relation()` を追加、`mcp_server.py` に 5 ツールを追加（MCP 公開ツールは 12 → 17 に）。
+- `update_done_ratio` は 0〜100 範囲外をクライアント側で弾く（150 を渡すとエラー、実機確認済み）。
+- ローカル Redmine で検証: 一時 issue を 2 件作成し、due_date（2026-07-15）/ priority（High）/ done_ratio（40）/ fixed_version（Sprint 3）の更新と blocks 関連付けがすべて反映。検証後に両 issue を削除。
+- M16 完了。
