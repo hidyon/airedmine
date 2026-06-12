@@ -2864,3 +2864,58 @@ Priority: High
 - 仕様の 7 ツールをすべて公開（list_issues / get_issue / search_issues / create_issue / add_comment / change_status / change_assignee）。
 - 当初案の `change_status` はステータス名なし（数値 ID のみ）、`search_issues` は Redmine の `/search.json` 全文検索を利用する形に調整。
 - ローカル Redmine（:3000）で検証: read 系（list/get/search/404）、write 系（create #1028 → comment → done_ratio 更新 → close）、MCP stdio ハンドシェイク（initialize / list_tools / call_tool）すべて成功。テスト用 issue #1028 はクローズ済み。
+
+### ISS-086: MCP に参照系ヘルパーツールを追加する
+
+Status: Open
+Priority: High
+
+要求仕様:
+
+- Claude Code から Redmine を操作する際、名前から数値 ID を解決できるようにする。
+- ISS-085 の検証で、`create_issue` の project_id、`change_assignee` の user_id、`change_status` の status_id を人が調べる必要があり摩擦になった。これを MCP ツールで解消する。
+- 対象外: 書き込み操作（ISS-087 で扱う）。
+
+機能仕様:
+
+- `mcp-server/redmine.py` に以下の取得メソッドを追加する。
+  - `list_projects()`: `GET /projects.json` → id / identifier / name。
+  - `list_issue_statuses()`: `GET /issue_statuses.json` → id / name / is_closed。
+  - `list_priorities()`: `GET /enumerations/issue_priorities.json` → id / name。
+  - `list_users()`: `GET /users.json` → id / login / name（要管理者権限。403 時は分かるエラーを返す）。
+  - `list_versions(project_id)`: `GET /projects/{id}/versions.json` → id / name / status。
+- `mcp-server/mcp_server.py` に同名の MCP ツールを公開する。
+- ワークフロー制限（ISS-085 で判明）を踏まえ、`list_issue_statuses` の説明に「遷移可否はロール設定に依存する」旨を記載する。
+
+テスト仕様:
+
+- Claude Code（または stdio クライアント）から `list_projects` / `list_issue_statuses` / `list_priorities` を呼び、Redmine の値が返ることを確認する。
+- `list_users` が権限不足時に適切なエラーを返すことを確認する。
+- `list_versions` が指定プロジェクトのバージョンを返すことを確認する。
+
+### ISS-087: MCP に更新系ツールを追加する
+
+Status: Open
+Priority: Medium
+
+要求仕様:
+
+- Claude Code から、期日・優先度・進捗率の更新、バージョン割当、issue 関連付けを実行できるようにする。
+- 既存の `change_status` / `change_assignee` と同じく、Redmine API を直接呼ぶ（承認は Claude Code のツール実行確認に委ねる）。
+- 対象外: 一括操作、関連の削除。
+
+機能仕様:
+
+- `mcp-server/mcp_server.py` に以下のツールを追加する（実装は既存 `update_issue` / 新規メソッドを流用）。
+  - `update_due_date(issue_id, due_date)`: 期日（YYYY-MM-DD）を設定。
+  - `update_priority(issue_id, priority_id)`: 優先度を変更。
+  - `update_done_ratio(issue_id, done_ratio)`: 進捗率（0〜100）を更新。
+  - `assign_version(issue_id, version_id)`: 対象バージョン（fixed_version_id）を設定。
+  - `add_relation(issue_id, related_issue_id, relation_type)`: 関連を追加（`POST /issues/{id}/relations.json`）。
+- `mcp-server/redmine.py` に `add_relation()` を追加する（その他は `update_issue` を流用）。
+
+テスト仕様:
+
+- 各ツールをローカル Redmine に対して実行し、反映を確認する。
+- `update_done_ratio` に 0〜100 範囲外を渡した場合の挙動を確認する。
+- `add_relation` で 2 つの issue が関連付けられることを確認する。
