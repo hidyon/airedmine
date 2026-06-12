@@ -2867,7 +2867,7 @@ Priority: High
 
 ### ISS-086: MCP に参照系ヘルパーツールを追加する
 
-Status: Open
+Status: Closed
 Priority: High
 
 要求仕様:
@@ -2892,6 +2892,13 @@ Priority: High
 - Claude Code（または stdio クライアント）から `list_projects` / `list_issue_statuses` / `list_priorities` を呼び、Redmine の値が返ることを確認する。
 - `list_users` が権限不足時に適切なエラーを返すことを確認する。
 - `list_versions` が指定プロジェクトのバージョンを返すことを確認する。
+
+実装結果:
+
+- `redmine.py` に 5 メソッド、`mcp_server.py` に 5 ツールを追加（MCP 公開ツールは 7 → 12 に）。
+- `list_users` は 401/403 を「管理者権限の API キーが必要」というエラーに変換。
+- ローカル Redmine で検証: projects（2 件）/ statuses（5 件、Closed の is_closed=true）/ priorities（4 件）/ users（admin キーで取得可）/ versions（kintai-next の Sprint 1〜4）すべて期待通り。stdio でツール数 12 を確認。
+- `list_users` の権限エラー経路はコードで対応済みだが、検証キーが管理者のため実地での 403 発火は未確認。
 
 ### ISS-087: MCP に更新系ツールを追加する
 

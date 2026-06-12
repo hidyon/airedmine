@@ -62,6 +62,54 @@ async def search_issues(query: str, limit: int = 25) -> Any:
 
 
 @mcp.tool()
+async def list_projects(limit: int = 100) -> Any:
+    """プロジェクト一覧を取得する。create_issue の project_id を調べるのに使う。
+
+    Args:
+        limit: 取得件数の上限（既定 100）。
+    """
+    return await _safe(client.list_projects(limit))
+
+
+@mcp.tool()
+async def list_issue_statuses() -> Any:
+    """ステータス一覧（id / name / is_closed）を取得する。change_status の status_id を調べるのに使う。
+
+    遷移できるステータスはユーザーのロールとワークフロー設定に依存するため、
+    一覧に存在しても変更が反映されない場合がある。
+    """
+    return await _safe(client.list_issue_statuses())
+
+
+@mcp.tool()
+async def list_priorities() -> Any:
+    """優先度一覧（id / name）を取得する。"""
+    return await _safe(client.list_priorities())
+
+
+@mcp.tool()
+async def list_users(limit: int = 100) -> Any:
+    """ユーザー一覧（id / login / name）を取得する。担当者の user_id を調べるのに使う。
+
+    管理者権限の API キーが必要。権限がない場合はエラーを返す。
+
+    Args:
+        limit: 取得件数の上限（既定 100）。
+    """
+    return await _safe(client.list_users(limit))
+
+
+@mcp.tool()
+async def list_versions(project_id: str) -> Any:
+    """指定プロジェクトのバージョン（スプリント・マイルストーン）一覧を取得する。
+
+    Args:
+        project_id: プロジェクトの ID または識別子。
+    """
+    return await _safe(client.list_versions(project_id))
+
+
+@mcp.tool()
 async def create_issue(
     project_id: str,
     subject: str,

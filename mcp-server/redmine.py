@@ -97,6 +97,72 @@ class RedmineClient:
             ],
         }
 
+    async def list_projects(self, limit: int = 100) -> dict:
+        resp = await self._request(
+            "GET", "/projects.json", params={"limit": str(limit)}, headers=self._headers()
+        )
+        data = resp.json()
+        return {
+            "total_count": data.get("total_count", 0),
+            "projects": [
+                {"id": p.get("id"), "identifier": p.get("identifier"), "name": p.get("name")}
+                for p in data.get("projects", [])
+            ],
+        }
+
+    async def list_issue_statuses(self) -> dict:
+        resp = await self._request("GET", "/issue_statuses.json", headers=self._headers())
+        return {
+            "statuses": [
+                {"id": s.get("id"), "name": s.get("name"), "is_closed": bool(s.get("is_closed"))}
+                for s in resp.json().get("issue_statuses", [])
+            ]
+        }
+
+    async def list_priorities(self) -> dict:
+        resp = await self._request(
+            "GET", "/enumerations/issue_priorities.json", headers=self._headers()
+        )
+        return {
+            "priorities": [
+                {"id": p.get("id"), "name": p.get("name")}
+                for p in resp.json().get("issue_priorities", [])
+            ]
+        }
+
+    async def list_users(self, limit: int = 100) -> dict:
+        try:
+            resp = await self._request(
+                "GET", "/users.json", params={"limit": str(limit)}, headers=self._headers()
+            )
+        except RedmineError as exc:
+            if exc.status in (401, 403):
+                raise RedmineError(
+                    "ユーザー一覧の取得には管理者権限の API キーが必要です", exc.status
+                ) from exc
+            raise
+        return {
+            "users": [
+                {
+                    "id": u.get("id"),
+                    "login": u.get("login"),
+                    "name": f"{u.get('firstname', '')} {u.get('lastname', '')}".strip(),
+                }
+                for u in resp.json().get("users", [])
+            ]
+        }
+
+    async def list_versions(self, project_id: str) -> dict:
+        resp = await self._request(
+            "GET", f"/projects/{project_id}/versions.json", headers=self._headers()
+        )
+        return {
+            "versions": [
+                {"id": v.get("id"), "name": v.get("name"), "status": v.get("status")}
+                for v in resp.json().get("versions", [])
+            ]
+        }
+
     async def create_issue(self, fields: dict[str, Any]) -> dict:
         payload = {"issue": {k: v for k, v in fields.items() if v is not None}}
         resp = await self._request(

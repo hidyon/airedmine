@@ -440,7 +440,7 @@ ISS-012 の記録の入口は残っているが、可視化・テンプレート
 
 関連 issue:
 
-- `ISS-086` Open: MCP に参照系ヘルパーツールを追加する（projects / statuses / priorities / users / versions の一覧）。
+- `ISS-086` Closed: MCP に参照系ヘルパーツールを追加する（projects / statuses / priorities / users / versions の一覧）。
 - `ISS-087` Open: MCP に更新系ツールを追加する（期日・優先度・進捗率・バージョン割当・関連付け）。
 
 期待成果:
@@ -456,6 +456,7 @@ ISS-012 の記録の入口は残っているが、可視化・テンプレート
 - 2026-06-06: アプリの目的を「AI エージェント経由の Redmine 利用体験を明らかにするプロトタイプ」として定義した。
 - 2026-06-06: ブラウザー UI に加えて自然言語対話を主要な入口として扱う方針を追加した。
 - 2026-06-06: 開発環境は devcontainer または Docker Compose、Redmine は無料で利用できる OSS 版を前提にする方針を追加した。
+- 2026-06-08: ISS-086 を完了し、MCP サーバーに参照系ヘルパー 5 ツール（projects / statuses / priorities / users / versions）を追加。公開ツールは 12 に。
 - 2026-06-08: ISS-085 を完了し、Redmine MCP サーバー（`mcp-server/`）を追加。Claude Code から Redmine を直接操作できるようにした。M15 を Completed とした。
 - 2026-06-08: ISS-077 を完了し、開発者 Dashboard をブロッカー・高優先度・その他の 3 セクションに整理した。`assigned_to_id` に数値 user_id を使用するよう修正。
 - 2026-06-08: ISS-078 を完了し、PM Dashboard に停滞・担当者別負荷・優先度サマリー・今週クローズ数・期限切れの 5 パネルを追加した。
