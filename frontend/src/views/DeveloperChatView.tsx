@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import { postChat, postCommentProposal, postUpdateProposal } from '../api/client'
+import { postChat, postCommentProposal, postUpdateProposal, postCreateIssueProposal } from '../api/client'
 import type { ChatHistoryMessage } from '../api/client'
 import type { ChatResponse, ChatReference, UpdateProposal } from '../api/types'
 import IssueDetailPanel from '../components/IssueDetailPanel'
@@ -202,7 +202,8 @@ function ProposalCard({ proposal }: { proposal: UpdateProposal }) {
   const isComment = proposal.action === 'comment' && proposal.target_issue != null
   const isStatusChange = proposal.action === 'status_change' && proposal.issue_id != null && proposal.new_status_id != null
   const isAssigneeChange = proposal.action === 'assignee_change' && proposal.issue_id != null && proposal.new_assigned_to_id != null
-  const canExecute = isComment || isStatusChange || isAssigneeChange
+  const isCreateIssue = proposal.action === 'create_issue' && !!proposal.project_id && !!proposal.subject
+  const canExecute = isComment || isStatusChange || isAssigneeChange || isCreateIssue
 
   async function execute() {
     setSendState('loading')
@@ -225,6 +226,15 @@ function ProposalCard({ proposal }: { proposal: UpdateProposal }) {
           newAssignedToName: proposal.new_assigned_to_name,
           reason: proposal.reason,
         })
+      } else if (isCreateIssue && proposal.project_id && proposal.subject) {
+        await postCreateIssueProposal({
+          projectId: proposal.project_id,
+          subject: proposal.subject,
+          description: proposal.description,
+          assignedToId: proposal.assigned_to_id,
+          priorityId: proposal.priority_id,
+          dueDate: proposal.due_date,
+        })
       }
       setSendState('done')
     } catch (e) {
@@ -233,8 +243,12 @@ function ProposalCard({ proposal }: { proposal: UpdateProposal }) {
     }
   }
 
-  const buttonLabel = isComment ? 'Redmine に送信' : '実行'
-  const doneLabel = isComment ? '✓ Redmine に送信済み' : '✓ Redmine を更新しました'
+  const buttonLabel = isComment ? 'Redmine に送信' : isCreateIssue ? '作成' : '実行'
+  const doneLabel = isComment
+    ? '✓ Redmine に送信済み'
+    : isCreateIssue
+      ? '✓ Redmine に issue を作成しました'
+      : '✓ Redmine を更新しました'
 
   return (
     <div className="bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3">
@@ -281,6 +295,7 @@ function ToolCallBadges({ toolCalls }: { toolCalls: string[] }) {
     get_issue: 'issue 詳細',
     search_issues: 'issue 検索',
     add_comment: 'コメント作成',
+    create_issue: 'issue 作成',
     search_knowledge: 'ドキュメント検索',
   }
   return (

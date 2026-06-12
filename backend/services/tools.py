@@ -130,6 +130,43 @@ TOOL_SCHEMAS = [
         },
     },
     {
+        "name": "create_issue",
+        "description": (
+            "Redmine に issue を新規作成する提案を作成する。実行前にユーザーの確認を求める。"
+            "project_id は必須。どのプロジェクトか不明な場合はユーザーに確認する。"
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "project_id": {
+                    "type": "string",
+                    "description": "作成先プロジェクトの ID または識別子（例: 'kintai-next'）",
+                },
+                "subject": {
+                    "type": "string",
+                    "description": "issue のタイトル",
+                },
+                "description": {
+                    "type": "string",
+                    "description": "issue の本文・詳細",
+                },
+                "assigned_to_id": {
+                    "type": "integer",
+                    "description": "担当者の Redmine user_id（任意）",
+                },
+                "priority_id": {
+                    "type": "integer",
+                    "description": "優先度 ID（任意）",
+                },
+                "due_date": {
+                    "type": "string",
+                    "description": "期日 YYYY-MM-DD（任意）",
+                },
+            },
+            "required": ["project_id", "subject"],
+        },
+    },
+    {
         "name": "search_knowledge",
         "description": "プロジェクトの docs（ロードマップ・方針・仕様）をキーワード検索する。",
         "input_schema": {
@@ -227,6 +264,18 @@ async def execute_tool(name: str, tool_input: dict[str, Any], connector: Any, kn
             "new_assigned_to_name": tool_input["new_assigned_to_name"],
             "reason": tool_input.get("reason", ""),
             "message": "担当者変更の準備ができました。ユーザーの確認後に実行します。",
+        }, ensure_ascii=False)
+
+    if name == "create_issue":
+        return json.dumps({
+            "confirmation_required": True,
+            "project_id": tool_input["project_id"],
+            "subject": tool_input["subject"],
+            "description": tool_input.get("description", ""),
+            "assigned_to_id": tool_input.get("assigned_to_id"),
+            "priority_id": tool_input.get("priority_id"),
+            "due_date": tool_input.get("due_date"),
+            "message": "issue 作成の準備ができました。ユーザーの確認後に実行します。",
         }, ensure_ascii=False)
 
     if name == "search_knowledge":

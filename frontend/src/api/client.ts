@@ -142,6 +142,27 @@ export function postUpdateProposal(
   })
 }
 
+export function postCreateIssueProposal(opts: {
+  projectId: string
+  subject: string
+  description?: string
+  assignedToId?: number
+  priorityId?: number
+  dueDate?: string
+}): Promise<unknown> {
+  return request('/proposals/create_issue', {
+    method: 'POST',
+    body: JSON.stringify({
+      project_id: opts.projectId,
+      subject: opts.subject,
+      description: opts.description,
+      assigned_to_id: opts.assignedToId,
+      priority_id: opts.priorityId,
+      due_date: opts.dueDate,
+    }),
+  })
+}
+
 export function postCommentProposal(
   issueId: number,
   notes: string,

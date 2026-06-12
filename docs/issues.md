@@ -2658,7 +2658,7 @@ Priority: High
 
 ### ISS-079: チャットから issue を新規作成できるようにする
 
-Status: Open
+Status: Closed
 Priority: High
 
 要求仕様:
@@ -2689,6 +2689,14 @@ Priority: High
 - 「作成」ボタンを押すと Redmine に issue が作成されることを確認する（Redmine モードで）。
 - モックモードでは `POST /api/proposals/create_issue` が `{"mode": "mock", ...}` を返すことを確認する。
 - `npx tsc --noEmit` エラーなし。
+
+実装結果:
+
+- 9 ファイルを変更: connector `create_issue` / tools スキーマ＋実行 / agent 提案変換 / prompts ガイド / models `CreateIssueRequest` / proposals エンドポイント / types / client / ProposalCard。
+- `tsc --noEmit` エラーなし。
+- 検証: `POST /api/proposals/create_issue` で実 Redmine に #1031 を作成（priority High 反映、Audit ログ記録）→ 後始末で削除。
+- チャット全体フロー: 「kintai-next に〜という issue を作って」で agent が `create_issue` を呼び、提案カード（project_id / subject / description）が生成されることを確認。ツールは `confirmation_required` を返すのみで、チャット時点では Redmine に書き込まれない。
+- プロンプト調整: 当初 AI がツールを呼ばずテキストで確認を求めたため、「確認待ちツールは呼び出すことで提案カードが出る／任意項目は聞き返さない」旨を明記して解消。
 
 ### ISS-080: チャットから期日・優先度を変更できるようにする
 

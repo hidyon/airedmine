@@ -134,6 +134,34 @@ async def run_agent(
                         "next_step": "",
                     }
 
+            if block.name == "create_issue":
+                result_json = json.loads(result_str)
+                if result_json.get("confirmation_required"):
+                    subject = result_json.get("subject", "")
+                    project_id = result_json.get("project_id", "")
+                    meta = [f"プロジェクト: {project_id}"]
+                    if result_json.get("assigned_to_id"):
+                        meta.append(f"担当: {result_json['assigned_to_id']}")
+                    if result_json.get("priority_id"):
+                        meta.append(f"優先度: {result_json['priority_id']}")
+                    if result_json.get("due_date"):
+                        meta.append(f"期日: {result_json['due_date']}")
+                    proposal = {
+                        "status": "confirmation_required",
+                        "action": "create_issue",
+                        "project_id": project_id,
+                        "subject": subject,
+                        "description": result_json.get("description", ""),
+                        "assigned_to_id": result_json.get("assigned_to_id"),
+                        "priority_id": result_json.get("priority_id"),
+                        "due_date": result_json.get("due_date"),
+                        "title": f"issue 作成: {subject}",
+                        "change_summary": " / ".join(meta),
+                        "draft": result_json.get("description", ""),
+                        "checklist": [],
+                        "next_step": "",
+                    }
+
             tool_results.append({
                 "type": "tool_result",
                 "tool_use_id": block.id,

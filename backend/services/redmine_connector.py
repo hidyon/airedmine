@@ -109,6 +109,29 @@ class RedmineConnector:
 
         return {"mode": "redmine", "issue_id": issue_id, "updated": True}
 
+    async def create_issue(self, fields: dict) -> dict:
+        clean = {k: v for k, v in fields.items() if v is not None}
+        if not self.is_connected:
+            return {"mode": "mock", "issue": {"id": 0, **clean}, "created": True}
+
+        url = f"{self._base_url}/issues.json"
+        try:
+            async with httpx.AsyncClient() as client:
+                resp = await client.post(
+                    url,
+                    json={"issue": clean},
+                    headers={**self._headers(), "Content-Type": "application/json"},
+                    timeout=10,
+                )
+        except httpx.RequestError as exc:
+            raise RedmineApiError("Redmine connection error", 503, str(exc)) from exc
+
+        if not resp.is_success:
+            raise RedmineApiError(f"Redmine API error: {resp.status_code}", resp.status_code, resp.text)
+
+        issue = resp.json().get("issue", {})
+        return {"mode": "redmine", "issue": _normalize_issue(issue), "created": True}
+
     async def update_issue(self, issue_id: int, fields: dict) -> dict:
         if not self.is_connected:
             return {"mode": "mock", "issue_id": issue_id, "fields": fields, "updated": True}

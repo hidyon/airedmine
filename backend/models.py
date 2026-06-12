@@ -162,6 +162,15 @@ class UpdateProposalRequest(BaseModel):
     reason: Optional[str] = None
 
 
+class CreateIssueRequest(BaseModel):
+    project_id: str
+    subject: str
+    description: Optional[str] = None
+    assigned_to_id: Optional[int] = None
+    priority_id: Optional[int] = None
+    due_date: Optional[str] = None
+
+
 class UpdateLog(BaseModel):
     id: str
     created_at: str
