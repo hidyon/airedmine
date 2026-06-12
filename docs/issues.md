@@ -2811,7 +2811,7 @@ Priority: Low
 
 ### ISS-085: Redmine MCP サーバーを追加し Claude Code から操作できるようにする
 
-Status: Open
+Status: Closed
 Priority: High
 
 要求仕様:
@@ -2857,3 +2857,10 @@ Priority: High
 - Claude Code に MCP サーバーを接続し、`list_issues` を呼んで Redmine の issue 一覧が返ることを手動で確認する。
 - `create_issue` で issue が Redmine に作成されることを確認する。
 - `REDMINE_BASE_URL` 未設定時にエラーメッセージが返ることを確認する。
+
+実装結果:
+
+- `mcp-server/`（`redmine.py` 薄い非同期クライアント、`mcp_server.py` FastMCP サーバー、`requirements.txt`、`Dockerfile`）を追加。`docs/mcp.md` に接続手順を記載。
+- 仕様の 7 ツールをすべて公開（list_issues / get_issue / search_issues / create_issue / add_comment / change_status / change_assignee）。
+- 当初案の `change_status` はステータス名なし（数値 ID のみ）、`search_issues` は Redmine の `/search.json` 全文検索を利用する形に調整。
+- ローカル Redmine（:3000）で検証: read 系（list/get/search/404）、write 系（create #1028 → comment → done_ratio 更新 → close）、MCP stdio ハンドシェイク（initialize / list_tools / call_tool）すべて成功。テスト用 issue #1028 はクローズ済み。

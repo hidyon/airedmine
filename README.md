@@ -96,6 +96,7 @@ OSS 版 Redmine (:3000)
 
 - **frontend/**: React + TypeScript + Vite。Tailwind CSS v4 でスタイリング。
 - **backend/**: Python + FastAPI。AI Agent は Anthropic API の tool_use ループで動作する。
+- **mcp-server/**: Redmine MCP サーバー。Claude Code から Redmine を直接操作できる（web アプリとは独立）。詳細は [`docs/mcp.md`](docs/mcp.md)。
 - **Redmine**: `REDMINE_BASE_URL` / `REDMINE_API_KEY` が未設定の場合、モックデータで動作する。
 - **AI**: `ANTHROPIC_API_KEY` が未設定の場合、Chat はエラーを返す。
 
@@ -216,6 +217,7 @@ docker compose exec backend python -m pytest tests/ -v
 - `docs/issues.md`: issue 管理
 - `docs/issueslog.md`: issue の検討ログ
 - `docs/spec.md`: 要求・機能・テスト仕様
+- `docs/mcp.md`: Redmine MCP サーバーの接続手順
 
 ## 参考
 

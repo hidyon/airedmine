@@ -413,13 +413,13 @@ ISS-012 の記録の入口は残っているが、可視化・テンプレート
 ## Milestone 15: Redmine MCP サーバー
 
 優先度: High
-状態: Open
+状態: Completed
 
 背景: AIRedmine web アプリは PM・開発者がブラウザで使う体験を提供する。一方で Claude Code ユーザーはターミナルや IDE から直接 Redmine を操作したい。MCP サーバーとして Redmine を公開することで、両方の体験を並行して提供できる。
 
 関連 issue:
 
-- `ISS-085` Open: Redmine MCP サーバーを追加し Claude Code から操作できるようにする。
+- `ISS-085` Closed: Redmine MCP サーバーを追加し Claude Code から操作できるようにする。
 
 期待成果:
 
@@ -436,6 +436,7 @@ ISS-012 の記録の入口は残っているが、可視化・テンプレート
 - 2026-06-06: アプリの目的を「AI エージェント経由の Redmine 利用体験を明らかにするプロトタイプ」として定義した。
 - 2026-06-06: ブラウザー UI に加えて自然言語対話を主要な入口として扱う方針を追加した。
 - 2026-06-06: 開発環境は devcontainer または Docker Compose、Redmine は無料で利用できる OSS 版を前提にする方針を追加した。
+- 2026-06-08: ISS-085 を完了し、Redmine MCP サーバー（`mcp-server/`）を追加。Claude Code から Redmine を直接操作できるようにした。M15 を Completed とした。
 - 2026-06-08: ISS-077 を完了し、開発者 Dashboard をブロッカー・高優先度・その他の 3 セクションに整理した。`assigned_to_id` に数値 user_id を使用するよう修正。
 - 2026-06-08: ISS-078 を完了し、PM Dashboard に停滞・担当者別負荷・優先度サマリー・今週クローズ数・期限切れの 5 パネルを追加した。
 - 2026-06-06: 各マイルストーンに関連 issue を記載し、ロードマップと issue の対応を追えるようにした。
