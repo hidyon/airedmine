@@ -3265,7 +3265,7 @@ Priority: Medium
 
 ### ISS-098: 主要 API のレスポンス時間を計測できるようにする
 
-Status: Open
+Status: Closed
 Priority: Medium
 
 要求仕様:
@@ -3284,6 +3284,15 @@ Priority: Medium
 
 - ローカルで計測コマンドを実行し、主要 API の結果が出力されることを確認する。
 - 計測対象 API が失敗した場合に分かる形でエラーが表示されることを確認する。
+
+実装結果:
+
+- `scripts/measure-api.mjs` を追加し、主要 API の平均、最小、最大、p95 相当、エラー件数を出力できるようにした。
+- `package.json` に `npm run perf:api` を追加した。
+- `GET /api/issues`、`GET /api/issues/{id}`、`GET /api/pm/stats`、`GET /api/proposals/logs`、`POST /api/chat` を計測対象にした。
+- `--runs`、`--chat-runs`、`--skip-chat`、`--api-url` で計測回数と対象 URL を調整できるようにした。
+- `docs/performance.md` を追加し、計測手順、対象 API、記録テンプレートを記載した。
+- Chat を除いた計測と Chat を含む計測の両方で結果が出力されることを確認した。
 
 ### ISS-099: Chat / tool_use / semantic search の処理時間を切り分ける
 
