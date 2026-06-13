@@ -454,7 +454,7 @@ ISS-012 の記録の入口は残っているが、可視化・テンプレート
 ## Milestone 17: Redmine 書き込み操作の安全性と監査性強化
 
 優先度: High
-状態: Open
+状態: Completed
 
 背景: M14 で Chat から実行できる Redmine 書き込み操作が、issue 作成・コメント・ステータス変更・担当変更・期日・優先度・進捗率・バージョン割当・関連付けまで広がった。
 次は操作種別をさらに増やすより、提案内容を人間が安心して確認でき、実行後に追跡・再試行しやすい体験へ磨く。
@@ -465,8 +465,8 @@ ISS-084 の一括操作は誤操作リスクが高いため、このマイルス
 - `ISS-088` Closed: Proposal カードに操作種別ごとの差分表示を追加する。
 - `ISS-089` Closed: Audit ログを操作種別・結果・issue_id で絞り込めるようにする。
 - `ISS-090` Closed: Redmine 更新失敗時の詳細表示と再試行体験を改善する。
-- `ISS-091` Open: 危険操作に二段階確認を追加する。
-- `ISS-092` Open: Chat が ID を推測しないための参照ツールを web 側にも追加する。
+- `ISS-091` Closed: 危険操作に二段階確認を追加する。
+- `ISS-092` Closed: Chat が ID を推測しないための参照ツールを web 側にも追加する。
 - `ISS-093` Closed: Audit View のスクリーンショットを README に追加する。
 
 期待成果:
@@ -494,6 +494,8 @@ ISS-084 の一括操作は誤操作リスクが高いため、このマイルス
 - 2026-06-13: ISS-089 を完了。Audit View に操作種別・結果・issue_id の絞り込みを追加し、失敗ログの category / retryable を確認できるようにした。
 - 2026-06-13: ISS-093 を完了。Audit View の最新スクリーンショットを `docs/screenshots/audit-view.png` として追加し、README から参照した。
 - 2026-06-13: ISS-090 を完了。Proposal 実行失敗時に message / HTTP status / category / retryable / detail を表示し、Audit ログにも失敗メタ情報を残すようにした。
+- 2026-06-13: ISS-091 を完了。Closed / Urgent / 過去日期日などの危険操作で Proposal カードに二段階確認を追加した。
+- 2026-06-13: ISS-092 を完了。web Chat 側に projects / statuses / priorities / users の参照ツールを追加し、ID を推測せず提案するルールを強化した。M17 を Completed とした。
 - 2026-06-08: ISS-079 を完了し、チャットから issue を新規作成できるようにした（提案 → 確認 → 実行フロー）。M14 の最初の issue。
 - 2026-06-13: ISS-080〜083 を完了し、チャットから期日・優先度・進捗率・バージョン割当・関連付けを提案 → 確認 → 実行できるようにした。`npm run build` と backend tests 19 件、ブラウザ起動確認が成功。ISS-084 は誤操作リスクが高いため Open のままとし、M14 は継続。
 - 2026-06-08: ISS-087 を完了し、MCP サーバーに更新系 5 ツール（期日・優先度・進捗率・バージョン割当・関連付け）を追加。公開ツールは 17 に。M16 を Completed とした。

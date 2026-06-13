@@ -3050,7 +3050,7 @@ Priority: Medium
 
 ### ISS-091: 危険操作に二段階確認を追加する
 
-Status: Open
+Status: Closed
 Priority: Medium
 
 要求仕様:
@@ -3072,9 +3072,16 @@ Priority: Medium
 - 通常のコメント追加では二段階確認が出ないことを確認する。
 - `npm run build` エラーなし。
 
+実装結果:
+
+- `ProposalCard` に危険操作判定を追加し、Closed への変更、Urgent への変更、過去日の期日設定で二段階確認を要求するようにした。
+- 危険操作では最初のクリックで確認状態に入り、判定理由と再確認文を表示してから二回目のクリックで実行する。
+- 確認状態を解除できる `戻る` ボタンを追加し、軽微なコメント追加などは従来通り一段階で実行できるようにした。
+- `npm run build` 成功。
+
 ### ISS-092: Chat が ID を推測しないための参照ツールを web 側にも追加する
 
-Status: Open
+Status: Closed
 Priority: High
 
 要求仕様:
@@ -3095,6 +3102,15 @@ Priority: High
 - mock mode で各参照ツールが空または固定値を返し、Chat が落ちないことを確認する。
 - 実 Redmine 接続で priorities / statuses / versions が取得できることを確認する。
 - backend tests と `npm run build` エラーなし。
+
+実装結果:
+
+- `RedmineConnector` に projects / issue_statuses / priorities / users の取得メソッドを追加し、versions と合わせて参照系 ID を取得できるようにした。
+- `backend/services/tools.py` に `list_projects` / `list_issue_statuses` / `list_priorities` / `list_users` を追加した。
+- `backend/services/prompts.py` に、ID が必要な提案では参照ツールで確認し、推測で ID を埋めないルールを追加した。
+- `list_users` は Redmine 側の権限不足時に、管理者 API key が必要なことが分かるエラーを返す。
+- `backend/requirements.txt` に `httpx2` を追加し、Starlette `TestClient` がハングしないテスト環境にした。
+- `pytest backend/tests` 22 件成功、`npm run build` 成功。
 
 ### ISS-093: Audit View のスクリーンショットを README に追加する
 

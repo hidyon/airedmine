@@ -130,6 +130,38 @@ TOOL_SCHEMAS = [
         },
     },
     {
+        "name": "list_projects",
+        "description": "プロジェクト一覧を取得する。create_issue の project_id を調べるのに使う。",
+        "input_schema": {
+            "type": "object",
+            "properties": {},
+        },
+    },
+    {
+        "name": "list_issue_statuses",
+        "description": "ステータス一覧（id / name / is_closed）を取得する。change_status の status_id を調べるのに使う。",
+        "input_schema": {
+            "type": "object",
+            "properties": {},
+        },
+    },
+    {
+        "name": "list_priorities",
+        "description": "優先度一覧（id / name）を取得する。update_priority の priority_id を調べるのに使う。",
+        "input_schema": {
+            "type": "object",
+            "properties": {},
+        },
+    },
+    {
+        "name": "list_users",
+        "description": "ユーザー一覧（id / login / name）を取得する。担当者の user_id を調べるのに使う。権限がない場合はエラーを返す。",
+        "input_schema": {
+            "type": "object",
+            "properties": {},
+        },
+    },
+    {
         "name": "update_due_date",
         "description": "issue の期日を変更する提案を作成する。実行前にユーザーの確認を求める。",
         "input_schema": {
@@ -353,6 +385,22 @@ async def execute_tool(name: str, tool_input: dict[str, Any], connector: Any, kn
             "reason": tool_input.get("reason", ""),
             "message": "担当者変更の準備ができました。ユーザーの確認後に実行します。",
         }, ensure_ascii=False)
+
+    if name == "list_projects":
+        result = await connector.list_projects()
+        return json.dumps(result, ensure_ascii=False)
+
+    if name == "list_issue_statuses":
+        result = await connector.list_issue_statuses()
+        return json.dumps(result, ensure_ascii=False)
+
+    if name == "list_priorities":
+        result = await connector.list_priorities()
+        return json.dumps(result, ensure_ascii=False)
+
+    if name == "list_users":
+        result = await connector.list_users()
+        return json.dumps(result, ensure_ascii=False)
 
     if name == "list_versions":
         result = await connector.list_versions(tool_input["project_id"])

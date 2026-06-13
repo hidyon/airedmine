@@ -13,6 +13,7 @@ from main import app  # noqa: E402
 from dependencies import get_connector  # noqa: E402
 from routers import chat as chat_router  # noqa: E402
 from services.redmine_connector import RedmineApiError  # noqa: E402
+from services.tools import execute_tool  # noqa: E402
 
 init_db()
 client = TestClient(app)
@@ -52,6 +53,23 @@ class FailingConnector:
 
     async def update_issue(self, issue_id: int, fields: dict) -> dict:
         raise RedmineApiError("Redmine API error", self.status, self.body)
+
+
+class ReferenceConnector:
+    async def list_projects(self) -> dict:
+        return {"projects": [{"id": 1, "identifier": "mock", "name": "Mock Project"}]}
+
+    async def list_issue_statuses(self) -> dict:
+        return {"statuses": [{"id": 5, "name": "Closed", "is_closed": True}]}
+
+    async def list_priorities(self) -> dict:
+        return {"priorities": [{"id": 4, "name": "Urgent"}]}
+
+    async def list_users(self) -> dict:
+        return {"users": [{"id": 5, "login": "tanaka", "name": "田中 健太"}]}
+
+    async def list_versions(self, project_id: str) -> dict:
+        return {"versions": [{"id": 3, "name": "Sprint 3", "status": "open"}]}
 
 
 def test_health():
@@ -251,6 +269,23 @@ def test_execute_add_relation_rejects_unknown_type():
         "relation_type": "blocked_by",
     })
     assert resp.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_reference_tools_return_lookup_values():
+    connector = ReferenceConnector()
+
+    projects = await execute_tool("list_projects", {}, connector, None)
+    statuses = await execute_tool("list_issue_statuses", {}, connector, None)
+    priorities = await execute_tool("list_priorities", {}, connector, None)
+    users = await execute_tool("list_users", {}, connector, None)
+    versions = await execute_tool("list_versions", {"project_id": "mock"}, connector, None)
+
+    assert "Mock Project" in projects
+    assert "Closed" in statuses
+    assert "Urgent" in priorities
+    assert "tanaka" in users
+    assert "Sprint 3" in versions
 
 
 def test_experience_notes_get():

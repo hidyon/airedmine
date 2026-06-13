@@ -203,6 +203,11 @@ interface ProposalError {
   detail?: string
 }
 
+interface HazardInfo {
+  required: boolean
+  reason: string
+}
+
 interface ProposalDetail {
   label: string
   value: string
@@ -275,10 +280,36 @@ function proposalDetails(proposal: UpdateProposal): ProposalDetail[] {
   return rows.filter(row => row.value.trim())
 }
 
+function proposalHazard(proposal: UpdateProposal): HazardInfo {
+  if (proposal.action === 'status_change') {
+    const status = (proposal.new_status_name ?? '').toLowerCase()
+    if (status === 'closed' || status === 'クローズ' || proposal.new_status_id === 5) {
+      return { required: true, reason: 'issue を Closed に変更します' }
+    }
+  }
+  if (proposal.action === 'priority') {
+    const priority = (proposal.new_priority_name ?? '').toLowerCase()
+    if (priority === 'urgent' || priority === '緊急' || proposal.new_priority_id === 4) {
+      return { required: true, reason: '優先度を Urgent に変更します' }
+    }
+  }
+  if (proposal.action === 'due_date' && proposal.new_due_date) {
+    const due = new Date(`${proposal.new_due_date}T00:00:00`)
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    if (!Number.isNaN(due.getTime()) && due < today) {
+      return { required: true, reason: '期日を過去日に設定します' }
+    }
+  }
+  return { required: false, reason: '' }
+}
+
 function ProposalCard({ proposal }: { proposal: UpdateProposal }) {
   const [sendState, setSendState] = useState<SendState>('idle')
   const [errorInfo, setErrorInfo] = useState<ProposalError | null>(null)
+  const [confirmArmed, setConfirmArmed] = useState(false)
   const details = proposalDetails(proposal)
+  const hazard = proposalHazard(proposal)
 
   const isComment = proposal.action === 'comment' && proposal.target_issue != null
   const isStatusChange = proposal.action === 'status_change' && proposal.issue_id != null && proposal.new_status_id != null
@@ -294,6 +325,11 @@ function ProposalCard({ proposal }: { proposal: UpdateProposal }) {
     isDueDate || isPriority || isDoneRatio || isVersion || isRelation || isCreateIssue
 
   async function execute() {
+    if (hazard.required && !confirmArmed) {
+      setConfirmArmed(true)
+      setErrorInfo(null)
+      return
+    }
     setSendState('loading')
     setErrorInfo(null)
     try {
@@ -362,6 +398,7 @@ function ProposalCard({ proposal }: { proposal: UpdateProposal }) {
   }
 
   const buttonLabel = isComment ? 'Redmine に送信' : isCreateIssue ? '作成' : '実行'
+  const executeLabel = hazard.required && !confirmArmed ? '確認する' : buttonLabel
   const doneLabel = isComment
     ? '✓ Redmine に送信済み'
     : isCreateIssue
@@ -384,6 +421,16 @@ function ProposalCard({ proposal }: { proposal: UpdateProposal }) {
           ))}
         </dl>
       )}
+      {hazard.required && (
+        <div className="mt-3 border border-amber-200 bg-amber-50 rounded-lg px-3 py-2">
+          <p className="text-xs font-semibold text-amber-800 m-0">{hazard.reason}</p>
+          <p className="text-xs text-amber-700 mt-1 mb-0">
+            {confirmArmed
+              ? '内容を再確認しました。もう一度実行すると Redmine に反映します。'
+              : 'この操作は影響が大きいため、実行前に追加確認が必要です。'}
+          </p>
+        </div>
+      )}
       <div className="mt-3">
         {canExecute ? (
           sendState === 'done' ? (
@@ -393,10 +440,23 @@ function ProposalCard({ proposal }: { proposal: UpdateProposal }) {
               <button
                 onClick={execute}
                 disabled={sendState === 'loading'}
-                className="px-3 py-1.5 text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-300 text-white rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed"
+                className={`px-3 py-1.5 text-xs font-semibold text-white rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed ${
+                  hazard.required && confirmArmed
+                    ? 'bg-amber-600 hover:bg-amber-700 disabled:bg-amber-300'
+                    : 'bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-300'
+                }`}
               >
-                {sendState === 'loading' ? '処理中…' : buttonLabel}
+                {sendState === 'loading' ? '処理中…' : executeLabel}
               </button>
+              {hazard.required && confirmArmed && (
+                <button
+                  onClick={() => setConfirmArmed(false)}
+                  disabled={sendState === 'loading'}
+                  className="px-3 py-1.5 text-xs font-semibold border border-amber-200 text-amber-700 bg-white/70 hover:bg-white rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed"
+                >
+                  戻る
+                </button>
+              )}
             </div>
           )
         ) : (

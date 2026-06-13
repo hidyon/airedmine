@@ -109,6 +109,104 @@ class RedmineConnector:
 
         return {"mode": "redmine", "issue_id": issue_id, "updated": True}
 
+    async def list_projects(self) -> dict:
+        if not self.is_connected:
+            return {"projects": [{"id": 1, "identifier": "mock", "name": "Mock Project"}], "total_count": 1}
+        url = f"{self._base_url}/projects.json"
+        try:
+            async with httpx.AsyncClient() as client:
+                resp = await client.get(url, params={"limit": "100"}, headers=self._headers(), timeout=10)
+        except httpx.RequestError as exc:
+            raise RedmineApiError("Redmine connection error", 503, str(exc)) from exc
+        if not resp.is_success:
+            raise RedmineApiError(f"Redmine API error: {resp.status_code}", resp.status_code, resp.text)
+        data = resp.json()
+        return {
+            "projects": [
+                {"id": p.get("id"), "identifier": p.get("identifier"), "name": p.get("name")}
+                for p in data.get("projects", [])
+            ],
+            "total_count": data.get("total_count", 0),
+        }
+
+    async def list_issue_statuses(self) -> dict:
+        if not self.is_connected:
+            return {"statuses": [
+                {"id": 1, "name": "New", "is_closed": False},
+                {"id": 2, "name": "In Progress", "is_closed": False},
+                {"id": 3, "name": "Feedback", "is_closed": False},
+                {"id": 4, "name": "Resolved", "is_closed": False},
+                {"id": 5, "name": "Closed", "is_closed": True},
+            ]}
+        url = f"{self._base_url}/issue_statuses.json"
+        try:
+            async with httpx.AsyncClient() as client:
+                resp = await client.get(url, headers=self._headers(), timeout=10)
+        except httpx.RequestError as exc:
+            raise RedmineApiError("Redmine connection error", 503, str(exc)) from exc
+        if not resp.is_success:
+            raise RedmineApiError(f"Redmine API error: {resp.status_code}", resp.status_code, resp.text)
+        return {
+            "statuses": [
+                {"id": s.get("id"), "name": s.get("name"), "is_closed": bool(s.get("is_closed"))}
+                for s in resp.json().get("issue_statuses", [])
+            ]
+        }
+
+    async def list_priorities(self) -> dict:
+        if not self.is_connected:
+            return {"priorities": [
+                {"id": 1, "name": "Low"},
+                {"id": 2, "name": "Normal"},
+                {"id": 3, "name": "High"},
+                {"id": 4, "name": "Urgent"},
+            ]}
+        url = f"{self._base_url}/enumerations/issue_priorities.json"
+        try:
+            async with httpx.AsyncClient() as client:
+                resp = await client.get(url, headers=self._headers(), timeout=10)
+        except httpx.RequestError as exc:
+            raise RedmineApiError("Redmine connection error", 503, str(exc)) from exc
+        if not resp.is_success:
+            raise RedmineApiError(f"Redmine API error: {resp.status_code}", resp.status_code, resp.text)
+        return {
+            "priorities": [
+                {"id": p.get("id"), "name": p.get("name")}
+                for p in resp.json().get("issue_priorities", [])
+            ]
+        }
+
+    async def list_users(self) -> dict:
+        if not self.is_connected:
+            return {"users": [
+                {"id": 1, "login": "admin", "name": "Redmine Admin"},
+                {"id": 5, "login": "tanaka", "name": "田中 健太"},
+                {"id": 6, "login": "sato", "name": "佐藤 誠"},
+                {"id": 7, "login": "ito", "name": "伊藤 大輔"},
+                {"id": 8, "login": "yamada", "name": "山田 真由美"},
+                {"id": 9, "login": "nakamura", "name": "中村 雄二"},
+            ]}
+        url = f"{self._base_url}/users.json"
+        try:
+            async with httpx.AsyncClient() as client:
+                resp = await client.get(url, params={"limit": "100"}, headers=self._headers(), timeout=10)
+        except httpx.RequestError as exc:
+            raise RedmineApiError("Redmine connection error", 503, str(exc)) from exc
+        if resp.status_code in (401, 403):
+            raise RedmineApiError("Redmine API error: user list requires admin API key", resp.status_code, resp.text)
+        if not resp.is_success:
+            raise RedmineApiError(f"Redmine API error: {resp.status_code}", resp.status_code, resp.text)
+        return {
+            "users": [
+                {
+                    "id": u.get("id"),
+                    "login": u.get("login"),
+                    "name": f"{u.get('firstname', '')} {u.get('lastname', '')}".strip(),
+                }
+                for u in resp.json().get("users", [])
+            ]
+        }
+
     async def list_versions(self, project_id: str) -> dict:
         if not self.is_connected:
             return {"versions": []}
