@@ -228,7 +228,8 @@ docker compose exec backend python -m pytest tests/ -v
 ## 開発ドキュメント
 
 - `CLAUDE.md`: 共同開発ルール
-- `docs/roadmap.md`: ロードマップ
+- `docs/roadmap.md`: 現在進行中のロードマップ
+- `docs/roadmaplog.md`: 終了したマイルストーンと変更履歴
 - `docs/issues.md`: issue 管理
 - `docs/issueslog.md`: issue の検討ログ
 - `docs/spec.md`: 要求・機能・テスト仕様
