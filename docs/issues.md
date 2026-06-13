@@ -2955,7 +2955,7 @@ Priority: Medium
 
 ### ISS-088: Proposal カードに操作種別ごとの差分表示を追加する
 
-Status: Open
+Status: Closed
 Priority: High
 
 要求仕様:
@@ -2976,6 +2976,13 @@ Priority: High
 - 各 action の Proposal を表示したとき、対象と変更後の値がカード上に表示されることをブラウザで確認する。
 - 変更前の値が取得できない場合でも、カードが崩れず「変更後」の確認ができることを確認する。
 - `npm run build` エラーなし。
+
+実装結果:
+
+- `ProposalCard` に操作種別ごとの確認項目表示を追加した。
+- 既存の `UpdateProposal` フィールドから、対象、変更内容、変更後、関連タイプ、関連先、issue 作成項目、理由を組み立てて表示する。
+- 変更前の値が取得できない場合でも、変更後と理由を確認できる表示にした。
+- `npm run build` 成功。
 
 ### ISS-089: Audit ログを操作種別・結果・issue_id で絞り込めるようにする
 

@@ -195,9 +195,82 @@ export default function DeveloperChatView() {
 
 type SendState = 'idle' | 'loading' | 'done' | 'error'
 
+interface ProposalDetail {
+  label: string
+  value: string
+}
+
+function proposalTarget(proposal: UpdateProposal): string {
+  if (proposal.action === 'comment' && proposal.target_issue) {
+    return `#${proposal.target_issue.id} ${proposal.target_issue.title}`
+  }
+  if (proposal.action === 'create_issue') {
+    return proposal.project_id ? `新規 issue / ${proposal.project_id}` : '新規 issue'
+  }
+  if (proposal.action === 'add_relation' && proposal.issue_id != null) {
+    return `#${proposal.issue_id} -> #${proposal.related_issue_id ?? '?'}`
+  }
+  return proposal.issue_id != null ? `#${proposal.issue_id}` : '対象未指定'
+}
+
+function proposalDetails(proposal: UpdateProposal): ProposalDetail[] {
+  const rows: ProposalDetail[] = [{ label: '対象', value: proposalTarget(proposal) }]
+  const reason = proposal.reason || proposal.draft
+
+  switch (proposal.action) {
+    case 'comment':
+      rows.push({ label: '変更内容', value: 'コメント追加' })
+      if (proposal.notes || proposal.draft) rows.push({ label: '本文', value: proposal.notes ?? proposal.draft ?? '' })
+      break
+    case 'status_change':
+      rows.push({ label: '変更内容', value: 'ステータス変更' })
+      rows.push({ label: '変更後', value: proposal.new_status_name ?? String(proposal.new_status_id ?? '') })
+      break
+    case 'assignee_change':
+      rows.push({ label: '変更内容', value: '担当者変更' })
+      rows.push({ label: '変更後', value: proposal.new_assigned_to_name ?? String(proposal.new_assigned_to_id ?? '') })
+      break
+    case 'due_date':
+      rows.push({ label: '変更内容', value: '期日変更' })
+      rows.push({ label: '変更後', value: proposal.new_due_date ?? '' })
+      break
+    case 'priority':
+      rows.push({ label: '変更内容', value: '優先度変更' })
+      rows.push({ label: '変更後', value: proposal.new_priority_name ?? String(proposal.new_priority_id ?? '') })
+      break
+    case 'done_ratio':
+      rows.push({ label: '変更内容', value: '進捗率更新' })
+      rows.push({ label: '変更後', value: proposal.new_done_ratio != null ? `${proposal.new_done_ratio}%` : '' })
+      break
+    case 'version':
+      rows.push({ label: '変更内容', value: 'バージョン割当' })
+      rows.push({ label: '変更後', value: proposal.new_version_name ?? String(proposal.new_version_id ?? '') })
+      break
+    case 'add_relation':
+      rows.push({ label: '変更内容', value: 'issue 関連付け' })
+      rows.push({ label: '関連タイプ', value: proposal.relation_type ?? 'relates' })
+      rows.push({ label: '関連先', value: proposal.related_issue_id != null ? `#${proposal.related_issue_id}` : '' })
+      break
+    case 'create_issue':
+      rows.push({ label: '変更内容', value: 'issue 作成' })
+      rows.push({ label: '件名', value: proposal.subject ?? '' })
+      if (proposal.description) rows.push({ label: '説明', value: proposal.description })
+      if (proposal.assigned_to_id != null) rows.push({ label: '担当者 ID', value: String(proposal.assigned_to_id) })
+      if (proposal.priority_id != null) rows.push({ label: '優先度 ID', value: String(proposal.priority_id) })
+      if (proposal.due_date) rows.push({ label: '期日', value: proposal.due_date })
+      break
+    default:
+      rows.push({ label: '変更内容', value: proposal.change_summary ?? proposal.action })
+  }
+
+  if (reason) rows.push({ label: '理由', value: reason })
+  return rows.filter(row => row.value.trim())
+}
+
 function ProposalCard({ proposal }: { proposal: UpdateProposal }) {
   const [sendState, setSendState] = useState<SendState>('idle')
   const [errorMsg, setErrorMsg] = useState('')
+  const details = proposalDetails(proposal)
 
   const isComment = proposal.action === 'comment' && proposal.target_issue != null
   const isStatusChange = proposal.action === 'status_change' && proposal.issue_id != null && proposal.new_status_id != null
@@ -292,10 +365,15 @@ function ProposalCard({ proposal }: { proposal: UpdateProposal }) {
         {proposal.title ?? proposal.action}
       </p>
       <p className="text-xs text-emerald-700 mb-2 m-0">{proposal.change_summary}</p>
-      {proposal.draft && (
-        <pre className="text-xs text-slate-700 bg-white/60 rounded-lg px-3 py-2 whitespace-pre-wrap break-words font-sans m-0">
-          {proposal.draft}
-        </pre>
+      {details.length > 0 && (
+        <dl className="grid grid-cols-[72px_1fr] gap-x-3 gap-y-1.5 text-xs bg-white/70 border border-emerald-100 rounded-lg px-3 py-2 m-0">
+          {details.map((row, i) => (
+            <div key={`${row.label}-${i}`} className="contents">
+              <dt className="text-emerald-700 font-semibold">{row.label}</dt>
+              <dd className="text-slate-700 whitespace-pre-wrap break-words m-0">{row.value}</dd>
+            </div>
+          ))}
+        </dl>
       )}
       <div className="mt-3">
         {canExecute ? (
