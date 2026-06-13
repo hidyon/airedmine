@@ -3087,3 +3087,27 @@ Priority: High
 - mock mode で各参照ツールが空または固定値を返し、Chat が落ちないことを確認する。
 - 実 Redmine 接続で priorities / statuses / versions が取得できることを確認する。
 - backend tests と `npm run build` エラーなし。
+
+### ISS-093: Audit View のスクリーンショットを README に追加する
+
+Status: Open
+Priority: Medium
+
+要求仕様:
+
+- README のユーザー体験説明で、更新監査の画面イメージも確認できるようにする。
+- ISS-089 で Audit View に絞り込み UI が追加されたため、最新状態のスクリーンショットを残す。
+- 対象外: README 全体の再構成やデザイン刷新。
+
+機能仕様:
+
+- ブラウザで Audit View を開き、更新ログとフィルタ UI が分かるスクリーンショットを撮影する。
+- 画像は `docs/screenshots/audit-view.png` に保存する。
+- `README.md` の「人間が確認する境界」または View 構成付近に Audit View の画像を追加する。
+- 既存の `docs/screenshots/developer-chat.png` / `pm-dashboard.png` と同じ相対リンク形式を使う。
+
+テスト仕様:
+
+- README の画像リンクが存在するファイルを指していることを確認する。
+- スクリーンショットに Audit View のタイトル、フィルタ UI、ログ行が写っていることを確認する。
+- Markdown 表示上で画像リンクが壊れていないことを確認する。
