@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { postChat, postCommentProposal, postUpdateProposal, postCreateIssueProposal, postAddRelationProposal } from '../api/client'
-import type { ChatHistoryMessage } from '../api/client'
+import type { ApiError, ChatHistoryMessage } from '../api/client'
 import type { ChatResponse, ChatReference, UpdateProposal } from '../api/types'
 import IssueDetailPanel from '../components/IssueDetailPanel'
 import { getUser } from '../auth'
@@ -195,6 +195,14 @@ export default function DeveloperChatView() {
 
 type SendState = 'idle' | 'loading' | 'done' | 'error'
 
+interface ProposalError {
+  message: string
+  category?: string
+  retryable?: boolean
+  status?: number
+  detail?: string
+}
+
 interface ProposalDetail {
   label: string
   value: string
@@ -269,7 +277,7 @@ function proposalDetails(proposal: UpdateProposal): ProposalDetail[] {
 
 function ProposalCard({ proposal }: { proposal: UpdateProposal }) {
   const [sendState, setSendState] = useState<SendState>('idle')
-  const [errorMsg, setErrorMsg] = useState('')
+  const [errorInfo, setErrorInfo] = useState<ProposalError | null>(null)
   const details = proposalDetails(proposal)
 
   const isComment = proposal.action === 'comment' && proposal.target_issue != null
@@ -287,6 +295,7 @@ function ProposalCard({ proposal }: { proposal: UpdateProposal }) {
 
   async function execute() {
     setSendState('loading')
+    setErrorInfo(null)
     try {
       if (isComment && proposal.target_issue) {
         await postCommentProposal(
@@ -347,7 +356,7 @@ function ProposalCard({ proposal }: { proposal: UpdateProposal }) {
       }
       setSendState('done')
     } catch (e) {
-      setErrorMsg(e instanceof Error ? e.message : '送信に失敗しました')
+      setErrorInfo(proposalError(e))
       setSendState('error')
     }
   }
@@ -388,9 +397,6 @@ function ProposalCard({ proposal }: { proposal: UpdateProposal }) {
               >
                 {sendState === 'loading' ? '処理中…' : buttonLabel}
               </button>
-              {sendState === 'error' && (
-                <span className="text-xs text-red-600">{errorMsg} — 再試行できます</span>
-              )}
             </div>
           )
         ) : (
@@ -399,6 +405,56 @@ function ProposalCard({ proposal }: { proposal: UpdateProposal }) {
           </p>
         )}
       </div>
+      {sendState === 'error' && errorInfo && (
+        <ProposalErrorMessage error={errorInfo} />
+      )}
+    </div>
+  )
+}
+
+function proposalError(error: unknown): ProposalError {
+  const apiError = error as ApiError
+  const body = apiError.body
+  return {
+    message: body?.message ?? (error instanceof Error ? error.message : '送信に失敗しました'),
+    category: body?.category,
+    retryable: body?.retryable,
+    status: body?.status ?? apiError.status,
+    detail: body?.detail,
+  }
+}
+
+function ProposalErrorMessage({ error }: { error: ProposalError }) {
+  const nextAction = error.retryable
+    ? 'Redmine またはネットワークの状態を確認して再試行できます。'
+    : '入力内容、対象 issue、権限、Redmine 設定を確認してください。'
+
+  return (
+    <div className="mt-3 border border-red-200 bg-red-50 rounded-lg px-3 py-2">
+      <div className="flex flex-wrap items-center gap-2 mb-1">
+        <span className="text-xs font-semibold text-red-700">{error.message}</span>
+        {error.status != null && (
+          <span className="text-[11px] text-red-600 bg-white/70 border border-red-100 rounded-full px-2 py-0.5">
+            HTTP {error.status}
+          </span>
+        )}
+        {error.category && (
+          <span className="text-[11px] text-red-600 bg-white/70 border border-red-100 rounded-full px-2 py-0.5">
+            {error.category}
+          </span>
+        )}
+        {error.retryable != null && (
+          <span className="text-[11px] text-slate-600 bg-white/70 border border-red-100 rounded-full px-2 py-0.5">
+            {error.retryable ? '再試行可' : '再試行不可'}
+          </span>
+        )}
+      </div>
+      <p className="text-xs text-red-700 m-0">{nextAction}</p>
+      {error.detail && (
+        <pre className="mt-2 text-[11px] text-red-700 bg-white/70 border border-red-100 rounded-md px-2 py-1.5 whitespace-pre-wrap break-words font-mono m-0">
+          {error.detail}
+        </pre>
+      )}
     </div>
   )
 }

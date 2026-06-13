@@ -10,6 +10,21 @@ import type {
 
 const BASE = '/api'
 
+export interface ApiErrorBody {
+  error?: string
+  message?: string
+  category?: string
+  retryable?: boolean
+  status?: number
+  detail?: string
+  log?: unknown
+}
+
+export interface ApiError extends Error {
+  status?: number
+  body?: ApiErrorBody
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {
     headers: { 'Content-Type': 'application/json', ...init?.headers },
@@ -17,7 +32,9 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   })
   if (!res.ok) {
     const body = await res.json().catch(() => ({ error: res.statusText }))
-    throw Object.assign(new Error(body.error ?? res.statusText), { status: res.status, body })
+    const detail = body.detail && typeof body.detail === 'object' ? body.detail : body
+    const message = detail.message ?? detail.error ?? res.statusText
+    throw Object.assign(new Error(message), { status: res.status, body: detail })
   }
   return res.json() as Promise<T>
 }

@@ -3018,7 +3018,7 @@ Priority: High
 
 ### ISS-090: Redmine 更新失敗時の詳細表示と再試行体験を改善する
 
-Status: Open
+Status: Closed
 Priority: Medium
 
 要求仕様:
@@ -3039,6 +3039,14 @@ Priority: Medium
 - connector が 503 相当の `RedmineApiError` を返す場合に retryable なエラー表示になることを確認する。
 - 400/403 相当では retryable=false の案内になることを確認する。
 - backend tests と `npm run build` エラーなし。
+
+実装結果:
+
+- proposal 系 API の Redmine 失敗ログに category / retryable / status / detail を記録するよう統一した。
+- フロントエンドの API エラー処理で FastAPI の `detail` payload を展開し、ProposalCard で message / HTTP status / category / retryable / detail を表示するようにした。
+- retryable=true の場合は再試行可能、retryable=false の場合は入力・権限・設定確認を促す文言を表示する。
+- backend tests に 503（retryable）と 422（non-retryable）の proposal 更新失敗ケースを追加した。
+- `pytest backend/tests` 21 件成功、`npm run build` 成功。
 
 ### ISS-091: 危険操作に二段階確認を追加する
 

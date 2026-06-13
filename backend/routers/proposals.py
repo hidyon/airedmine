@@ -45,7 +45,7 @@ async def execute_comment(request: CommentProposalRequest, connector: ConnectorD
         return {**result, "message": "Redmine コメントを追加しました。", "log": log}
     except RedmineApiError as exc:
         payload = _redmine_error_payload(exc)
-        log = _record_log({**log_base, "result": "failure", "message": payload["message"], "category": payload.get("category"), "retryable": payload.get("retryable")})
+        log = _record_log(_failure_log(log_base, payload))
         raise HTTPException(status_code=exc.status, detail={**payload, "log": log}) from exc
 
 
@@ -94,7 +94,7 @@ async def execute_update(request: UpdateProposalRequest, connector: ConnectorDep
         return {**result, "message": f"Redmine issue #{request.issue_id} を更新しました。", "log": log}
     except RedmineApiError as exc:
         payload = _redmine_error_payload(exc)
-        log = _record_log({**log_base, "result": "failure", "message": payload["message"]})
+        log = _record_log(_failure_log(log_base, payload))
         raise HTTPException(status_code=exc.status, detail={**payload, "log": log}) from exc
 
 
@@ -138,7 +138,7 @@ async def execute_create_issue(request: CreateIssueRequest, connector: Connector
         return {**result, "message": message, "log": log}
     except RedmineApiError as exc:
         payload = _redmine_error_payload(exc)
-        log = _record_log({**log_base, "result": "failure", "message": payload["message"]})
+        log = _record_log(_failure_log(log_base, payload))
         raise HTTPException(status_code=exc.status, detail={**payload, "log": log}) from exc
 
 
@@ -164,7 +164,7 @@ async def execute_add_relation(request: AddRelationRequest, connector: Connector
         return {**result, "message": message, "log": log}
     except RedmineApiError as exc:
         payload = _redmine_error_payload(exc)
-        log = _record_log({**log_base, "result": "failure", "message": payload["message"]})
+        log = _record_log(_failure_log(log_base, payload))
         raise HTTPException(status_code=exc.status, detail={**payload, "log": log}) from exc
 
 
@@ -178,6 +178,18 @@ def _record_log(entry: dict) -> dict:
     if len(_update_logs) > 50:
         del _update_logs[50:]
     return entry
+
+
+def _failure_log(log_base: dict, payload: dict) -> dict:
+    return {
+        **log_base,
+        "result": "failure",
+        "message": payload["message"],
+        "category": payload.get("category"),
+        "retryable": payload.get("retryable"),
+        "status": payload.get("status"),
+        "detail": payload.get("detail"),
+    }
 
 
 def _now_iso() -> str:

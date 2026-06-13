@@ -10,7 +10,9 @@ os.environ["JWT_SECRET"] = "test-secret"
 
 from db import init_db  # noqa: E402
 from main import app  # noqa: E402
+from dependencies import get_connector  # noqa: E402
 from routers import chat as chat_router  # noqa: E402
+from services.redmine_connector import RedmineApiError  # noqa: E402
 
 init_db()
 client = TestClient(app)
@@ -41,6 +43,15 @@ async def _fake_run_agent(question, messages, role, connector, **kwargs):
             },
         }
     return {"answer": "今日の優先候補を確認しました。", "references": [], "clarification": None, "proposal": None}
+
+
+class FailingConnector:
+    def __init__(self, status: int, body: str):
+        self.status = status
+        self.body = body
+
+    async def update_issue(self, issue_id: int, fields: dict) -> dict:
+        raise RedmineApiError("Redmine API error", self.status, self.body)
 
 
 def test_health():
@@ -162,6 +173,48 @@ def test_execute_done_ratio_rejects_out_of_range():
     })
     assert resp.status_code == 400
     assert resp.json()["detail"]["category"] == "validation"
+
+
+def test_execute_update_records_retryable_server_error():
+    app.dependency_overrides[get_connector] = lambda: FailingConnector(503, "temporary outage")
+    try:
+        resp = client.post("/api/proposals/update", json={
+            "issue_id": 1208,
+            "action": "due_date",
+            "new_due_date": "2026-07-01",
+        })
+    finally:
+        app.dependency_overrides.clear()
+
+    assert resp.status_code == 503
+    detail = resp.json()["detail"]
+    assert detail["category"] == "server"
+    assert detail["retryable"] is True
+    assert detail["status"] == 503
+    assert detail["detail"] == "temporary outage"
+    assert detail["log"]["category"] == "server"
+    assert detail["log"]["retryable"] is True
+    assert detail["log"]["status"] == 503
+
+
+def test_execute_update_records_non_retryable_validation_error():
+    app.dependency_overrides[get_connector] = lambda: FailingConnector(422, "invalid due_date")
+    try:
+        resp = client.post("/api/proposals/update", json={
+            "issue_id": 1208,
+            "action": "due_date",
+            "new_due_date": "not-a-date",
+        })
+    finally:
+        app.dependency_overrides.clear()
+
+    assert resp.status_code == 422
+    detail = resp.json()["detail"]
+    assert detail["category"] == "validation"
+    assert detail["retryable"] is False
+    assert detail["status"] == 422
+    assert detail["log"]["category"] == "validation"
+    assert detail["log"]["retryable"] is False
 
 
 def test_execute_version_update_mock():
