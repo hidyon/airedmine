@@ -355,6 +355,9 @@
     - user: suzuki
       note: "API 仕様ありがとうございます。失敗した申請は赤いバッジで理由をツールチップ表示する形にします。実装中です。"
       days_ago: 2
+    - user: yamada
+      note: "QA で代理承認者を含む一括承認を試したところ、一部が pending のまま残りました。API 側の修正後、UI では failed の理由を一覧表示できるか確認したいです。"
+      days_ago: 1
 
 - subject: "申請詳細画面のコメント欄を追加する"
   tracker: feature
@@ -642,6 +645,12 @@
     - user: suzuki
       note: "フロントエンドは仮想スクロール + 遅延ロードで対応します。テーブルの初期描画は上位 50 件のみで、スクロールに応じて追加ロードします。バックエンドのページネーション API が必要です。佐藤さん確認してください。"
       days_ago: 11
+    - user: sato
+      note: "ページネーション API は `limit/offset` で追加できます。ただし部署別集計の N+1 が残っているため、API の応答時間は DB index の対応と合わせて確認したいです。"
+      days_ago: 9
+    - user: ito
+      note: "DB 側は `department_id, worked_on` の複合 index で p95 2.7s まで改善する見込みです。フロントの仮想スクロールと合わせれば 500 人規模でも体感 3 秒以内に収まりそうです。"
+      days_ago: 7
 
 - subject: "レポートのフィルタ条件を URL パラメータで保持する"
   tracker: task

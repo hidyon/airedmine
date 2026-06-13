@@ -88,10 +88,23 @@
 
 - subject: "一括承認で一部が承認されないバグを報告する"
   tracker: bug
-  status: in_progress
-  priority: high
-  updated_days_ago: 2
+  status: feedback
+  priority: urgent
+  updated_days_ago: 12
   version: sprint3
+  description: |
+    一括承認 API の検証で、50 件中 3 件だけ承認済みに更新されないケースを確認した。
+    失敗した申請は承認者が代理承認者に切り替わった直後のデータに偏っている。
+  journals:
+    - user: yamada
+      note: "再現条件: 代理承認者を設定した申請を含めて 50 件選択し、一括承認を実行すると 3 件が pending のまま残ります。API レスポンスでは succeeded に含まれているため、バックエンド側のトランザクション境界を確認したいです。"
+      days_ago: 12
+    - user: sato
+      note: "確認します。`bulk_approve` の中で代理承認者の権限チェックだけ別トランザクションになっていました。失敗時に succeeded へ入ってしまう可能性があります。修正後に再テストをお願いします。"
+      days_ago: 10
+    - user: nakamura
+      note: "このバグは Sprint 3 リリース判定のブロッカーにします。一括承認は管理者の主要導線なので、暫定回避ではなく修正完了をリリース条件にしてください。"
+      days_ago: 9
 
 - subject: "PDF 帳票で文字が欠けるバグを報告する"
   tracker: bug
@@ -146,8 +159,21 @@
   tracker: bug
   status: feedback
   priority: urgent
-  updated_days_ago: 8
+  updated_days_ago: 16
   version: sprint3
+  description: |
+    月初 00:00 の締め処理後も前月分の集計キャッシュが残り、部署別レポートの数値が更新されない。
+    PM Dashboard で停滞 issue として見えるよう、確認待ち状態を維持する。
+  journals:
+    - user: yamada
+      note: "月初の締め処理後、部署別残業時間の合計が前月の値のまま残りました。キャッシュクリア API を手動実行すると直るため、バッチ後の invalidation 漏れの可能性があります。"
+      days_ago: 16
+    - user: ito
+      note: "Redis のキー設計を確認しました。`summary:{department}:{month}` の month が JST ではなく UTC 基準で生成されており、月初 0〜9 時に前月キーへ書き込まれています。修正案を出します。"
+      days_ago: 14
+    - user: nakamura
+      note: "月次レポートは顧客説明に使うため、次回定例までに方針を決めたいです。暫定対応で手動クリア運用にする場合も手順を残してください。"
+      days_ago: 13
 
 - subject: "CSV エクスポートで文字化けするバグを報告する"
   tracker: bug
@@ -195,9 +221,22 @@
 - subject: "レポート生成 API の応答時間を計測する"
   tracker: task
   status: in_progress
-  priority: normal
-  updated_days_ago: 5
+  priority: high
+  updated_days_ago: 8
   version: sprint3
+  description: |
+    月次レポート生成 API の応答時間を部署数・従業員数別に計測する。
+    M19 の AIRedmine パフォーマンス分析でも検索・要約しやすいよう、具体的な計測値をコメントに残す。
+  journals:
+    - user: yamada
+      note: "ステージングで 500 人・100 部署のデータを投入して計測しました。p50: 1.8s / p95: 4.6s / max: 6.2s です。目標の 3 秒以内を p95 で超えています。"
+      days_ago: 8
+    - user: sato
+      note: "API 側は部署別集計で N+1 クエリが出ています。`attendance_records` を部署単位でまとめて取得し、アプリ側で map 化すれば p95 は 2 秒台まで落とせる見込みです。"
+      days_ago: 6
+    - user: ito
+      note: "DB のスロークエリログにも同じクエリが出ています。index は `user_id, worked_on` だけなので、`department_id, worked_on` の複合 index を検討してください。"
+      days_ago: 5
 
 - subject: "大量データ投入時のデータベース性能を計測する"
   tracker: task
@@ -276,6 +315,19 @@
   priority: urgent
   updated_days_ago: 2
   version: sprint3
+  description: |
+    API Gateway とアプリケーション側の認可チェックを組み合わせ、管理者 API への認証バイパスが成立しないことを検証する。
+    Sprint 3 リリースゲートのセキュリティ確認項目。
+  journals:
+    - user: yamada
+      note: "一般ユーザーの JWT に `role=admin` を付け替える試行では 403 になりました。ただし `/api/v1/reports/export` は tenant_id の不一致が 404 ではなく 200 空配列になるため、情報漏えいではないものの挙動を揃えたいです。"
+      days_ago: 4
+    - user: tanaka
+      note: "tenant_id 不一致時は 404 に統一してください。リリースゲートでは `admin/export/user-management` の 3 系統を重点確認対象にします。"
+      days_ago: 3
+    - user: nakamura
+      note: "セキュリティ確認が Closed になるまで v1.0 リリース日は確定しません。結果をゲートレビュー issue にも転記してください。"
+      days_ago: 2
 
 - subject: "API の認可チェックを全エンドポイントで確認する"
   tracker: task
@@ -371,10 +423,22 @@
 
 - subject: "本番リリース前の最終確認テストを実施する"
   tracker: task
-  status: new
+  status: in_progress
   priority: urgent
-  updated_days_ago: 6
+  updated_days_ago: 11
   version: sprint3
+  description: |
+    v1.0 リリース候補の最終確認。QA、セキュリティ、PM 判断待ちの残件を集約し、リリース可否を判断する。
+  journals:
+    - user: yamada
+      note: "最終確認のチェックリストを作成しました。残件は 1) 一括承認の部分失敗、2) 認証バイパス検証、3) 部署別レポート p95 超過、4) リリース日程の PM 判断待ちです。"
+      days_ago: 11
+    - user: tanaka
+      note: "技術的には一括承認と認証検証がブロッカーです。部署別レポート性能は High ですが、管理者向けに利用時間帯を案内する暫定回避も可能です。"
+      days_ago: 9
+    - user: nakamura
+      note: "顧客説明の観点では部署別レポート性能も無視できません。p95 3 秒以内の見込みが立たない場合は、リリースノートに制約として明記する判断が必要です。"
+      days_ago: 8
 
 # ===== ドキュメント・プロセス =====
 - subject: "バグトリアージの優先度付け基準を整備する"

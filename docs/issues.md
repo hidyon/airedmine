@@ -3173,7 +3173,7 @@ Priority: High
 
 ### ISS-095: seed issue とコメント履歴を実プロジェクトらしく拡充する
 
-Status: Open
+Status: Closed
 Priority: High
 
 要求仕様:
@@ -3193,6 +3193,14 @@ Priority: High
 - `npm run seed:demo` で seed が成功することを確認する。
 - AIRedmine の issue 一覧、Dashboard、Chat で追加データが参照できることを確認する。
 - 代表質問で、コメント履歴や関連 issue を材料にした回答が得られることを確認する。
+
+実装結果:
+
+- `scripts/redmine/seed-data/*.yml` の代表 issue を拡充し、リリースゲート、一括承認、月次集計、認証検証、レポート性能、PM 判断待ち、品質ゲートのコメント履歴を追加した。
+- 担当者別に、QA 指摘、開発調査、PM 判断、性能分析、リリース可否判断がつながって見えるように、優先度、ステータス、更新日、進捗率を調整した。
+- `scripts/redmine/seed-demo.rb` を、既存 issue でも説明・状態・コメントを更新できるようにした。コメントは同一本文の重複投入を避ける。
+- `ruby -c scripts/redmine/seed-demo.rb`、seed YAML の読み込み、`npm run seed:demo` が成功することを確認した。
+- AIRedmine API で代表 issue の説明、ステータス、優先度、コメント履歴が参照できることを確認した。
 
 ### ISS-096: seed 再投入とリセットの扱いを改善する
 

@@ -464,10 +464,26 @@
 
 - subject: "品質基準を満たしているかのゲートレビューを行う"
   tracker: task
-  status: new
+  status: in_progress
   priority: high
-  updated_days_ago: 7
+  updated_days_ago: 13
   version: sprint3
+  description: |
+    Sprint 3 リリース候補が品質ゲートを満たしているか確認する。
+    QA、セキュリティ、性能、PM 判断待ちの残件を横断して整理する。
+  journals:
+    - user: tanaka
+      note: "ゲートレビュー観点を整理しました。ブロッカー: 一括承認の部分失敗、認証バイパス検証の tenant_id 不一致挙動。High: 部署別レポート p95 超過、月初集計キャッシュ。PM 判断待ち: v1.0 リリース日程。"
+      days_ago: 13
+    - user: yamada
+      note: "QA 観点では一括承認バグと認証バイパス検証が未完了です。最終確認テスト issue にも同じ残件を転記しています。"
+      days_ago: 11
+    - user: ito
+      note: "性能面は複合 index 追加で p95 2.7s まで改善する見込みです。DB migration のリスクは低いですが、適用タイミングの確認が必要です。"
+      days_ago: 9
+    - user: nakamura
+      note: "PM としては 6/20 定例で Go / No-Go を判断します。この issue のコメントをリリース判断の根拠として使います。"
+      days_ago: 8
 
 - subject: "次期機能の概算見積もりを行う"
   tracker: task

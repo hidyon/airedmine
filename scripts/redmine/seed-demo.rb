@@ -133,7 +133,6 @@ end
 def create_issue(project:, attrs:, idx:, assigned_to:, users:, statuses:, priorities:, trackers:, versions:)
   subject = attrs["subject"].to_s.strip
   return if subject.empty?
-  return unless Issue.find_or_initialize_by(project: project, subject: subject).new_record?
 
   status   = statuses[attrs["status"]   || STATUS_CYCLE[idx % STATUS_CYCLE.length]]
   priority = priorities[attrs["priority"] || PRIORITY_CYCLE[idx % PRIORITY_CYCLE.length]]
@@ -142,19 +141,16 @@ def create_issue(project:, attrs:, idx:, assigned_to:, users:, statuses:, priori
   days     = (attrs["updated_days_ago"] || DAYS_CYCLE[idx % DAYS_CYCLE.length]).to_i
   author   = users[attrs["author"] || "suzuki"] || assigned_to
 
-  issue = Issue.new(
-    project:       project,
-    subject:       subject,
-    tracker:       tracker,
-    status:        status,
-    priority:      priority,
-    assigned_to:   assigned_to,
-    author:        author,
-    description:   attrs["description"].to_s.strip,
-    fixed_version: version,
-    start_date:    [Date.current - days.days - 5.days, Date.current - 90.days].max,
-    done_ratio:    done_ratio_for(status)
-  )
+  issue = Issue.find_or_initialize_by(project: project, subject: subject)
+  issue.tracker       = tracker
+  issue.status        = status
+  issue.priority      = priority
+  issue.assigned_to   = assigned_to
+  issue.author        ||= author
+  issue.description   = attrs["description"].to_s.strip
+  issue.fixed_version = version
+  issue.start_date    = [Date.current - days.days - 5.days, Date.current - 90.days].max
+  issue.done_ratio    = done_ratio_for(status)
   issue.save!(validate: false)
 
   ts = days.days.ago
@@ -164,10 +160,14 @@ def create_issue(project:, attrs:, idx:, assigned_to:, users:, statuses:, priori
   )
 
   (attrs["journals"] || []).each do |j|
+    note_text = j["note"].to_s
+    next if note_text.empty?
+    next if issue.journals.where(notes: note_text).exists?
+
     note = Journal.new(
       journalized:   issue,
       user:          users[j["user"]] || author,
-      notes:         j["note"].to_s,
+      notes:         note_text,
       private_notes: false
     )
     note.save!(validate: false)

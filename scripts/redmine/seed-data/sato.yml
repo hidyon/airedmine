@@ -252,8 +252,24 @@
   tracker: feature
   status: in_progress
   priority: high
-  updated_days_ago: 2
+  updated_days_ago: 10
   version: sprint3
+  description: |
+    複数の申請を一括承認する API を実装する。
+    代理承認者が混在する場合も、成功・失敗を件数と理由付きで返す。
+  journals:
+    - user: sato
+      note: "`POST /api/v1/requests/bulk-approve` の基本実装を入れました。レスポンスは `{ succeeded: [...], failed: [{ id, reason }] }` です。最大 50 件まで受け付けます。"
+      days_ago: 10
+    - user: yamada
+      note: "代理承認者を含むケースで succeeded に入っているのに DB 上は pending のまま残る申請がありました。トランザクション境界と権限チェックの順序を確認してください。"
+      days_ago: 8
+    - user: sato
+      note: "原因は代理承認者の権限チェックを承認更新後に実行していたことでした。権限チェックを先に移動し、失敗時は failed に入れるよう修正中です。"
+      days_ago: 6
+    - user: tanaka
+      note: "一括承認は Sprint 3 リリースゲートのブロッカーです。API 側の修正が入ったら、山田さんの QA issue とセットで再テストしてください。"
+      days_ago: 5
 
 - subject: "申請の差し戻しと再申請フローを実装する"
   tracker: feature

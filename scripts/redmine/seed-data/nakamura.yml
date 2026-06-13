@@ -374,8 +374,24 @@
   tracker: task
   status: feedback
   priority: urgent
-  updated_days_ago: 3
+  updated_days_ago: 12
   version: sprint3
+  description: |
+    v1.0 のリリース日を確定する。QA 最終確認、セキュリティ確認、部署別レポート性能の扱いが判断材料。
+    PM 判断待ちとして Dashboard と Chat のデモで使う。
+  journals:
+    - user: nakamura
+      note: "リリース候補日は 7/31 ですが、現時点では一括承認バグ、認証バイパス検証、部署別レポート p95 超過が残っています。各担当は 6/20 までにリスク見通しをコメントしてください。"
+      days_ago: 12
+    - user: tanaka
+      note: "一括承認と認証バイパスはリリースブロッカーです。部署別レポート性能は制約明記でリリース可能かもしれませんが、顧客説明の前提が必要です。"
+      days_ago: 10
+    - user: yamada
+      note: "QA としては一括承認バグの再テスト完了、認証バイパス検証の tenant_id 不一致挙動修正を確認できればリリース判定に進めます。"
+      days_ago: 8
+    - user: nakamura
+      note: "では 7/31 は仮置きのまま、6/20 の定例で Go / No-Go を判断します。AIRedmine の PM 向けデモではこの issue をリリース判断の中心に使います。"
+      days_ago: 7
 
 - subject: "PM判断待ち: 有料プランの機能制限を決める"
   tracker: task
@@ -565,5 +581,17 @@
   tracker: task
   status: feedback
   priority: high
-  updated_days_ago: 9
+  updated_days_ago: 15
   version: sprint3
+  description: |
+    打刻修正を申請できる期限を決める。給与締め後の修正を許すかどうかで、承認フローと監査ログの仕様が変わる。
+  journals:
+    - user: sato
+      note: "バックエンド実装上は 30 日以内なら既存の締め処理に影響を出さず対応できます。給与締め後の修正を許す場合は差分監査ログと再集計ジョブが必要です。"
+      days_ago: 15
+    - user: suzuki
+      note: "UI は 30 日を超えた申請で警告を出せます。締め後修正を許す場合は、申請理由を必須にして承認者に強調表示したいです。"
+      days_ago: 13
+    - user: nakamura
+      note: "顧客ヒアリングでは 30 日以内が多数派でした。v1.0 は 30 日以内に制限し、締め後修正は Sprint 4 の検討事項にします。仕様を各 issue に反映してください。"
+      days_ago: 12

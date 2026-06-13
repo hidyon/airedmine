@@ -90,8 +90,23 @@
   tracker: task
   status: in_progress
   priority: high
-  updated_days_ago: 3
+  updated_days_ago: 9
   version: sprint3
+  description: |
+    レポート生成 API と部署別勤怠集計テーブルの遅延原因を特定するため、PostgreSQL のスロークエリログを有効化して分析する。
+  journals:
+    - user: ito
+      note: "ステージングで slow query log を 500ms 閾値に設定しました。部署別レポートの `attendance_records` 集計で 4.8s のクエリが出ています。"
+      days_ago: 9
+    - user: sato
+      note: "API 側でも N+1 が見えています。DB index と API の取得単位の両方を直す必要がありそうです。"
+      days_ago: 7
+    - user: ito
+      note: "`department_id, worked_on` の複合 index を追加した検証では p95 が 4.6s から 2.7s まで改善しました。ロック時間は 180ms 程度で許容範囲です。"
+      days_ago: 5
+    - user: nakamura
+      note: "p95 3 秒以内が見えたので、リリース判断ではこの対応を Sprint 3 に含める前提で進めたいです。"
+      days_ago: 4
 
 - subject: "データベースのコネクションプールを最適化する"
   tracker: task
