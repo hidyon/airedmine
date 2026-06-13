@@ -81,6 +81,11 @@ FastAPI バックエンド (:8000)
         |       +--> tool: get_issue
         |       +--> tool: search_issues          (キーワード検索)
         |       +--> tool: search_issues_semantic  (意味検索)
+        |       +--> tool: list_projects          (project_id 参照)
+        |       +--> tool: list_issue_statuses    (status_id 参照)
+        |       +--> tool: list_priorities        (priority_id 参照)
+        |       +--> tool: list_users             (user_id 参照)
+        |       +--> tool: list_versions          (version_id 参照)
         |       +--> tool: add_comment            (確認待ちとして返す)
         |       +--> tool: change_status          (確認待ちとして返す)
         |       +--> tool: change_assignee        (確認待ちとして返す)
@@ -88,7 +93,6 @@ FastAPI バックエンド (:8000)
         |       +--> tool: update_due_date        (確認待ちとして返す)
         |       +--> tool: update_priority        (確認待ちとして返す)
         |       +--> tool: update_done_ratio      (確認待ちとして返す)
-        |       +--> tool: list_versions          (バージョン一覧)
         |       +--> tool: assign_version         (確認待ちとして返す)
         |       +--> tool: add_relation           (確認待ちとして返す)
         |       +--> tool: search_knowledge       (docs 検索)
@@ -96,7 +100,7 @@ FastAPI バックエンド (:8000)
         +--> Redmine Connector (httpx)
         +--> Knowledge Base (docs/ 読み込み)
         +--> Semantic Index (SQLite + sentence-transformers)
-        +--> Proposal & Audit Layer
+        +--> Proposal & Audit Layer (差分表示 / 二段階確認 / 実行ログ / 再試行判断)
         +--> Experience Notes (SQLite)
         |
         v
@@ -105,6 +109,8 @@ OSS 版 Redmine (:3000)
 
 - **frontend/**: React + TypeScript + Vite。Tailwind CSS v4 でスタイリング。
 - **backend/**: Python + FastAPI。AI Agent は Anthropic API の tool_use ループで動作する。
+- **Proposal & Audit Layer**: Redmine への書き込みは proposal として表示し、人間が確認してから実行する。Closed / Urgent / 過去日期日などの危険操作は二段階確認にする。
+- **参照ツール**: Chat は project/status/priority/user/version の ID を推測せず、Redmine から取得した一覧に基づいて更新案を作る。
 - **mcp-server/**: Redmine MCP サーバー。Claude Code から Redmine を直接操作できる（web アプリとは独立）。詳細は [`docs/mcp.md`](docs/mcp.md)。
 - **Redmine**: `REDMINE_BASE_URL` / `REDMINE_API_KEY` が未設定の場合、モックデータで動作する。
 - **AI**: `ANTHROPIC_API_KEY` が未設定の場合、Chat はエラーを返す。

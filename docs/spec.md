@@ -24,8 +24,8 @@ AI エージェントを通じて Redmine を利用したとき、開発者や P
 
 1. Redmine の issue 一覧を自分で読み解いて優先度を判断するコストが高い。
 2. 背景・判断理由・仕様が issue の外（docs, PR, 議事録）に散らばっていて参照しにくい。
-3. Redmine への更新（コメント・ステータス変更・担当変更）を安全に確認する導線がない。
-4. AI が Redmine を直接更新したとき、人間が確認する境界が不明確になりやすい。
+3. Redmine への更新（issue 作成、コメント、ステータス、担当者、期日、優先度、進捗率、バージョン、関連付け）を安全に確認してから反映する必要がある。
+4. AI が Redmine 更新案を作るとき、人間が確認する境界と実行後の監査履歴を明確にする必要がある。
 5. キーワードが一致しないと関連チケットを発見できない（意味的な検索ができない）。
 6. 「自分の issue」を聞いても誰の issue か特定できない（担当者の紐づけがない）。
 
@@ -35,14 +35,14 @@ AI エージェントを通じて Redmine を利用したとき、開発者や P
 | --- | --- | --- |
 | UC-01 | 開発者が「今日何からやればいい？」と質問し、Claude が Redmine を参照して優先 issue の推薦を受け取る | ISS-066, ISS-069 |
 | UC-02 | 開発者が issue 番号を指定して詳細・背景・次アクションを質問する | ISS-021, ISS-047, ISS-066 |
-| UC-03 | 開発者が Chat の提案から Redmine コメント案を確認し、承認する | ISS-026, ISS-059 |
+| UC-03 | 開発者が Chat の提案から Redmine 更新案を確認し、承認する | ISS-026, ISS-059, ISS-073, ISS-079〜083 |
 | UC-04 | 開発者が Dashboard で担当 issue 一覧を確認し、詳細パネルで内容を読む | ISS-046, ISS-060 |
 | UC-05 | PM がログイン後、Chat で「停滞 issue は？」「リスクは？」など PM 視点の質問をする | ISS-072 |
 | UC-06 | 開発者・PM が Audit で更新ログを確認する | ISS-028, ISS-055 |
 | UC-07 | 開発者が概念（「認証」「パフォーマンス」など）で関連 issue を意味検索する | ISS-070 |
 | UC-08 | 開発者・PM が前の発言を踏まえた連続した質問をする（マルチターン会話） | ISS-065, ISS-067 |
 | UC-09 | ユーザーがログインし、自分のロールに合った画面・回答を受け取る | ISS-074, ISS-075 |
-| UC-10 | 開発者が「#1208 のステータスを進行中にして」と依頼し、確認後に Redmine に反映する | ISS-073 |
+| UC-10 | 開発者が「#1208 のステータスを進行中にして」「期日を来週にして」などを依頼し、確認後に Redmine に反映する | ISS-073, ISS-080〜083 |
 | UC-11 | 開発者が「私の今日の issue を教えて」と質問し、ログインユーザーの担当 issue を受け取る | ISS-074 |
 | UC-12 | 開発者が「田中の issue を見せて」と質問し、名前から担当者 ID を解決して絞り込む | — |
 
@@ -50,7 +50,7 @@ AI エージェントを通じて Redmine を利用したとき、開発者や P
 
 - Redmine 以外の外部システム（GitHub, Slack 等）との連携
 - AI モデルの自己学習・ファインチューニング
-- Redmine でのクローズ操作の一括実行（ステータス変更・担当変更は対応済み）
+- Redmine での複数 issue の一括更新（単一 issue の主要更新操作は対応済み）
 
 ---
 
@@ -71,15 +71,26 @@ FastAPI バックエンド (:8000)
         |       +--> tool: get_issue               Redmine issue 詳細・journals 取得
         |       +--> tool: search_issues           キーワード検索
         |       +--> tool: search_issues_semantic  意味検索 (sentence-transformers)
+        |       +--> tool: list_projects           project_id 参照
+        |       +--> tool: list_issue_statuses     status_id 参照
+        |       +--> tool: list_priorities         priority_id 参照
+        |       +--> tool: list_users              user_id 参照
+        |       +--> tool: list_versions           version_id 参照
         |       +--> tool: add_comment             コメント追加（確認待ちを返す）
         |       +--> tool: change_status           ステータス変更（確認待ちを返す）
         |       +--> tool: change_assignee         担当者変更（確認待ちを返す）
+        |       +--> tool: create_issue            issue 作成（確認待ちを返す）
+        |       +--> tool: update_due_date         期日変更（確認待ちを返す）
+        |       +--> tool: update_priority         優先度変更（確認待ちを返す）
+        |       +--> tool: update_done_ratio       進捗率更新（確認待ちを返す）
+        |       +--> tool: assign_version          バージョン割当（確認待ちを返す）
+        |       +--> tool: add_relation            関連付け（確認待ちを返す）
         |       +--> tool: search_knowledge        docs 検索
         |
         +--> Redmine Connector (httpx) → Redmine (:3000)
         +--> Knowledge Base (docs/ 読み込み)
         +--> Semantic Index (SQLite + paraphrase-multilingual-MiniLM-L12-v2)
-        +--> Proposal & Audit Layer (in-memory)
+        +--> Proposal & Audit Layer (差分表示 / 二段階確認 / 実行ログ / 再試行判断)
         +--> Experience Notes (SQLite)
 ```
 
@@ -90,6 +101,7 @@ FastAPI バックエンド (:8000)
 | Login | `/login` | 全員 | ユーザー名・パスワードでログイン。JWT をローカルストレージに保存 |
 | Chat | `/developer/chat` | developer / pm | マルチターン AI チャット、ツール呼び出し表示、proposal カード |
 | Dashboard | `/developer/dashboard` | developer | 担当 issue 一覧、issue 詳細パネル |
+| Dashboard | `/pm/dashboard` | pm | バーンダウン、停滞 issue、担当者別負荷、優先度サマリー |
 | Audit | `/audit` | 全員 | 更新提案ログ一覧 |
 
 ナビゲーションはロール別にフィルタリングされる（PM: Chat + Audit、開発者: Chat + Dashboard + Audit）。
@@ -107,7 +119,9 @@ FastAPI バックエンド (:8000)
 | GET | `/api/issues/{id}` | issue 詳細（description, journals 含む） | ISS-047 |
 | POST | `/api/chat` | 自然言語質問 → AI Agent が Redmine を参照して回答・提案を返す | ISS-066 |
 | POST | `/api/proposals/comment` | コメント追加を Redmine に実行する | ISS-026 |
-| POST | `/api/proposals/update` | ステータス変更・担当変更を Redmine に実行する | ISS-073 |
+| POST | `/api/proposals/update` | ステータス・担当者・期日・優先度・進捗率・バージョンを Redmine に実行する | ISS-073, ISS-080, ISS-081, ISS-082 |
+| POST | `/api/proposals/create_issue` | issue 作成を Redmine に実行する | ISS-079 |
+| POST | `/api/proposals/add_relation` | issue 関連付けを Redmine に実行する | ISS-083 |
 | GET | `/api/proposals/logs` | 更新提案の実行ログ（直近 20 件） | ISS-028 |
 | GET | `/api/experience/notes` | 体験メモ一覧・サマリー | ISS-051 |
 | POST | `/api/experience/notes` | 体験メモ作成 | ISS-051 |
@@ -168,7 +182,31 @@ FastAPI バックエンド (:8000)
 }
 ```
 
-`action` は `"status_change"` または `"assignee_change"`。担当変更時は `new_assigned_to_id` / `new_assigned_to_name` を使う。
+`action` は `"status_change"` / `"assignee_change"` / `"due_date"` / `"priority"` / `"done_ratio"` / `"version"` に対応する。担当変更時は `new_assigned_to_id` / `new_assigned_to_name` を使う。
+
+#### POST /api/proposals/create_issue リクエスト形式
+
+```json
+{
+  "project_id": "1",
+  "subject": "リリース前チェックリストを整備する",
+  "description": "QA 前に確認項目を整理する",
+  "assigned_to_id": 5,
+  "priority_id": 3,
+  "due_date": "2026-07-01"
+}
+```
+
+#### POST /api/proposals/add_relation リクエスト形式
+
+```json
+{
+  "issue_id": 1208,
+  "related_issue_id": 1207,
+  "relation_type": "blocks",
+  "reason": "先に API 側の修正が必要"
+}
+```
 
 #### Redmine API 連携
 
@@ -176,8 +214,15 @@ FastAPI バックエンド (:8000)
 | --- | --- | --- | --- | --- |
 | issue 一覧取得 | `GET /issues.json` | status_id, limit, sort, offset, assigned_to_id（任意） | issues[], total_count | RedmineApiError |
 | issue 詳細取得 | `GET /issues/{id}.json?include=journals` | issue_id | issue + journals | 404 → None |
+| プロジェクト一覧取得 | `GET /projects.json` | limit | projects[], total_count | RedmineApiError |
+| ステータス一覧取得 | `GET /issue_statuses.json` | なし | statuses[] | RedmineApiError |
+| 優先度一覧取得 | `GET /enumerations/issue_priorities.json` | なし | priorities[] | RedmineApiError |
+| ユーザー一覧取得 | `GET /users.json` | limit | users[] | 401/403 → 権限不足エラー |
+| バージョン一覧取得 | `GET /projects/{id}/versions.json` | project_id | versions[] | RedmineApiError |
+| issue 作成 | `POST /issues.json` | project_id, subject, description, assigned_to_id, priority_id, due_date | issue | RedmineApiError |
 | コメント追加 | `PUT /issues/{id}.json` | issue_id, notes | updated: true | RedmineApiError |
-| ステータス変更・担当変更 | `PUT /issues/{id}.json` | issue_id, {status_id} or {assigned_to_id} | updated: true | RedmineApiError |
+| issue 更新 | `PUT /issues/{id}.json` | status_id, assigned_to_id, due_date, priority_id, done_ratio, fixed_version_id | updated: true | RedmineApiError |
+| 関連付け追加 | `POST /issues/{id}/relations.json` | issue_id, related_issue_id, relation_type | relation | RedmineApiError |
 
 `REDMINE_BASE_URL` または `REDMINE_API_KEY` が未設定の場合、mock モードで動作する（`backend/mock/mock_redmine.py`）。
 
@@ -200,10 +245,11 @@ FastAPI バックエンド (:8000)
    - `assigned_to_id="me"` の使用を禁止し、数値 ID の使用を指示する。
 3. **会話履歴の組み立て**: `messages[]` を Anthropic API 形式に変換し、今回の `question` を末尾に追加する。
 4. **tool_use ループ（最大 5 ラウンド）**:
-   - Anthropic API に `TOOL_SCHEMAS`（8 ツール）と `messages` を渡す。
+   - Anthropic API に `TOOL_SCHEMAS`（19 ツール）と `messages` を渡す。
    - `stop_reason == "end_turn"` になったら最終回答を返す。
    - `tool_use` ブロックがある場合は `execute_tool()` を実行し、結果を `tool_result` として履歴に追加して再度 API を呼ぶ。
-   - `add_comment` / `change_status` / `change_assignee` ツールは Redmine を直接更新せず、`confirmation_required` フラグ付きの proposal を返す。
+   - `add_comment` / `create_issue` / `change_status` / `change_assignee` / `update_due_date` / `update_priority` / `update_done_ratio` / `assign_version` / `add_relation` ツールは Redmine を直接更新せず、`confirmation_required` フラグ付きの proposal を返す。
+   - project/status/priority/user/version の ID が必要な場合は参照ツールで確認し、推測した ID では proposal を作らない。
 5. **レスポンス**: `{"answer", "proposal", "tool_calls"}` を返す。
 
 #### ロール別システムプロンプト
@@ -221,9 +267,20 @@ FastAPI バックエンド (:8000)
 | `get_issue` | issue 詳細・journals 取得 | issue_id |
 | `search_issues` | キーワードで件名を全文検索 | query, limit |
 | `search_issues_semantic` | 意味的に近い issue を検索 | query, top_k |
+| `list_projects` | project_id 参照用のプロジェクト一覧取得 | なし |
+| `list_issue_statuses` | status_id 参照用のステータス一覧取得 | なし |
+| `list_priorities` | priority_id 参照用の優先度一覧取得 | なし |
+| `list_users` | user_id 参照用のユーザー一覧取得 | なし |
+| `list_versions` | version_id 参照用のバージョン一覧取得 | project_id |
 | `add_comment` | コメント追加（確認待ちを返す） | issue_id, notes |
 | `change_status` | ステータス変更（確認待ちを返す） | issue_id, new_status_id, new_status_name, reason |
 | `change_assignee` | 担当者変更（確認待ちを返す） | issue_id, new_assigned_to_id, new_assigned_to_name, reason |
+| `create_issue` | issue 作成（確認待ちを返す） | project_id, subject, description, assigned_to_id, priority_id, due_date |
+| `update_due_date` | 期日変更（確認待ちを返す） | issue_id, due_date, reason |
+| `update_priority` | 優先度変更（確認待ちを返す） | issue_id, new_priority_id, new_priority_name, reason |
+| `update_done_ratio` | 進捗率更新（確認待ちを返す） | issue_id, done_ratio, reason |
+| `assign_version` | バージョン割当（確認待ちを返す） | issue_id, version_id, version_name, reason |
+| `add_relation` | issue 関連付け（確認待ちを返す） | issue_id, related_issue_id, relation_type, reason |
 | `search_knowledge` | docs をキーワード検索 | query |
 
 ### マークダウンレンダリング（`frontend/src/views/DeveloperChatView.tsx`）
