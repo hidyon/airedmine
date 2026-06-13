@@ -3326,7 +3326,7 @@ Priority: Medium
 
 ### ISS-100: フロントエンド主要画面の初期表示時間を確認する
 
-Status: Open
+Status: Closed
 Priority: Medium
 
 要求仕様:
@@ -3344,6 +3344,16 @@ Priority: Medium
 
 - ローカル環境で主要画面の表示確認と簡易計測が実行できることを確認する。
 - 計測時に未ログインリダイレクトなどで対象画面を測り損ねないことを確認する。
+
+実装結果:
+
+- `scripts/measure-frontend.mjs` を追加し、Chrome / Chromium の DevTools Protocol で主要画面を開いて計測できるようにした。
+- `package.json` に `npm run perf:frontend` を追加した。
+- `/developer/chat`、`/developer/dashboard`、`/pm/dashboard`、`/audit` を計測対象にした。
+- 計測時に localStorage へデモセッションを注入し、未ログインリダイレクトを避けるようにした。
+- load event、読み込み表示が消えるまでの ready time、初期表示中の `/api/*` 件数、API 合計時間、最遅 API を出力するようにした。
+- `docs/performance.md` にフロントエンド計測手順と出力項目を追記した。
+- この実行環境には Chrome / Chromium が無いため実ブラウザ計測は未実行。スクリプトの構文チェックと、ブラウザ未検出時に明確なエラーを出すことを確認した。
 
 ### ISS-101: パフォーマンス計測結果と改善候補を文書化する
 

@@ -8,6 +8,7 @@
     "doctor": "node scripts/doctor.mjs",
     "healthcheck": "node scripts/healthcheck.mjs",
     "perf:api": "node scripts/measure-api.mjs",
+    "perf:frontend": "node scripts/measure-frontend.mjs",
     "seed:demo": "node scripts/seed-demo.mjs",
     "seed:demo:reset": "node scripts/seed-demo.mjs --reset"
   },
