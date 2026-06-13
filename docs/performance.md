@@ -51,7 +51,7 @@ ISS-098 では計測手順とスクリプトを追加した。
 初回確認として、次の条件で主要 API が計測できることを確認した。
 
 日時: 2026-06-13
-commit: ISS-098 実装中
+commit: `e39dca0`
 seed issue 件数: 517
 コマンド: `npm run perf:api -- --runs=1 --chat-runs=1`
 条件: ローカル Docker Compose、`http://localhost:8000`、Node.js v20.20.2
