@@ -3090,7 +3090,7 @@ Priority: High
 
 ### ISS-093: Audit View のスクリーンショットを README に追加する
 
-Status: Open
+Status: Closed
 Priority: Medium
 
 要求仕様:
@@ -3111,3 +3111,9 @@ Priority: Medium
 - README の画像リンクが存在するファイルを指していることを確認する。
 - スクリーンショットに Audit View のタイトル、フィルタ UI、ログ行が写っていることを確認する。
 - Markdown 表示上で画像リンクが壊れていないことを確認する。
+
+実装結果:
+
+- `docs/screenshots/audit-view.png` を追加した。
+- README の「人間が確認する境界」に Audit View のスクリーンショットを追加した。
+- スクリーンショットに Audit View のタイトル、操作種別・結果・issue_id フィルタ、ログ行が写っていることを確認した。

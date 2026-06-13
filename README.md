@@ -40,6 +40,8 @@ PM は、Redmine の一覧やガントチャートを細かく巡回する代わ
 AIRedmine では、AI が勝手に Redmine を操作する体験を目指しません。
 AI は情報収集・要約・更新案の作成を支援し、人間は判断・承認・クローズ・Redmine への反映を確認します。
 
+![Audit View](docs/screenshots/audit-view.png)
+
 ## View 構成
 
 | View | URL | 対象 | 概要 |
