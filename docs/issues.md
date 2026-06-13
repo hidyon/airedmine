@@ -3296,7 +3296,7 @@ Priority: Medium
 
 ### ISS-099: Chat / tool_use / semantic search の処理時間を切り分ける
 
-Status: Open
+Status: Closed
 Priority: Medium
 
 要求仕様:
@@ -3314,6 +3314,15 @@ Priority: Medium
 
 - Chat を 1 回実行したときに、処理時間の内訳を確認できることを確認する。
 - semantic search 初回と 2 回目以降で計測差を確認できることを確認する。
+
+実装結果:
+
+- `/api/chat` のレスポンスに `timings` を追加し、Chat 全体、Claude API 呼び出し合計、tool 実行合計、round 数、tool 別時間を確認できるようにした。
+- tool 別に `redmine_read`、`semantic_search`、`knowledge_search`、`proposal` の分類を付けた。
+- semantic search では DB 読み込み、embedding decode、query encode、ランキング、インデックス構築時の fetch / encode / write を個別に計測するようにした。
+- `semantic.search.encode_query` と `semantic.build.encode` に `model_was_loaded` を含め、モデル初回ロードを含む計測か判別できるようにした。
+- `npm run perf:api` が Chat の `timings` を表示するようにした。
+- Chat 計測を実行し、Claude API 待ち、tool_use、semantic search 内訳が出力されることを確認した。
 
 ### ISS-100: フロントエンド主要画面の初期表示時間を確認する
 

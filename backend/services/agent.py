@@ -1,6 +1,7 @@
 """AI Agent core: Anthropic tool_use loop with conversation context."""
 import json
 import os
+import time
 from typing import Any
 
 import anthropic
@@ -49,6 +50,15 @@ async def run_agent(
         }
     """
     client = _client()
+    total_started = time.perf_counter()
+    timings = {
+        "total_ms": 0.0,
+        "claude_ms": 0.0,
+        "tool_total_ms": 0.0,
+        "rounds": 0,
+        "tools": [],
+        "semantic": [],
+    }
     system = get_system_prompt(
         role,
         display_name=display_name,
@@ -64,6 +74,8 @@ async def run_agent(
     proposal: dict | None = None
 
     for _round in range(MAX_TOOL_ROUNDS):
+        timings["rounds"] += 1
+        claude_started = time.perf_counter()
         response = client.messages.create(
             model=MODEL,
             max_tokens=MAX_TOKENS,
@@ -71,11 +83,12 @@ async def run_agent(
             tools=TOOL_SCHEMAS,
             messages=api_messages,
         )
+        timings["claude_ms"] += _elapsed_ms(claude_started)
 
         # ツール呼び出しがない → 最終回答
         if response.stop_reason == "end_turn":
             answer = _extract_text(response)
-            return {"answer": answer, "proposal": proposal, "tool_calls": tool_calls}
+            return {"answer": answer, "proposal": proposal, "tool_calls": tool_calls, "timings": _finalize_timings(timings, total_started)}
 
         # tool_use ブロックを処理
         tool_results = []
@@ -83,9 +96,21 @@ async def run_agent(
             if block.type != "tool_use":
                 continue
             tool_calls.append(block.name)
+            tool_started = time.perf_counter()
             result_str = await execute_tool(
-                block.name, block.input, connector, knowledge_base
+                block.name,
+                block.input,
+                connector,
+                knowledge_base,
+                timings=timings["semantic"],
             )
+            tool_elapsed = _elapsed_ms(tool_started)
+            timings["tool_total_ms"] += tool_elapsed
+            timings["tools"].append({
+                "name": block.name,
+                "category": _tool_category(block.name),
+                "duration_ms": tool_elapsed,
+            })
 
             # 書き込み系ツールは確認待ち proposal として保存
             if block.name == "add_comment":
@@ -271,6 +296,7 @@ async def run_agent(
         "answer": "処理が複雑すぎました。質問を分割して再度お試しください。",
         "proposal": proposal,
         "tool_calls": tool_calls,
+        "timings": _finalize_timings(timings, total_started),
     }
 
 
@@ -279,3 +305,45 @@ def _extract_text(response: Any) -> str:
         if hasattr(block, "text"):
             return block.text
     return ""
+
+
+def _elapsed_ms(started: float) -> float:
+    return round((time.perf_counter() - started) * 1000, 1)
+
+
+def _finalize_timings(timings: dict, total_started: float) -> dict:
+    timings["total_ms"] = _elapsed_ms(total_started)
+    timings["claude_ms"] = round(timings["claude_ms"], 1)
+    timings["tool_total_ms"] = round(timings["tool_total_ms"], 1)
+    return timings
+
+
+def _tool_category(name: str) -> str:
+    if name == "search_issues_semantic":
+        return "semantic_search"
+    if name == "search_knowledge":
+        return "knowledge_search"
+    if name in {
+        "list_issues",
+        "get_issue",
+        "search_issues",
+        "list_projects",
+        "list_issue_statuses",
+        "list_priorities",
+        "list_users",
+        "list_versions",
+    }:
+        return "redmine_read"
+    if name in {
+        "add_comment",
+        "change_status",
+        "change_assignee",
+        "update_due_date",
+        "update_priority",
+        "update_done_ratio",
+        "assign_version",
+        "add_relation",
+        "create_issue",
+    }:
+        return "proposal"
+    return "other"

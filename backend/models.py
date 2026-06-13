@@ -129,6 +129,7 @@ class ChatResponse(BaseModel):
     clarification: Optional[ClarificationResponse] = None
     references: list[Any] = []
     proposal: Optional[UpdateProposal] = None
+    timings: Optional[dict[str, Any]] = None
 
 
 class ConversationMessage(BaseModel):

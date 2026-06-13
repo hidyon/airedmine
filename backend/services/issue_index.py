@@ -7,7 +7,7 @@ from typing import Any
 import numpy as np
 
 from db import get_connection
-from services.embedder import encode, encode_one, to_blob, from_blob, cosine_similarity_matrix
+from services.embedder import encode, encode_one, to_blob, from_blob, cosine_similarity_matrix, is_model_loaded
 
 
 def _now() -> str:
@@ -40,7 +40,7 @@ async def _fetch_all_issues(connector: Any) -> list[dict]:
     return all_issues
 
 
-async def build_index(connector: Any, force: bool = False) -> int:
+async def build_index(connector: Any, force: bool = False, timings: list[dict] | None = None) -> int:
     """
     Redmine から全 issue を取得して埋め込みインデックスを構築する。
     既存のエントリは上書きする。force=False の場合はインデックスが空のときのみ実行。
@@ -49,14 +49,20 @@ async def build_index(connector: Any, force: bool = False) -> int:
     if not force and index_count() > 0:
         return index_count()
 
+    started = datetime.now(timezone.utc)
     issues = await _fetch_all_issues(connector)
+    _append_timing(timings, "semantic.build.fetch_issues", started)
     if not issues:
         return 0
 
     texts = [_issue_text(i) for i in issues]
+    model_was_loaded = is_model_loaded()
+    started = datetime.now(timezone.utc)
     embeddings = encode(texts)
+    _append_timing(timings, "semantic.build.encode", started, {"model_was_loaded": model_was_loaded})
 
     now = _now()
+    started = datetime.now(timezone.utc)
     with get_connection() as conn:
         for issue, vec in zip(issues, embeddings):
             conn.execute(
@@ -78,32 +84,42 @@ async def build_index(connector: Any, force: bool = False) -> int:
                 ),
             )
         conn.commit()
+    _append_timing(timings, "semantic.build.write_db", started, {"count": len(issues)})
 
     return len(issues)
 
 
-def search(query: str, top_k: int = 10) -> list[dict]:
+def search(query: str, top_k: int = 10, timings: list[dict] | None = None) -> list[dict]:
     """
     クエリに意味的に近い issue を返す。
     インデックスが空の場合は空リストを返す。
     """
+    started = datetime.now(timezone.utc)
     with get_connection() as conn:
         rows = conn.execute(
             "SELECT issue_id, subject, body, embedding FROM issue_embeddings"
         ).fetchall()
+    _append_timing(timings, "semantic.search.read_db", started, {"rows": len(rows)})
 
     if not rows:
         return []
 
+    started = datetime.now(timezone.utc)
     ids = [r["issue_id"] for r in rows]
     subjects = [r["subject"] for r in rows]
     matrix = np.stack([from_blob(r["embedding"]) for r in rows])
+    _append_timing(timings, "semantic.search.decode_embeddings", started, {"rows": len(rows)})
 
+    model_was_loaded = is_model_loaded()
+    started = datetime.now(timezone.utc)
     q_vec = encode_one(query)
+    _append_timing(timings, "semantic.search.encode_query", started, {"model_was_loaded": model_was_loaded})
+
+    started = datetime.now(timezone.utc)
     scores = cosine_similarity_matrix(q_vec, matrix)
 
     top_indices = np.argsort(scores)[::-1][:top_k]
-    return [
+    results = [
         {
             "id": ids[i],
             "subject": subjects[i],
@@ -112,6 +128,19 @@ def search(query: str, top_k: int = 10) -> list[dict]:
         for i in top_indices
         if scores[i] > 0.3  # 類似度が低すぎるものは除外
     ]
+    _append_timing(timings, "semantic.search.rank", started, {"matched": len(results)})
+    return results
+
+
+def _append_timing(timings: list[dict] | None, name: str, started: datetime, extra: dict | None = None) -> None:
+    if timings is None:
+        return
+    elapsed = datetime.now(timezone.utc) - started
+    timings.append({
+        "name": name,
+        "duration_ms": round(elapsed.total_seconds() * 1000, 1),
+        **(extra or {}),
+    })
 
 
 def _issue_text(issue: dict) -> str:

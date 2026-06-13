@@ -3,6 +3,7 @@ const args = parseArgs(process.argv.slice(2));
 const apiUrl = trimTrailingSlash(args.apiUrl || process.env.AIREDMINE_API_URL || DEFAULT_API_URL);
 const runs = positiveInt(args.runs, 5);
 const chatRuns = args.skipChat ? 0 : positiveInt(args.chatRuns, 1);
+const chatQuestion = args.chatQuestion || "私の今日の issue を優先順に教えて";
 
 const conditions = {
   api_url: apiUrl,
@@ -57,8 +58,9 @@ const targets = [
     method: "POST",
     path: "/api/chat",
     runs: chatRuns,
+    captureTimings: true,
     body: {
-      question: "私の今日の issue を優先順に教えて",
+      question: chatQuestion,
       session_id: `perf-${Date.now()}`,
       role: "developer",
       messages: [],
@@ -89,6 +91,7 @@ if (results.some((result) => result.error_count > 0 || result.discovery_error)) 
 async function measureTarget(target) {
   const samples = [];
   const errors = [];
+  const capturedTimings = [];
 
   for (let i = 0; i < target.runs; i += 1) {
     const started = performance.now();
@@ -104,6 +107,10 @@ async function measureTarget(target) {
         errors.push(`${response.status} ${response.statusText}: ${text.slice(0, 180)}`);
       } else {
         samples.push(durationMs);
+        if (target.captureTimings) {
+          const data = parseJsonOrNull(text);
+          if (data?.timings) capturedTimings.push(data.timings);
+        }
       }
     } catch (error) {
       errors.push(error.message);
@@ -117,7 +124,8 @@ async function measureTarget(target) {
     samples,
     error_count: errors.length,
     errors: errors.slice(0, 3),
-    stats: summarize(samples)
+    stats: summarize(samples),
+    captured_timings: capturedTimings
   };
 }
 
@@ -173,6 +181,19 @@ function printSummary(currentConditions, currentResults) {
     for (const error of result.errors || []) {
       console.log(`  error: ${result.name}: ${error}`);
     }
+    for (const timings of result.captured_timings || []) {
+      console.log(`  timings: ${result.name}: total=${timings.total_ms}ms claude=${timings.claude_ms}ms tools=${timings.tool_total_ms}ms rounds=${timings.rounds}`);
+      for (const tool of timings.tools || []) {
+        console.log(`    tool: ${tool.name} category=${tool.category} duration=${tool.duration_ms}ms`);
+      }
+      for (const semantic of timings.semantic || []) {
+        const extras = Object.entries(semantic)
+          .filter(([key]) => !["name", "duration_ms"].includes(key))
+          .map(([key, value]) => `${key}=${value}`)
+          .join(" ");
+        console.log(`    semantic: ${semantic.name} duration=${semantic.duration_ms}ms${extras ? ` ${extras}` : ""}`);
+      }
+    }
   }
 }
 
@@ -197,6 +218,14 @@ function parseArgs(rawArgs) {
     parsed[key] = match[2];
   }
   return parsed;
+}
+
+function parseJsonOrNull(value) {
+  try {
+    return JSON.parse(value);
+  } catch {
+    return null;
+  }
 }
 
 function positiveInt(value, fallback) {

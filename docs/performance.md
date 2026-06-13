@@ -19,6 +19,7 @@ npm run perf:api
 npm run perf:api -- --runs=10
 npm run perf:api -- --skip-chat
 npm run perf:api -- --api-url=http://localhost:8000 --runs=5 --chat-runs=2
+npm run perf:api -- --runs=1 --chat-runs=1 --chat-question=パフォーマンスが遅いという相談に関係する issue を探して
 ```
 
 計測対象:
@@ -31,6 +32,23 @@ npm run perf:api -- --api-url=http://localhost:8000 --runs=5 --chat-runs=2
 
 出力には、計測条件、seed issue 件数、平均、最小、最大、p95 相当、エラー件数が含まれる。
 Chat は Claude API 待ちを含むため、通常 API と分けて読む。
+`POST /api/chat` のレスポンスには `timings` が含まれ、`npm run perf:api` の出力にも次の内訳が表示される。
+
+- `total_ms`: Chat API 全体の処理時間。
+- `claude_ms`: Claude API 呼び出しの合計時間。
+- `tool_total_ms`: tool_use 実行の合計時間。
+- `tools`: tool 名、分類、実行時間。
+- `semantic`: semantic search の DB 読み込み、embedding encode、類似度計算などの詳細時間。
+
+semantic search の初回ロード差を見るときは、バックエンドを再起動してから semantic search を使う質問を 2 回実行する。
+
+```bash
+docker compose restart backend
+npm run perf:api -- --runs=1 --chat-runs=1 --chat-question=パフォーマンスが遅いという相談に関係する issue を探して
+npm run perf:api -- --runs=1 --chat-runs=1 --chat-question=パフォーマンスが遅いという相談に関係する issue を探して
+```
+
+`semantic.search.encode_query` の `model_was_loaded=false` が初回ロードを含む計測、`true` がロード済み状態の計測を示す。
 
 ## 記録テンプレート
 
@@ -64,4 +82,21 @@ seed issue 件数: 517
 | `GET /api/proposals/logs` | 1 | 2.8 | 2.8 | 2.8 | 2.8 | 0 |
 | `POST /api/chat` | 1 | 11686.1 | 11686.1 | 11686.1 | 11686.1 | 0 |
 
-継続的な数値比較、Chat 内部の切り分け、改善候補の整理は ISS-099〜101 で扱う。
+継続的な数値比較、画面側の計測、改善候補の整理は ISS-100〜101 で扱う。
+
+## Chat timing baseline
+
+ISS-099 で `/api/chat` の内部 timing を追加した。
+semantic search を含む質問で、初回モデルロードとロード済み状態の差を確認した。
+
+質問: `パフォーマンスが遅いという相談に関係する issue を探して`
+
+| 状態 | total ms | Claude ms | tool ms | semantic encode ms | model_was_loaded |
+| --- | ---: | ---: | ---: | ---: | --- |
+| 初回 | 80852.2 | 5514.2 | 75337.8 | 75209.2 | false |
+| 2 回目 | 6781.6 | 6511.6 | 269.7 | 70.1 | true |
+
+観察:
+
+- semantic search の初回は sentence-transformers モデルロードが支配的だった。
+- 2 回目以降は Claude API 待ちが支配的になり、semantic search 自体は 200ms 前後まで下がった。

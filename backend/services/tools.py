@@ -326,7 +326,13 @@ TOOL_SCHEMAS = [
 ]
 
 
-async def execute_tool(name: str, tool_input: dict[str, Any], connector: Any, knowledge_base: Any) -> str:
+async def execute_tool(
+    name: str,
+    tool_input: dict[str, Any],
+    connector: Any,
+    knowledge_base: Any,
+    timings: list[dict] | None = None,
+) -> str:
     """ツールを実行して結果を JSON 文字列で返す。add_comment は確認待ちを返す。"""
     if name == "list_issues":
         params: dict[str, Any] = {
@@ -481,10 +487,10 @@ async def execute_tool(name: str, tool_input: dict[str, Any], connector: Any, kn
         top_k = tool_input.get("top_k", 10)
         count = issue_index.index_count()
         if count == 0:
-            built = await issue_index.build_index(connector)
+            built = await issue_index.build_index(connector, timings=timings)
             if built == 0:
                 return json.dumps({"error": "インデックスの構築に失敗しました。Redmine 接続を確認してください。"}, ensure_ascii=False)
-        results = issue_index.search(tool_input["query"], top_k=top_k)
+        results = issue_index.search(tool_input["query"], top_k=top_k, timings=timings)
         return json.dumps({"matched": len(results), "issues": results}, ensure_ascii=False)
 
     return json.dumps({"error": f"未知のツール: {name}"}, ensure_ascii=False)

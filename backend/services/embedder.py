@@ -16,6 +16,10 @@ def _get_model():
     return _model
 
 
+def is_model_loaded() -> bool:
+    return _model is not None
+
+
 def encode(texts: list[str]) -> np.ndarray:
     """Return (N, D) float32 embedding matrix."""
     model = _get_model()
