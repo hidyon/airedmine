@@ -2952,3 +2952,123 @@ Priority: Medium
 - `update_done_ratio` は 0〜100 範囲外をクライアント側で弾く（150 を渡すとエラー、実機確認済み）。
 - ローカル Redmine で検証: 一時 issue を 2 件作成し、due_date（2026-07-15）/ priority（High）/ done_ratio（40）/ fixed_version（Sprint 3）の更新と blocks 関連付けがすべて反映。検証後に両 issue を削除。
 - M16 完了。
+
+### ISS-088: Proposal カードに操作種別ごとの差分表示を追加する
+
+Status: Open
+Priority: High
+
+要求仕様:
+
+- Redmine に書き込む前に、ユーザーが「何がどう変わるか」を操作種別ごとに確認できるようにする。
+- コメントや issue 作成だけでなく、ステータス・担当者・期日・優先度・進捗率・バージョン・関連付けでも確認しやすい表示にする。
+- 対象外: Redmine 側の全フィールド差分取得。まずは AI 提案と既存 issue 詳細から分かる範囲を表示する。
+
+機能仕様:
+
+- `UpdateProposal` に表示用の差分データを持たせるか、既存フィールドから `ProposalCard` 内で差分表示を組み立てる。
+- `ProposalCard` で操作種別ごとに、対象 issue、変更前（取得できる場合）、変更後、理由を表示する。
+- 関連付けは「起点 issue」「関連先 issue」「関連タイプ」を明示する。
+- issue 作成は project / subject / description / assigned_to / priority / due_date を確認項目として表示する。
+
+テスト仕様:
+
+- 各 action の Proposal を表示したとき、対象と変更後の値がカード上に表示されることをブラウザで確認する。
+- 変更前の値が取得できない場合でも、カードが崩れず「変更後」の確認ができることを確認する。
+- `npm run build` エラーなし。
+
+### ISS-089: Audit ログを操作種別・結果・issue_id で絞り込めるようにする
+
+Status: Open
+Priority: High
+
+要求仕様:
+
+- PM や開発者が、Redmine 更新履歴から特定の操作や失敗をすばやく探せるようにする。
+- 「どの issue に、誰が、どの操作を、いつ実行し、成功/失敗したか」を確認しやすくする。
+- 対象外: 永続的な監査 DB 設計の刷新。まずは既存の in-memory 更新ログ表示を改善する。
+
+機能仕様:
+
+- Audit View に操作種別、結果（success/failure）、issue_id の絞り込み UI を追加する。
+- `GET /api/proposals/logs` のレスポンス構造は維持し、フロント側でフィルタする。
+- 絞り込み条件が空の場合は従来通り最新ログを表示する。
+- 失敗ログは category / retryable があれば表示する。
+
+テスト仕様:
+
+- success / failure のログが混在している状態で結果フィルタが効くことを確認する。
+- action フィルタと issue_id フィルタを組み合わせても期待通り絞り込めることを確認する。
+- `npm run build` エラーなし。
+
+### ISS-090: Redmine 更新失敗時の詳細表示と再試行体験を改善する
+
+Status: Open
+Priority: Medium
+
+要求仕様:
+
+- Redmine API 更新に失敗したとき、ユーザーが原因と次の行動を判断できるようにする。
+- 一時的な接続失敗や 5xx では再試行しやすくし、権限・バリデーション系では設定や入力を見直せるようにする。
+- 対象外: 自動リトライ。ユーザー確認なしに再実行しない。
+
+機能仕様:
+
+- Proposal 実行失敗時のエラー表示に、message / category / retryable / Redmine status を反映する。
+- `routers.issues._redmine_error_payload` と proposal 系エラー payload の扱いを揃える。
+- `retryable=true` の場合は ProposalCard 上で再試行ボタンを維持し、非 retryable の場合は入力・権限確認を促す文言にする。
+- Audit ログにも失敗 category / retryable を残す。
+
+テスト仕様:
+
+- connector が 503 相当の `RedmineApiError` を返す場合に retryable なエラー表示になることを確認する。
+- 400/403 相当では retryable=false の案内になることを確認する。
+- backend tests と `npm run build` エラーなし。
+
+### ISS-091: 危険操作に二段階確認を追加する
+
+Status: Open
+Priority: Medium
+
+要求仕様:
+
+- 取り消しづらい、または影響範囲が大きい Redmine 更新では、通常の実行ボタンだけでなく追加確認を求める。
+- 例: issue を Closed にする、優先度を Urgent にする、期日を過去日にする、複数 issue を一括更新する。
+- 対象外: すべての操作への二段階確認。軽微なコメント追加などは従来通り一段階でよい。
+
+機能仕様:
+
+- 危険操作判定関数をフロントまたは shared な proposal helper として定義する。
+- `ProposalCard` は危険操作の場合、最初のクリックで追加確認状態に入り、確認文を表示してから実行する。
+- 判定理由（例: `Urgent に変更`, `Closed に変更`, `過去日の期日`）をカード内に表示する。
+- 将来の ISS-084 一括操作はこの二段階確認を前提にする。
+
+テスト仕様:
+
+- Urgent への優先度変更や Closed へのステータス変更で二段階確認が出ることを確認する。
+- 通常のコメント追加では二段階確認が出ないことを確認する。
+- `npm run build` エラーなし。
+
+### ISS-092: Chat が ID を推測しないための参照ツールを web 側にも追加する
+
+Status: Open
+Priority: High
+
+要求仕様:
+
+- Chat が Redmine の priority_id、status_id、user_id、version_id、project_id を推測せず、Redmine から取得した値に基づいて提案できるようにする。
+- MCP 側で追加済みの参照系 helper と同等の体験を web Chat 側にも持たせる。
+- 対象外: 複雑な権限ごとの遷移可否判定。Redmine の status 一覧と、必要に応じたエラー表示までを扱う。
+
+機能仕様:
+
+- `RedmineConnector` に projects / issue_statuses / priorities / users / versions の取得メソッドを追加する。
+- `backend/services/tools.py` に `list_projects` / `list_issue_statuses` / `list_priorities` / `list_users` を追加する。`list_versions` は既存実装を利用する。
+- `backend/services/prompts.py` で、名前指定の更新では参照ツールで ID を確認してから提案するよう明記する。
+- `list_users` は Redmine 権限不足時に分かるエラーを返す。
+
+テスト仕様:
+
+- mock mode で各参照ツールが空または固定値を返し、Chat が落ちないことを確認する。
+- 実 Redmine 接続で priorities / statuses / versions が取得できることを確認する。
+- backend tests と `npm run build` エラーなし。
