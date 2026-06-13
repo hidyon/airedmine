@@ -3144,7 +3144,7 @@ Priority: Medium
 
 ### ISS-094: seed データのプロジェクトシナリオを設計する
 
-Status: Open
+Status: Closed
 Priority: High
 
 要求仕様:
@@ -3163,6 +3163,13 @@ Priority: High
 
 - 設計メモから M18 の各 issue に必要な作業が追えることを確認する。
 - PM Dashboard / Developer Dashboard / Chat / semantic search の各観点が少なくとも 1 つずつ含まれていることを確認する。
+
+実装結果:
+
+- `docs/seed-scenario.md` を追加し、既存 seed の現状、主な不足、目指すデモ体験を整理した。
+- Sprint 3 リリースゲート、申請・承認フローの仕様揺れ、レポート性能と大量データ対応、担当者負荷と停滞、Redmine 更新提案デモの 5 シナリオを定義した。
+- 開発者向け、PM 向け、更新提案向けの代表質問を整理した。
+- ISS-095〜097、および M19 の ISS-098〜101 へどう接続するかを記録した。
 
 ### ISS-095: seed issue とコメント履歴を実プロジェクトらしく拡充する
 
