@@ -87,7 +87,17 @@ export interface Clarification {
 
 export interface UpdateProposal {
   status: 'confirmation_required'
-  action: 'comment' | 'close_candidate' | 'status_change' | 'assignee_change' | 'create_issue'
+  action:
+    | 'comment'
+    | 'close_candidate'
+    | 'status_change'
+    | 'assignee_change'
+    | 'create_issue'
+    | 'due_date'
+    | 'priority'
+    | 'done_ratio'
+    | 'version'
+    | 'add_relation'
   // comment
   target_issue?: IssueReference | null
   notes?: string
@@ -97,6 +107,16 @@ export interface UpdateProposal {
   new_status_name?: string
   new_assigned_to_id?: number
   new_assigned_to_name?: string
+  // due_date / priority / done_ratio / version
+  new_due_date?: string
+  new_priority_id?: number
+  new_priority_name?: string
+  new_done_ratio?: number
+  new_version_id?: number
+  new_version_name?: string
+  // add_relation
+  related_issue_id?: number
+  relation_type?: string
   // create_issue
   project_id?: string
   subject?: string

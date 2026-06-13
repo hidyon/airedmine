@@ -130,6 +130,94 @@ TOOL_SCHEMAS = [
         },
     },
     {
+        "name": "update_due_date",
+        "description": "issue の期日を変更する提案を作成する。実行前にユーザーの確認を求める。",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "issue_id": {"type": "integer", "description": "対象 issue の番号"},
+                "due_date": {"type": "string", "description": "新しい期日 YYYY-MM-DD"},
+                "reason": {"type": "string", "description": "変更理由"},
+            },
+            "required": ["issue_id", "due_date"],
+        },
+    },
+    {
+        "name": "update_priority",
+        "description": "issue の優先度を変更する提案を作成する。実行前にユーザーの確認を求める。",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "issue_id": {"type": "integer", "description": "対象 issue の番号"},
+                "new_priority_id": {"type": "integer", "description": "新しい優先度 ID（Low=1, Normal=2, High=3, Urgent=4 が一般的）"},
+                "new_priority_name": {"type": "string", "description": "新しい優先度の表示名（例: 'High'）"},
+                "reason": {"type": "string", "description": "変更理由"},
+            },
+            "required": ["issue_id", "new_priority_id", "new_priority_name"],
+        },
+    },
+    {
+        "name": "update_done_ratio",
+        "description": "issue の進捗率（0〜100）を更新する提案を作成する。実行前にユーザーの確認を求める。",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "issue_id": {"type": "integer", "description": "対象 issue の番号"},
+                "done_ratio": {
+                    "type": "integer",
+                    "description": "進捗率（0〜100）",
+                    "minimum": 0,
+                    "maximum": 100,
+                },
+                "reason": {"type": "string", "description": "変更理由"},
+            },
+            "required": ["issue_id", "done_ratio"],
+        },
+    },
+    {
+        "name": "list_versions",
+        "description": "プロジェクトのバージョン（スプリント・マイルストーン）一覧を取得する。assign_version の version_id を調べるのに使う。",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "project_id": {"type": "string", "description": "プロジェクトの ID または識別子"},
+            },
+            "required": ["project_id"],
+        },
+    },
+    {
+        "name": "assign_version",
+        "description": "issue を対象バージョン（スプリント）に割り当てる提案を作成する。実行前にユーザーの確認を求める。version_id は list_versions で調べる。",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "issue_id": {"type": "integer", "description": "対象 issue の番号"},
+                "version_id": {"type": "integer", "description": "バージョンの数値 ID"},
+                "version_name": {"type": "string", "description": "バージョンの表示名"},
+                "reason": {"type": "string", "description": "変更理由"},
+            },
+            "required": ["issue_id", "version_id", "version_name"],
+        },
+    },
+    {
+        "name": "add_relation",
+        "description": "2 つの issue に関連を設定する提案を作成する。実行前にユーザーの確認を求める。",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "issue_id": {"type": "integer", "description": "起点となる issue の番号"},
+                "related_issue_id": {"type": "integer", "description": "関連先の issue の番号"},
+                "relation_type": {
+                    "type": "string",
+                    "description": "関連タイプ",
+                    "enum": ["relates", "blocks", "blocked", "precedes", "follows", "duplicates", "duplicated", "copied_to", "copied_from"],
+                },
+                "reason": {"type": "string", "description": "関連付けの理由"},
+            },
+            "required": ["issue_id", "related_issue_id", "relation_type"],
+        },
+    },
+    {
         "name": "create_issue",
         "description": (
             "Redmine に issue を新規作成する提案を作成する。実行前にユーザーの確認を求める。"
@@ -264,6 +352,63 @@ async def execute_tool(name: str, tool_input: dict[str, Any], connector: Any, kn
             "new_assigned_to_name": tool_input["new_assigned_to_name"],
             "reason": tool_input.get("reason", ""),
             "message": "担当者変更の準備ができました。ユーザーの確認後に実行します。",
+        }, ensure_ascii=False)
+
+    if name == "list_versions":
+        result = await connector.list_versions(tool_input["project_id"])
+        return json.dumps(result, ensure_ascii=False)
+
+    if name == "update_due_date":
+        return json.dumps({
+            "confirmation_required": True,
+            "issue_id": tool_input["issue_id"],
+            "due_date": tool_input["due_date"],
+            "reason": tool_input.get("reason", ""),
+            "message": "期日変更の準備ができました。ユーザーの確認後に実行します。",
+        }, ensure_ascii=False)
+
+    if name == "update_priority":
+        return json.dumps({
+            "confirmation_required": True,
+            "issue_id": tool_input["issue_id"],
+            "new_priority_id": tool_input["new_priority_id"],
+            "new_priority_name": tool_input["new_priority_name"],
+            "reason": tool_input.get("reason", ""),
+            "message": "優先度変更の準備ができました。ユーザーの確認後に実行します。",
+        }, ensure_ascii=False)
+
+    if name == "update_done_ratio":
+        done_ratio = tool_input["done_ratio"]
+        if not 0 <= done_ratio <= 100:
+            return json.dumps({
+                "error": "done_ratio は 0〜100 で指定してください",
+            }, ensure_ascii=False)
+        return json.dumps({
+            "confirmation_required": True,
+            "issue_id": tool_input["issue_id"],
+            "done_ratio": done_ratio,
+            "reason": tool_input.get("reason", ""),
+            "message": "進捗率更新の準備ができました。ユーザーの確認後に実行します。",
+        }, ensure_ascii=False)
+
+    if name == "assign_version":
+        return json.dumps({
+            "confirmation_required": True,
+            "issue_id": tool_input["issue_id"],
+            "version_id": tool_input["version_id"],
+            "version_name": tool_input["version_name"],
+            "reason": tool_input.get("reason", ""),
+            "message": "バージョン割当の準備ができました。ユーザーの確認後に実行します。",
+        }, ensure_ascii=False)
+
+    if name == "add_relation":
+        return json.dumps({
+            "confirmation_required": True,
+            "issue_id": tool_input["issue_id"],
+            "related_issue_id": tool_input["related_issue_id"],
+            "relation_type": tool_input["relation_type"],
+            "reason": tool_input.get("reason", ""),
+            "message": "関連付けの準備ができました。ユーザーの確認後に実行します。",
         }, ensure_ascii=False)
 
     if name == "create_issue":

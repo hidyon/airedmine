@@ -4,12 +4,14 @@ import { fetchConfig } from '../api/client'
 import type { ConfigResponse } from '../api/types'
 import { getUser, clearSession } from '../auth'
 
+type Role = 'developer' | 'pm'
+
 const ALL_NAV = [
   { to: '/developer/chat', icon: '💬', label: 'Chat', roles: ['developer', 'pm'] },
   { to: '/developer/dashboard', icon: '📋', label: 'Dashboard', roles: ['developer'] },
   { to: '/pm/dashboard', icon: '📊', label: 'Dashboard', roles: ['pm'] },
   { to: '/audit', icon: '📝', label: 'Audit', roles: ['developer', 'pm'] },
-] as const
+] satisfies Array<{ to: string; icon: string; label: string; roles: Role[] }>
 
 const VIEW_LABELS: Record<string, string> = {
   '/developer/chat': 'Chat',
@@ -35,7 +37,7 @@ export default function Layout() {
 
   const viewTitle = VIEW_LABELS[pathname] ?? 'AIRedmine'
   const mode = config?.mode
-  const role = user?.role ?? 'developer'
+  const role: Role = user?.role ?? 'developer'
   const navItems = ALL_NAV.filter(item => item.roles.includes(role))
 
   return (

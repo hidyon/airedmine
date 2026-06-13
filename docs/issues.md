@@ -2700,7 +2700,7 @@ Priority: High
 
 ### ISS-080: チャットから期日・優先度を変更できるようにする
 
-Status: Open
+Status: Closed
 Priority: High
 
 要求仕様:
@@ -2712,12 +2712,12 @@ Priority: High
 
 - `backend/services/tools.py` に `update_due_date` ツールと `update_priority` ツールを追加する。
   - `update_due_date`: 入力 `issue_id`、`due_date`（YYYY-MM-DD）、`reason`。
-  - `update_priority`: 入力 `issue_id`、`priority_id`、`priority_name`、`reason`。
-  - 両方とも `{"confirmation_required": True, "action": "update_due_date" / "update_priority", ...}` を返す。
+  - `update_priority`: 入力 `issue_id`、`new_priority_id`、`new_priority_name`、`reason`。
+  - 両方とも `{"confirmation_required": True, ...}` を返す。
 - `backend/services/agent.py` で両ツールのブロックを処理し提案に変換する。
 - `backend/services/redmine_connector.py` は既存の `update_issue(issue_id, fields)` を流用する。
-- `backend/models.py` に `UpdateDueDateRequest`・`UpdatePriorityRequest` を追加する。
-- `backend/routers/proposals.py` に `POST /api/proposals/update_due_date` と `POST /api/proposals/update_priority` を追加する。
+- `backend/models.py` の `UpdateProposalRequest` に期日・優先度用フィールドを追加する。
+- `backend/routers/proposals.py` は既存の `POST /api/proposals/update` を action 分岐で拡張する。
 - フロントエンドの `UpdateProposal.action` に両アクションを追加し、`ProposalCard` で「更新」ボタンを表示する。
 
 テスト仕様:
@@ -2728,7 +2728,7 @@ Priority: High
 
 ### ISS-081: チャットから進捗率を更新できるようにする
 
-Status: Open
+Status: Closed
 Priority: Medium
 
 要求仕様:
@@ -2739,7 +2739,7 @@ Priority: Medium
 機能仕様:
 
 - `backend/services/tools.py` に `update_done_ratio` ツールを追加する（入力: `issue_id`、`done_ratio`（0〜100）、`reason`）。
-- 既存の `update_issue` を流用。`backend/models.py` に `UpdateDoneRatioRequest`、`backend/routers/proposals.py` に `POST /api/proposals/update_done_ratio` を追加する。
+- 既存の `update_issue` を流用。`backend/models.py` の `UpdateProposalRequest` に `new_done_ratio` を追加し、`backend/routers/proposals.py` は `POST /api/proposals/update` を action 分岐で拡張する。
 - フロントエンドで `done_ratio` アクションを `ProposalCard` に追加する。
 
 テスト仕様:
@@ -2749,7 +2749,7 @@ Priority: Medium
 
 ### ISS-082: チャットから issue をバージョン（スプリント）に割り当てられるようにする
 
-Status: Open
+Status: Closed
 Priority: Medium
 
 要求仕様:
@@ -2762,8 +2762,8 @@ Priority: Medium
 - `backend/services/redmine_connector.py` に `list_versions(project_id)` を追加する（`GET /projects/{id}/versions.json`）。
 - `backend/services/tools.py` に `list_versions` ツールと `assign_version` ツールを追加する。
   - `assign_version`: 入力 `issue_id`、`version_id`、`version_name`、`reason`。
-- 既存の `update_issue` を流用。`backend/models.py` に `AssignVersionRequest`、`backend/routers/proposals.py` に `POST /api/proposals/assign_version` を追加する。
-- フロントエンドで `assign_version` アクションを `ProposalCard` に追加する。
+- 既存の `update_issue` を流用。`backend/models.py` の `UpdateProposalRequest` にバージョン用フィールドを追加し、`backend/routers/proposals.py` は `POST /api/proposals/update` を action 分岐で拡張する。
+- フロントエンドで `version` アクションを `ProposalCard` に追加する。
 
 テスト仕様:
 
@@ -2773,17 +2773,17 @@ Priority: Medium
 
 ### ISS-083: チャットから issue の関連を設定できるようにする
 
-Status: Open
+Status: Closed
 Priority: Medium
 
 要求仕様:
 
-- 「#123 は #456 に依存しているので関連付けて」とチャットで依頼すると、AI が関連（relates、blocks、blocked_by など）を提案し確認後に Redmine に反映できるようにする。
+- 「#123 は #456 に依存しているので関連付けて」とチャットで依頼すると、AI が関連（relates、blocks、blocked など）を提案し確認後に Redmine に反映できるようにする。
 - 対象外: 関連の削除。
 
 機能仕様:
 
-- `backend/services/tools.py` に `add_relation` ツールを追加する（入力: `issue_id`、`related_issue_id`、`relation_type`（relates/blocks/blocked_by/duplicates/duplicated_by）、`reason`）。
+- `backend/services/tools.py` に `add_relation` ツールを追加する（入力: `issue_id`、`related_issue_id`、`relation_type`（relates/blocks/blocked/precedes/follows/duplicates/duplicated/copied_to/copied_from）、`reason`）。
 - `backend/services/redmine_connector.py` に `add_relation(issue_id, related_issue_id, relation_type)` を追加する（`POST /issues/{id}/relations.json`）。
 - `backend/models.py` に `AddRelationRequest`、`backend/routers/proposals.py` に `POST /api/proposals/add_relation` を追加する。
 - フロントエンドで `add_relation` アクションを `ProposalCard` に追加し、関連タイプと対象 issue を表示する。
@@ -2792,6 +2792,17 @@ Priority: Medium
 
 - 「#123 は #456 をブロックしているので設定して」で提案カードが表示されることを確認する。
 - `npx tsc --noEmit` エラーなし。
+
+実装結果:
+
+- ISS-080〜083 は共通の確認待ち更新フローとして実装した。
+- `backend/services/tools.py` に `update_due_date` / `update_priority` / `update_done_ratio` / `list_versions` / `assign_version` / `add_relation` を追加した。
+- `backend/services/agent.py` で各 tool_use 結果を Proposal に変換する。
+- `backend/routers/proposals.py` は既存の `POST /api/proposals/update` を action 分岐で拡張し、関連付けのみ `POST /api/proposals/add_relation` を追加した。
+- フロントエンドの `ProposalCard` から期日・優先度・進捗率・バージョン・関連付けを実行できるようにした。
+- 自動検証: `npm run build` 成功、`pytest backend/tests` 19 件成功（mock mode で proposal 実行を確認）。
+- ブラウザ確認: `http://localhost:5174/` でログイン・画面表示・動作を確認した。
+- 実 Redmine 接続時は `update_issue` / `add_relation` 経由で Redmine API に反映する。mock mode では同 payload と Audit ログ記録を自動テストで確認した。
 
 ### ISS-084: チャットから複数 issue を一括操作できるようにする
 

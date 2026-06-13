@@ -109,6 +109,45 @@ class RedmineConnector:
 
         return {"mode": "redmine", "issue_id": issue_id, "updated": True}
 
+    async def list_versions(self, project_id: str) -> dict:
+        if not self.is_connected:
+            return {"versions": []}
+        url = f"{self._base_url}/projects/{project_id}/versions.json"
+        try:
+            async with httpx.AsyncClient() as client:
+                resp = await client.get(url, headers=self._headers(), timeout=10)
+        except httpx.RequestError as exc:
+            raise RedmineApiError("Redmine connection error", 503, str(exc)) from exc
+        if resp.status_code == 404:
+            return {"versions": []}
+        if not resp.is_success:
+            raise RedmineApiError(f"Redmine API error: {resp.status_code}", resp.status_code, resp.text)
+        return {
+            "versions": [
+                {"id": v.get("id"), "name": v.get("name"), "status": v.get("status")}
+                for v in resp.json().get("versions", [])
+            ]
+        }
+
+    async def add_relation(self, issue_id: int, related_issue_id: int, relation_type: str) -> dict:
+        if not self.is_connected:
+            return {"mode": "mock", "issue_id": issue_id, "related_issue_id": related_issue_id, "relation_type": relation_type, "created": True}
+        url = f"{self._base_url}/issues/{issue_id}/relations.json"
+        payload = {"relation": {"issue_to_id": related_issue_id, "relation_type": relation_type}}
+        try:
+            async with httpx.AsyncClient() as client:
+                resp = await client.post(
+                    url,
+                    json=payload,
+                    headers={**self._headers(), "Content-Type": "application/json"},
+                    timeout=10,
+                )
+        except httpx.RequestError as exc:
+            raise RedmineApiError("Redmine connection error", 503, str(exc)) from exc
+        if not resp.is_success:
+            raise RedmineApiError(f"Redmine API error: {resp.status_code}", resp.status_code, resp.text)
+        return {"mode": "redmine", "issue_id": issue_id, "related_issue_id": related_issue_id, "relation_type": relation_type, "created": True}
+
     async def create_issue(self, fields: dict) -> dict:
         clean = {k: v for k, v in fields.items() if v is not None}
         if not self.is_connected:

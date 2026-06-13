@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import { postChat, postCommentProposal, postUpdateProposal, postCreateIssueProposal } from '../api/client'
+import { postChat, postCommentProposal, postUpdateProposal, postCreateIssueProposal, postAddRelationProposal } from '../api/client'
 import type { ChatHistoryMessage } from '../api/client'
 import type { ChatResponse, ChatReference, UpdateProposal } from '../api/types'
 import IssueDetailPanel from '../components/IssueDetailPanel'
@@ -202,8 +202,15 @@ function ProposalCard({ proposal }: { proposal: UpdateProposal }) {
   const isComment = proposal.action === 'comment' && proposal.target_issue != null
   const isStatusChange = proposal.action === 'status_change' && proposal.issue_id != null && proposal.new_status_id != null
   const isAssigneeChange = proposal.action === 'assignee_change' && proposal.issue_id != null && proposal.new_assigned_to_id != null
+  const isDueDate = proposal.action === 'due_date' && proposal.issue_id != null && !!proposal.new_due_date
+  const isPriority = proposal.action === 'priority' && proposal.issue_id != null && proposal.new_priority_id != null
+  const isDoneRatio = proposal.action === 'done_ratio' && proposal.issue_id != null && proposal.new_done_ratio != null
+  const isVersion = proposal.action === 'version' && proposal.issue_id != null && proposal.new_version_id != null
+  const isRelation = proposal.action === 'add_relation' && proposal.issue_id != null && proposal.related_issue_id != null
   const isCreateIssue = proposal.action === 'create_issue' && !!proposal.project_id && !!proposal.subject
-  const canExecute = isComment || isStatusChange || isAssigneeChange || isCreateIssue
+  const canExecute =
+    isComment || isStatusChange || isAssigneeChange ||
+    isDueDate || isPriority || isDoneRatio || isVersion || isRelation || isCreateIssue
 
   async function execute() {
     setSendState('loading')
@@ -226,6 +233,35 @@ function ProposalCard({ proposal }: { proposal: UpdateProposal }) {
           newAssignedToName: proposal.new_assigned_to_name,
           reason: proposal.reason,
         })
+      } else if (isDueDate && proposal.issue_id != null) {
+        await postUpdateProposal(proposal.issue_id, 'due_date', {
+          newDueDate: proposal.new_due_date,
+          reason: proposal.reason,
+        })
+      } else if (isPriority && proposal.issue_id != null) {
+        await postUpdateProposal(proposal.issue_id, 'priority', {
+          newPriorityId: proposal.new_priority_id,
+          newPriorityName: proposal.new_priority_name,
+          reason: proposal.reason,
+        })
+      } else if (isDoneRatio && proposal.issue_id != null) {
+        await postUpdateProposal(proposal.issue_id, 'done_ratio', {
+          newDoneRatio: proposal.new_done_ratio,
+          reason: proposal.reason,
+        })
+      } else if (isVersion && proposal.issue_id != null) {
+        await postUpdateProposal(proposal.issue_id, 'version', {
+          newVersionId: proposal.new_version_id,
+          newVersionName: proposal.new_version_name,
+          reason: proposal.reason,
+        })
+      } else if (isRelation && proposal.issue_id != null && proposal.related_issue_id != null) {
+        await postAddRelationProposal(
+          proposal.issue_id,
+          proposal.related_issue_id,
+          proposal.relation_type ?? 'relates',
+          proposal.reason,
+        )
       } else if (isCreateIssue && proposal.project_id && proposal.subject) {
         await postCreateIssueProposal({
           projectId: proposal.project_id,
@@ -296,6 +332,12 @@ function ToolCallBadges({ toolCalls }: { toolCalls: string[] }) {
     search_issues: 'issue 検索',
     add_comment: 'コメント作成',
     create_issue: 'issue 作成',
+    update_due_date: '期日変更',
+    update_priority: '優先度変更',
+    update_done_ratio: '進捗率更新',
+    list_versions: 'バージョン一覧',
+    assign_version: 'バージョン割当',
+    add_relation: '関連付け',
     search_knowledge: 'ドキュメント検索',
   }
   return (

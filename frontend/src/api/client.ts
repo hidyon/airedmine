@@ -24,7 +24,13 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 export interface LoginResponse {
   token: string
-  user: { user_id: number; username: string; display_name: string; role: 'developer' | 'pm' }
+  user: {
+    id: number
+    username: string
+    display_name: string
+    role: 'developer' | 'pm'
+    redmine_user_id: number | null
+  }
 }
 
 export function postLogin(username: string, password: string): Promise<LoginResponse> {
@@ -119,12 +125,18 @@ export function fetchPmStats(): Promise<PmStatsResponse> {
 
 export function postUpdateProposal(
   issueId: number,
-  action: 'status_change' | 'assignee_change',
+  action: 'status_change' | 'assignee_change' | 'due_date' | 'priority' | 'done_ratio' | 'version',
   opts: {
     newStatusId?: number
     newStatusName?: string
     newAssignedToId?: number
     newAssignedToName?: string
+    newDueDate?: string
+    newPriorityId?: number
+    newPriorityName?: string
+    newDoneRatio?: number
+    newVersionId?: number
+    newVersionName?: string
     reason?: string
   },
 ): Promise<unknown> {
@@ -137,7 +149,30 @@ export function postUpdateProposal(
       new_status_name: opts.newStatusName,
       new_assigned_to_id: opts.newAssignedToId,
       new_assigned_to_name: opts.newAssignedToName,
+      new_due_date: opts.newDueDate,
+      new_priority_id: opts.newPriorityId,
+      new_priority_name: opts.newPriorityName,
+      new_done_ratio: opts.newDoneRatio,
+      new_version_id: opts.newVersionId,
+      new_version_name: opts.newVersionName,
       reason: opts.reason,
+    }),
+  })
+}
+
+export function postAddRelationProposal(
+  issueId: number,
+  relatedIssueId: number,
+  relationType: string,
+  reason?: string,
+): Promise<unknown> {
+  return request('/proposals/add_relation', {
+    method: 'POST',
+    body: JSON.stringify({
+      issue_id: issueId,
+      related_issue_id: relatedIssueId,
+      relation_type: relationType,
+      reason,
     }),
   })
 }

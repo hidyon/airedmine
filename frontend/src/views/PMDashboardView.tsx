@@ -101,9 +101,9 @@ export default function PMDashboardView() {
                     <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} allowDecimals={false} />
                     <Tooltip
                       contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e2e8f0' }}
-                      formatter={(value: number, name: string) => [
-                        `${value} 件`,
-                        name === 'open' ? '実績 (open)' : '理想線',
+                      formatter={(value, name) => [
+                        `${Number(value ?? 0)} 件`,
+                        String(name) === 'open' ? '実績 (open)' : '理想線',
                       ]}
                     />
                     <Legend
@@ -177,7 +177,7 @@ export default function PMDashboardView() {
                         <YAxis type="category" dataKey="name" width={90} tick={{ fontSize: 12, fill: '#475569' }} />
                         <Tooltip
                           contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e2e8f0' }}
-                          formatter={(v: number) => [`${v} 件`, '件数']}
+                          formatter={v => [`${Number(v ?? 0)} 件`, '件数']}
                         />
                         <Bar dataKey="count" fill="#3b82f6" radius={[0, 4, 4, 0]} />
                       </BarChart>

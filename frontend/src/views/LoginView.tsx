@@ -17,7 +17,13 @@ export default function LoginView() {
     setLoading(true)
     try {
       const res = await postLogin(username.trim(), password)
-      saveSession(res.token, res.user)
+      saveSession(res.token, {
+        user_id: res.user.id,
+        username: res.user.username,
+        display_name: res.user.display_name,
+        role: res.user.role,
+        redmine_user_id: res.user.redmine_user_id,
+      })
       const dest = res.user.role === 'pm' ? '/pm' : '/developer/chat'
       navigate(dest, { replace: true })
     } catch (err) {

@@ -134,6 +134,100 @@ async def run_agent(
                         "next_step": "",
                     }
 
+            if block.name == "update_due_date":
+                result_json = json.loads(result_str)
+                if result_json.get("confirmation_required"):
+                    iid = result_json["issue_id"]
+                    due = result_json["due_date"]
+                    proposal = {
+                        "status": "confirmation_required",
+                        "action": "due_date",
+                        "issue_id": iid,
+                        "new_due_date": due,
+                        "reason": result_json.get("reason", ""),
+                        "title": f"期日変更 #{iid}",
+                        "change_summary": f"期日を {due} に変更",
+                        "draft": result_json.get("reason", ""),
+                        "checklist": [],
+                        "next_step": "",
+                    }
+
+            if block.name == "update_priority":
+                result_json = json.loads(result_str)
+                if result_json.get("confirmation_required"):
+                    iid = result_json["issue_id"]
+                    pname = result_json.get("new_priority_name", "")
+                    proposal = {
+                        "status": "confirmation_required",
+                        "action": "priority",
+                        "issue_id": iid,
+                        "new_priority_id": result_json["new_priority_id"],
+                        "new_priority_name": pname,
+                        "reason": result_json.get("reason", ""),
+                        "title": f"優先度変更 #{iid}",
+                        "change_summary": f"優先度を「{pname}」に変更",
+                        "draft": result_json.get("reason", ""),
+                        "checklist": [],
+                        "next_step": "",
+                    }
+
+            if block.name == "update_done_ratio":
+                result_json = json.loads(result_str)
+                if result_json.get("confirmation_required"):
+                    iid = result_json["issue_id"]
+                    ratio = result_json["done_ratio"]
+                    proposal = {
+                        "status": "confirmation_required",
+                        "action": "done_ratio",
+                        "issue_id": iid,
+                        "new_done_ratio": ratio,
+                        "reason": result_json.get("reason", ""),
+                        "title": f"進捗率更新 #{iid}",
+                        "change_summary": f"進捗率を {ratio}% に更新",
+                        "draft": result_json.get("reason", ""),
+                        "checklist": [],
+                        "next_step": "",
+                    }
+
+            if block.name == "assign_version":
+                result_json = json.loads(result_str)
+                if result_json.get("confirmation_required"):
+                    iid = result_json["issue_id"]
+                    vname = result_json.get("version_name", "")
+                    proposal = {
+                        "status": "confirmation_required",
+                        "action": "version",
+                        "issue_id": iid,
+                        "new_version_id": result_json["version_id"],
+                        "new_version_name": vname,
+                        "reason": result_json.get("reason", ""),
+                        "title": f"バージョン割当 #{iid}",
+                        "change_summary": f"バージョンを「{vname}」に割り当て",
+                        "draft": result_json.get("reason", ""),
+                        "checklist": [],
+                        "next_step": "",
+                    }
+
+            if block.name == "add_relation":
+                result_json = json.loads(result_str)
+                if result_json.get("confirmation_required"):
+                    iid = result_json["issue_id"]
+                    rid = result_json["related_issue_id"]
+                    rtype = result_json["relation_type"]
+                    proposal = {
+                        "status": "confirmation_required",
+                        "action": "add_relation",
+                        "issue_id": iid,
+                        "related_issue_id": rid,
+                        "relation_type": rtype,
+                        "reason": result_json.get("reason", ""),
+                        "title": f"関連付け #{iid}",
+                        "change_summary": f"#{iid} と #{rid} を「{rtype}」で関連付け",
+                        "draft": result_json.get("reason", ""),
+                        "checklist": [],
+                        "next_step": "",
+                    }
+
             if block.name == "create_issue":
                 result_json = json.loads(result_str)
                 if result_json.get("confirmation_required"):

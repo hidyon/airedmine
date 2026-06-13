@@ -154,11 +154,36 @@ class CommentProposalRequest(BaseModel):
 
 class UpdateProposalRequest(BaseModel):
     issue_id: int
-    action: Literal["status_change", "assignee_change"]
+    action: Literal[
+        "status_change", "assignee_change", "due_date", "priority", "done_ratio", "version"
+    ]
     new_status_id: Optional[int] = None
     new_status_name: Optional[str] = None
     new_assigned_to_id: Optional[int] = None
     new_assigned_to_name: Optional[str] = None
+    new_due_date: Optional[str] = None
+    new_priority_id: Optional[int] = None
+    new_priority_name: Optional[str] = None
+    new_done_ratio: Optional[int] = None
+    new_version_id: Optional[int] = None
+    new_version_name: Optional[str] = None
+    reason: Optional[str] = None
+
+
+class AddRelationRequest(BaseModel):
+    issue_id: int
+    related_issue_id: int
+    relation_type: Literal[
+        "relates",
+        "blocks",
+        "blocked",
+        "precedes",
+        "follows",
+        "duplicates",
+        "duplicated",
+        "copied_to",
+        "copied_from",
+    ] = "relates"
     reason: Optional[str] = None
 
 

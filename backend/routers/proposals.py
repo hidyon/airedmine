@@ -1,7 +1,7 @@
 import time
 from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException
-from models import CommentProposalRequest, UpdateProposalRequest, CreateIssueRequest
+from models import CommentProposalRequest, UpdateProposalRequest, CreateIssueRequest, AddRelationRequest
 from services.redmine_connector import RedmineConnector, RedmineApiError
 from dependencies import get_connector
 from routers.issues import _redmine_error_payload
@@ -54,18 +54,29 @@ async def execute_update(request: UpdateProposalRequest, connector: ConnectorDep
     global _log_seq
 
     fields: dict = {}
+    label: str
     if request.action == "status_change" and request.new_status_id is not None:
         fields["status_id"] = request.new_status_id
+        label = request.new_status_name or str(request.new_status_id)
     elif request.action == "assignee_change" and request.new_assigned_to_id is not None:
         fields["assigned_to_id"] = request.new_assigned_to_id
+        label = request.new_assigned_to_name or str(request.new_assigned_to_id)
+    elif request.action == "due_date" and request.new_due_date:
+        fields["due_date"] = request.new_due_date
+        label = request.new_due_date
+    elif request.action == "priority" and request.new_priority_id is not None:
+        fields["priority_id"] = request.new_priority_id
+        label = request.new_priority_name or str(request.new_priority_id)
+    elif request.action == "done_ratio" and request.new_done_ratio is not None:
+        if not 0 <= request.new_done_ratio <= 100:
+            raise HTTPException(status_code=400, detail={"error": "done_ratio must be 0-100", "category": "validation", "retryable": False})
+        fields["done_ratio"] = request.new_done_ratio
+        label = f"{request.new_done_ratio}%"
+    elif request.action == "version" and request.new_version_id is not None:
+        fields["fixed_version_id"] = request.new_version_id
+        label = request.new_version_name or str(request.new_version_id)
     else:
         raise HTTPException(status_code=400, detail={"error": "invalid action or missing fields"})
-
-    label = (
-        request.new_status_name or str(request.new_status_id)
-        if request.action == "status_change"
-        else request.new_assigned_to_name or str(request.new_assigned_to_id)
-    )
     log_base = {
         "id": f"log-{int(time.time() * 1000)}-{_log_seq}",
         "created_at": _now_iso(),
@@ -124,6 +135,32 @@ async def execute_create_issue(request: CreateIssueRequest, connector: Connector
         new_id = (result.get("issue") or {}).get("id", 0)
         message = f"Redmine issue #{new_id} を作成しました。" if new_id else "Redmine issue を作成しました（mock）。"
         log = _record_log({**log_base, "issue_id": new_id, "result": "success", "message": message})
+        return {**result, "message": message, "log": log}
+    except RedmineApiError as exc:
+        payload = _redmine_error_payload(exc)
+        log = _record_log({**log_base, "result": "failure", "message": payload["message"]})
+        raise HTTPException(status_code=exc.status, detail={**payload, "log": log}) from exc
+
+
+@router.post("/api/proposals/add_relation")
+async def execute_add_relation(request: AddRelationRequest, connector: ConnectorDep) -> dict:
+    global _log_seq
+
+    log_base = {
+        "id": f"log-{int(time.time() * 1000)}-{_log_seq}",
+        "created_at": _now_iso(),
+        "actor": "browser-user",
+        "issue_id": request.issue_id,
+        "target_title": f"#{request.issue_id}",
+        "action": "add_relation",
+        "draft": f"{request.relation_type} #{request.related_issue_id}: {request.reason or ''}",
+    }
+    _log_seq += 1
+
+    try:
+        result = await connector.add_relation(request.issue_id, request.related_issue_id, request.relation_type)
+        message = f"#{request.issue_id} と #{request.related_issue_id} を関連付けました。"
+        log = _record_log({**log_base, "result": "success", "message": message})
         return {**result, "message": message, "log": log}
     except RedmineApiError as exc:
         payload = _redmine_error_payload(exc)
