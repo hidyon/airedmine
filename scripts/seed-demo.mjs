@@ -1,26 +1,41 @@
 import { runCompose } from "./compose-utils.mjs";
 
-console.log("Seeding AIRedmine demo data into Redmine...");
+const reset = process.argv.includes("--reset");
+
+console.log(reset
+  ? "Resetting and seeding AIRedmine demo data into Redmine..."
+  : "Seeding AIRedmine demo data into Redmine...");
 
 try {
-  const result = await runCompose([
+  const args = [
     "exec",
-    "-T",
+    "-T"
+  ];
+
+  if (reset) {
+    args.push("-e", "RESET_DEMO_PROJECT=1");
+  }
+
+  args.push(
     "redmine",
     "bundle",
     "exec",
     "rails",
     "runner",
     "/demo-scripts/seed-demo.rb"
-  ], {
+  );
+
+  const result = await runCompose(args, {
     maxBuffer: 1024 * 1024
   });
 
   if (result.stdout.trim()) console.log(maskSecrets(result.stdout.trim()));
   if (result.stderr.trim()) console.error(result.stderr.trim());
-  console.log("Demo data seed completed. Restart the app service after updating .env if needed.");
+  console.log(reset
+    ? "Demo data reset and seed completed. Restart the app service after updating .env if needed."
+    : "Demo data seed completed. Restart the app service after updating .env if needed.");
 } catch (error) {
-  console.error("Demo data seed failed.");
+  console.error(reset ? "Demo data reset failed." : "Demo data seed failed.");
   console.error(error.stdout || error.message);
   if (error.stderr) console.error(error.stderr);
   process.exitCode = 1;

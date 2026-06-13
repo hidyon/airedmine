@@ -4,6 +4,7 @@
 # 想定ユーザー: admin = 鈴木（フロントエンド担当）が AIRedmine を利用している場面。
 #
 # Usage: bundle exec rails runner /demo-scripts/seed-demo.rb
+# Reset: RESET_DEMO_PROJECT=1 bundle exec rails runner /demo-scripts/seed-demo.rb
 
 require "yaml"
 
@@ -13,6 +14,16 @@ User.current = User.find_by(login: "admin") || User.first
 Setting.rest_api_enabled = "1"
 
 cfg = YAML.load_file(File.join(DATA_DIR, "config.yml"))
+
+if ENV["RESET_DEMO_PROJECT"] == "1"
+  project_to_reset = Project.find_by(identifier: "kintai-next")
+  if project_to_reset
+    puts "  Resetting project: #{project_to_reset.identifier}"
+    project_to_reset.destroy
+  else
+    puts "  Reset skipped: project kintai-next does not exist"
+  end
+end
 
 # ===== ステータス =====
 statuses = {}
@@ -80,6 +91,12 @@ members_cfg["members"].each do |m|
       password_confirmation: "Welcome1!"
     )
     u.save!(validate: false)
+  else
+    u.firstname = m["firstname"]
+    u.lastname  = m["lastname"]
+    u.mail      = m["mail"]
+    u.status    = User::STATUS_ACTIVE
+    u.save!(validate: false)
   end
   users[m["key"]] = u
 end
@@ -110,6 +127,7 @@ cfg["versions"].each do |v|
     obj.status         = v["status"]
     obj.effective_date = date
   end
+  vr.update!(status: v["status"], effective_date: date)
   versions[v["key"]] = vr
 end
 
@@ -142,6 +160,7 @@ def create_issue(project:, attrs:, idx:, assigned_to:, users:, statuses:, priori
   author   = users[attrs["author"] || "suzuki"] || assigned_to
 
   issue = Issue.find_or_initialize_by(project: project, subject: subject)
+  was_new = issue.new_record?
   issue.tracker       = tracker
   issue.status        = status
   issue.priority      = priority
@@ -159,6 +178,7 @@ def create_issue(project:, attrs:, idx:, assigned_to:, users:, statuses:, priori
     closed_on:  status.is_closed? ? ts : nil
   )
 
+  journals_added = 0
   (attrs["journals"] || []).each do |j|
     note_text = j["note"].to_s
     next if note_text.empty?
@@ -172,9 +192,14 @@ def create_issue(project:, attrs:, idx:, assigned_to:, users:, statuses:, priori
     )
     note.save!(validate: false)
     Journal.where(id: note.id).update_all(created_on: j["days_ago"].to_i.days.ago)
+    journals_added += 1
   end
 
-  issue
+  {
+    created: was_new ? 1 : 0,
+    updated: was_new ? 0 : 1,
+    journals_added: journals_added
+  }
 end
 
 # ===== データファイルを読み込んで issue を作成 =====
@@ -183,6 +208,11 @@ data_files = Dir.glob(File.join(DATA_DIR, "*.yml"))
   .sort
 
 total = 0
+stats = {
+  created: 0,
+  updated: 0,
+  journals_added: 0
+}
 
 data_files.each do |file|
   member_key  = File.basename(file, ".yml")
@@ -190,7 +220,7 @@ data_files.each do |file|
   data        = YAML.load_file(file) || []
 
   data.each_with_index do |attrs, i|
-    create_issue(
+    result = create_issue(
       project:    project,
       attrs:      attrs,
       idx:        i,
@@ -201,6 +231,11 @@ data_files.each do |file|
       trackers:   trackers,
       versions:   versions
     )
+    next unless result
+
+    stats[:created] += result[:created]
+    stats[:updated] += result[:updated]
+    stats[:journals_added] += result[:journals_added]
   end
 
   puts "  #{member_key}: #{data.size} issues"
@@ -212,6 +247,9 @@ token = Token.find_or_create_by!(user: admin, action: "api")
 puts({
   project:     project.identifier,
   issues_registered: total,
+  issues_created: stats[:created],
+  issues_updated: stats[:updated],
+  journals_added: stats[:journals_added],
   issues_in_db:      project.issues.count,
   api_enabled: Setting.rest_api_enabled,
   api_key:     token.value

@@ -3204,7 +3204,7 @@ Priority: High
 
 ### ISS-096: seed 再投入とリセットの扱いを改善する
 
-Status: Open
+Status: Closed
 Priority: Medium
 
 要求仕様:
@@ -3223,6 +3223,15 @@ Priority: Medium
 
 - seed を連続実行しても致命的な重複や失敗が起きないことを確認する。
 - リセットまたは再投入後に AIRedmine UI からデモデータを確認できることを確認する。
+
+実装結果:
+
+- `scripts/redmine/seed-demo.rb` に `RESET_DEMO_PROJECT=1` 対応を追加し、`kintai-next` project を削除してから再投入できるようにした。
+- 通常の再投入では既存 project / issue / user を再利用し、issue の説明、状態、優先度、Sprint、コメント履歴、ユーザー属性、Sprint 日付を seed 定義へ合わせ直すようにした。
+- seed 実行結果に `issues_created`、`issues_updated`、`journals_added` を出力し、再投入時に何が起きたか確認しやすくした。
+- `scripts/seed-demo.mjs` に `--reset` を追加し、`package.json` から `npm run seed:demo:reset` を実行できるようにした。
+- README に通常再投入とリセット再投入の使い分け、注意点を追記した。
+- `npm run seed:demo` の連続実行と `npm run seed:demo:reset` が成功することを確認した。
 
 ### ISS-097: README にデモシナリオと質問例を追加する
 

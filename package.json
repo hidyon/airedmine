@@ -7,7 +7,8 @@
     "compose": "node scripts/compose-run.mjs",
     "doctor": "node scripts/doctor.mjs",
     "healthcheck": "node scripts/healthcheck.mjs",
-    "seed:demo": "node scripts/seed-demo.mjs"
+    "seed:demo": "node scripts/seed-demo.mjs",
+    "seed:demo:reset": "node scripts/seed-demo.mjs --reset"
   },
   "engines": {
     "node": ">=20"

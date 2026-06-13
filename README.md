@@ -181,6 +181,16 @@ docker compose restart backend
 npm run seed:demo
 ```
 
+同じコマンドを再実行すると、既存の `kintai-next` project / issue / user を再利用し、seed 定義に合わせて issue の説明、状態、優先度、コメント履歴を更新します。同じ本文のコメントは重複投入しません。
+
+デモ中の操作で状態が大きく崩れた場合は、seed 用 project を作り直せます。
+
+```bash
+npm run seed:demo:reset
+```
+
+`seed:demo:reset` は Redmine 上の `kintai-next` project と配下の issue を削除してから再投入します。seed 用 project 以外をリセットする用途には使わないでください。
+
 投入後、出力された API キーを `.env` の `REDMINE_API_KEY` に設定してバックエンドを再起動します。
 
 ### 意味検索インデックスを構築する
