@@ -189,6 +189,8 @@ export interface UpdateLog {
   draft: string
   result: 'success' | 'failure'
   message: string
+  category?: string | null
+  retryable?: boolean | null
 }
 
 export interface ProposalLogsResponse {

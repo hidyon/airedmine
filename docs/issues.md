@@ -2986,7 +2986,7 @@ Priority: High
 
 ### ISS-089: Audit ログを操作種別・結果・issue_id で絞り込めるようにする
 
-Status: Open
+Status: Closed
 Priority: High
 
 要求仕様:
@@ -3007,6 +3007,14 @@ Priority: High
 - success / failure のログが混在している状態で結果フィルタが効くことを確認する。
 - action フィルタと issue_id フィルタを組み合わせても期待通り絞り込めることを確認する。
 - `npm run build` エラーなし。
+
+実装結果:
+
+- Audit View に操作種別、結果、issue_id のフィルタ UI を追加した。
+- ログ件数の表示、条件クリア、該当なし表示を追加した。
+- ログ行に操作種別ラベルと issue_id を表示し、失敗ログでは category / retryable も表示できるようにした。
+- `GET /api/proposals/logs` のレスポンス構造は維持し、フロント側でフィルタする。
+- `npm run build` 成功。
 
 ### ISS-090: Redmine 更新失敗時の詳細表示と再試行体験を改善する
 
