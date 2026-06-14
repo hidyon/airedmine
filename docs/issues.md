@@ -3442,3 +3442,31 @@ Priority: Medium
 テスト仕様:
 
 - Chrome / Chromium がある環境で `npm run perf:frontend` が成功し、`docs/performance.md` に結果を追記できることを確認する。
+
+### ISS-105: seed 再投入後に semantic index を洗い替える
+
+Status: Open
+Priority: High
+
+要求仕様:
+
+- `npm run seed:demo` または `npm run seed:demo:reset` 後に、意味検索インデックスが現在の Redmine issue を参照するようにする。
+- seed reset で Redmine issue ID が作り直された場合に、古い `issue_embeddings` が残って意味検索結果が壊れないようにする。
+- 対象外: semantic search の検索品質改善や embedding モデル変更。
+
+背景:
+
+- 2026-06-14 時点の確認では、semantic index は `517` 件で issue_id 範囲が `1〜1027`、現在の `kintai-next` seed project は `510` 件で issue_id 範囲が `1035〜1544` だった。
+- つまり seed reset 後に Redmine issue ID が変わっても、`issue_embeddings` は自動洗い替えされていなかった。
+
+機能仕様:
+
+- seed 再投入後に `POST /api/ai/index/build` を実行する導線を追加する。
+- 可能なら `npm run seed:demo` / `npm run seed:demo:reset` から semantic index 再構築まで一連で実行できるようにする。
+- index 再構築に失敗した場合、seed 成功とは区別して分かるエラーを表示する。
+- README または `docs/performance.md` に、seed と semantic index の関係を明記する。
+
+テスト仕様:
+
+- `npm run seed:demo:reset` 後に semantic index を再構築し、`GET /api/ai/index/status` が現在の seed 件数と整合することを確認する。
+- 意味検索結果の issue ID が現在の Redmine project の issue ID 範囲に入ることを確認する。
