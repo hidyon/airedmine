@@ -3804,7 +3804,7 @@ Priority: Medium
 
 ### ISS-115: README とデモ手順を最新の Chat / Dashboard / Audit 体験に合わせる
 
-Status: Open
+Status: Closed
 Priority: Medium
 
 要求仕様:
@@ -3824,6 +3824,14 @@ Priority: Medium
 - README の手順だけを読んで `http://localhost:5173` から主要画面を開けることを確認する。
 - README に記載した質問例で proposal または issue 詳細が確認できることを確認する。
 - 古い画面名、廃止済みフロー、存在しない issue 番号が残っていないことを確認する。
+
+実装結果:
+
+- README の機能一覧にチャットセッション、一括更新、詳細パネルの追加 metadata、Audit の失敗情報表示を反映した。
+- アーキテクチャ図に `bulk_update` tool と Chat Sessions (`chat_sessions` / `conversations`) を追加した。
+- デモ質問例を `#1327` / `#1358` の description / journals 付き seed issue に合わせ、セッション切替、一括更新、危険操作の追加確認、Audit 確認の流れを追記した。
+- 開発ドキュメント一覧に `docs/chat-sessions.md`, `docs/semantic-embedding-scope.md`, `docs/performance.md` を追加した。
+- `curl http://localhost:8000/api/issues/1327` と `curl http://localhost:8000/api/issues/1358` で README に記載した代表 issue が description / journals を返すことを確認した。
 
 ### ISS-116: `docs/spec.md` と実装済み API / View / データ構造の差分を点検する
 
