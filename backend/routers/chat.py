@@ -7,6 +7,7 @@ from services.agent import run_agent
 from dependencies import get_connector
 from db import (
     add_conversation_message,
+    archive_chat_session,
     get_all_users,
     get_chat_session,
     get_conversation_messages,
@@ -50,8 +51,11 @@ async def chat(request: ChatRequest, connector: ConnectorDep) -> dict:
 
 
 @router.get("/api/chat/sessions")
-async def chat_sessions(limit: int = Query(default=50, ge=1, le=100)) -> dict:
-    return {"sessions": list_chat_sessions(limit)}
+async def chat_sessions(
+    limit: int = Query(default=50, ge=1, le=100),
+    include_archived: bool = Query(default=False),
+) -> dict:
+    return {"sessions": list_chat_sessions(limit, include_archived=include_archived)}
 
 
 @router.get("/api/chat/sessions/{session_id}")
@@ -73,6 +77,13 @@ async def update_chat_session(session_id: str, request: ChatSessionUpdateRequest
     if len(title) > 80:
         raise HTTPException(status_code=400, detail={"error": "title must be 80 characters or fewer"})
     if not update_chat_session_title(session_id, title):
+        raise HTTPException(status_code=404, detail={"error": "session not found"})
+    return {"session": get_chat_session(session_id)}
+
+
+@router.post("/api/chat/sessions/{session_id}/archive")
+async def archive_chat_session_route(session_id: str) -> dict:
+    if not archive_chat_session(session_id):
         raise HTTPException(status_code=404, detail={"error": "session not found"})
     return {"session": get_chat_session(session_id)}
 

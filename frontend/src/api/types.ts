@@ -153,6 +153,7 @@ export interface ChatSession {
   role: string
   created_at: string
   updated_at: string
+  archived_at: string | null
   message_count: number
   related_issue_ids: number[]
   last_proposal_action: string | null

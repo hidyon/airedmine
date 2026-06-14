@@ -460,6 +460,39 @@ def test_chat_session_title_can_be_updated(monkeypatch):
     assert missing.status_code == 404
 
 
+def test_chat_session_can_be_archived(monkeypatch):
+    with get_connection() as conn:
+        conn.execute("DELETE FROM conversations")
+        conn.execute("DELETE FROM chat_sessions")
+        conn.commit()
+
+    monkeypatch.setattr(chat_router, "run_agent", _fake_run_agent)
+    created = client.post("/api/chat", json={
+        "question": "完了した相談です",
+        "session_id": "archive-target",
+    })
+    assert created.status_code == 200
+
+    archived = client.post("/api/chat/sessions/archive-target/archive")
+    assert archived.status_code == 200
+    assert archived.json()["session"]["archived_at"] is not None
+
+    sessions = client.get("/api/chat/sessions").json()["sessions"]
+    assert "archive-target" not in [s["session_id"] for s in sessions]
+
+    all_sessions = client.get("/api/chat/sessions?include_archived=true").json()["sessions"]
+    archived_session = next(s for s in all_sessions if s["session_id"] == "archive-target")
+    assert archived_session["archived_at"] is not None
+
+    detail = client.get("/api/chat/sessions/archive-target")
+    assert detail.status_code == 200
+    assert detail.json()["session"]["session_id"] == "archive-target"
+    assert [m["role"] for m in detail.json()["messages"]] == ["user", "assistant"]
+
+    missing = client.post("/api/chat/sessions/missing/archive")
+    assert missing.status_code == 404
+
+
 def test_chat_uses_stored_session_context(monkeypatch):
     with get_connection() as conn:
         conn.execute("DELETE FROM conversations")

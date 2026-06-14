@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import {
+  archiveChatSession,
   fetchChatSession,
   fetchChatSessions,
   patchChatSessionTitle,
@@ -176,6 +177,18 @@ export default function DeveloperChatView() {
     }
   }
 
+  async function archiveCurrentSession() {
+    if (!currentSession || loading || sessionLoading) return
+    if (!window.confirm('このセッションをアーカイブしますか？')) return
+    try {
+      await archiveChatSession(currentSession.session_id)
+      setSessions(prev => prev.filter(session => session.session_id !== currentSession.session_id))
+      resetConversation()
+    } catch {
+      window.alert('セッションをアーカイブできませんでした。')
+    }
+  }
+
   return (
     <div className="flex flex-col md:flex-row h-full overflow-hidden">
       <aside className="md:w-72 md:min-w-72 border-b md:border-b-0 md:border-r border-slate-200 bg-slate-50 flex flex-col max-h-52 md:max-h-none">
@@ -244,13 +257,22 @@ export default function DeveloperChatView() {
             </p>
             <div className="flex items-center gap-3">
               {currentSession && (
-                <button
-                  onClick={renameCurrentSession}
-                  disabled={loading || sessionLoading}
-                  className="text-xs text-slate-400 hover:text-slate-600 transition-colors cursor-pointer disabled:text-slate-300 disabled:cursor-not-allowed"
-                >
-                  名前変更
-                </button>
+                <>
+                  <button
+                    onClick={renameCurrentSession}
+                    disabled={loading || sessionLoading}
+                    className="text-xs text-slate-400 hover:text-slate-600 transition-colors cursor-pointer disabled:text-slate-300 disabled:cursor-not-allowed"
+                  >
+                    名前変更
+                  </button>
+                  <button
+                    onClick={archiveCurrentSession}
+                    disabled={loading || sessionLoading}
+                    className="text-xs text-slate-400 hover:text-rose-600 transition-colors cursor-pointer disabled:text-slate-300 disabled:cursor-not-allowed"
+                  >
+                    アーカイブ
+                  </button>
+                </>
               )}
               <button
                 onClick={resetConversation}

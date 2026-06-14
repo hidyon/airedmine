@@ -4104,7 +4104,7 @@ Priority: Medium
 
 ### ISS-123: Chat session をアーカイブして通常一覧から隠せるようにする
 
-Status: Open
+Status: Closed
 Priority: Medium
 
 要求仕様:
@@ -4122,3 +4122,21 @@ Priority: Medium
 テスト仕様:
 
 - アーカイブした session が通常一覧から消え、詳細 API では履歴を取得できることを確認する。
+
+実装結果:
+
+- `chat_sessions.archived_at` を追加し、既存 DB 向けに nullable column の移行処理を追加した。
+- `GET /api/chat/sessions` は未アーカイブのみ返し、`include_archived=true` でアーカイブ済みも返すようにした。
+- `POST /api/chat/sessions/{session_id}/archive` を追加し、session を通常一覧から隠せるようにした。
+- Chat UI の現在 session ヘッダーに「アーカイブ」を追加し、実行後は新規 session に戻るようにした。
+- `docs/spec.md` と `docs/chat-sessions.md` に API、DB、テスト、整理操作方針を反映した。
+
+確認結果:
+
+- `docker compose exec -T backend python -m pytest tests/test_routes.py -q` で 35 件成功。
+- `test_chat_session_can_be_archived` を追加し、通常一覧からの除外、`include_archived=true` での参照、詳細 API の履歴保持、存在しない session の 404 を確認した。
+- `npm run build` を frontend で実行し、TypeScript build / Vite build が成功した。
+
+クローズ判定:
+
+- 要求仕様、機能仕様、テスト仕様を満たしたため ISS-123 を Closed とする。

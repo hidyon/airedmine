@@ -122,9 +122,10 @@ FastAPI バックエンド (:8000)
 | GET | `/api/pm/burndown` | PM Dashboard 用バーンダウン系列 | ISS-076 |
 | GET | `/api/pm/stats` | PM Dashboard 用統計（timings / cache 状態を含む） | ISS-078, ISS-103 |
 | POST | `/api/chat` | 自然言語質問 → AI Agent が Redmine を参照して回答・提案を返す | ISS-066 |
-| GET | `/api/chat/sessions` | チャットセッション一覧 | ISS-112 |
+| GET | `/api/chat/sessions` | チャットセッション一覧。通常は未アーカイブのみ、`include_archived=true` でアーカイブ済みも含める | ISS-112, ISS-123 |
 | GET | `/api/chat/sessions/{session_id}` | チャットセッション詳細・メッセージ履歴 | ISS-112 |
 | PATCH | `/api/chat/sessions/{session_id}` | チャットセッション title を手動更新する | ISS-122 |
+| POST | `/api/chat/sessions/{session_id}/archive` | チャットセッションを通常一覧から隠す | ISS-123 |
 | POST | `/api/proposals/comment` | コメント追加を Redmine に実行する | ISS-026 |
 | POST | `/api/proposals/update` | ステータス・担当者・期日・優先度・進捗率・バージョンを Redmine に実行する | ISS-073, ISS-080, ISS-081, ISS-082 |
 | POST | `/api/proposals/create_issue` | issue 作成を Redmine に実行する | ISS-079 |
@@ -377,8 +378,10 @@ FastAPI バックエンド (:8000)
 | role | TEXT | developer / pm |
 | created_at | TEXT | ISO 8601 UTC |
 | updated_at | TEXT | ISO 8601 UTC |
+| archived_at | TEXT nullable | アーカイブ日時。null の session のみ通常一覧に表示する |
 
 `GET /api/chat/sessions` と `GET /api/chat/sessions/{session_id}` は、保存済み assistant payload から表示用 metadata として `related_issue_ids` と `last_proposal_action` も返す。
+アーカイブ済み session も詳細 API では取得でき、保存済み messages と assistant payload は削除しない。
 
 チャットセッション体験の要件と初期スコープは [`chat-sessions.md`](chat-sessions.md) に記録する。
 初期方針では、UI に表示する履歴と AI に渡す文脈を分ける。UI は assistant message の `payload` があれば proposal / references / tool calls を復元し、AI には同一 `session_id` の直近 message の `content` のみを渡す。
@@ -436,6 +439,7 @@ docker compose exec backend python -m pytest tests/ -v
 | test_chat_session_detail_restores_assistant_payload | session detail で assistant payload と proposal を復元 |
 | test_chat_session_list_summarizes_payload_metadata | session 一覧で関連 issue と最後の proposal action を返す |
 | test_chat_session_title_can_be_updated | session title の更新、空 title 拒否、存在しない session の 404 |
+| test_chat_session_can_be_archived | session archive、通常一覧からの除外、include_archived での参照、詳細履歴保持 |
 | test_chat_uses_stored_session_context | 同一 session_id の保存済み履歴を AI 文脈に渡す |
 | test_chat_context_is_trimmed | AI 文脈を件数上限で切り詰める |
 | test_chat_clarification | 曖昧な更新依頼で clarification を返す |
@@ -475,6 +479,7 @@ npm run build
 
 - [ ] `curl http://localhost:8000/api/issues/1327` → `description` と `journals[]` が返る。
 - [ ] `curl http://localhost:8000/api/chat/sessions` → `sessions[]` が返る。
+- [ ] `curl "http://localhost:8000/api/chat/sessions?include_archived=true"` → アーカイブ済み session を含む `sessions[]` が返る。
 - [ ] `curl -X POST http://localhost:8000/api/ai/index/build` → `indexed_issues > 0`。
 - [ ] `curl http://localhost:8000/api/ai/index/status` → `ready: true`。
 - [ ] `curl http://localhost:8000/api/ai/index/freshness` → stale / orphan / missing の診断キーが返る。

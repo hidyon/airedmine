@@ -48,9 +48,14 @@ def init_db() -> None:
                 title         TEXT NOT NULL,
                 role          TEXT NOT NULL,
                 created_at    TEXT NOT NULL,
-                updated_at    TEXT NOT NULL
+                updated_at    TEXT NOT NULL,
+                archived_at   TEXT
             )
         """)
+        try:
+            conn.execute("ALTER TABLE chat_sessions ADD COLUMN archived_at TEXT")
+        except Exception:
+            pass  # column already exists
         conn.execute("CREATE INDEX IF NOT EXISTS idx_chat_sessions_updated ON chat_sessions(updated_at)")
         conn.execute("""
             CREATE TABLE IF NOT EXISTS issue_embeddings (
@@ -116,6 +121,21 @@ def update_chat_session_title(session_id: str, title: str) -> bool:
     return result.rowcount > 0
 
 
+def archive_chat_session(session_id: str) -> bool:
+    now = _now()
+    with get_connection() as conn:
+        result = conn.execute(
+            """
+            UPDATE chat_sessions
+            SET archived_at = ?, updated_at = ?
+            WHERE session_id = ?
+            """,
+            (now, now, session_id),
+        )
+        conn.commit()
+    return result.rowcount > 0
+
+
 def add_conversation_message(session_id: str, role: str, content: str, payload: dict | None = None) -> None:
     payload_text = json.dumps(payload, ensure_ascii=False, default=str) if payload is not None else None
     with get_connection() as conn:
@@ -129,19 +149,22 @@ def add_conversation_message(session_id: str, role: str, content: str, payload: 
         conn.commit()
 
 
-def list_chat_sessions(limit: int = 50) -> list[dict]:
+def list_chat_sessions(limit: int = 50, include_archived: bool = False) -> list[dict]:
+    archived_filter = "" if include_archived else "WHERE s.archived_at IS NULL"
     with get_connection() as conn:
         rows = conn.execute(
-            """
+            f"""
             SELECT
                 s.session_id,
                 s.title,
                 s.role,
                 s.created_at,
                 s.updated_at,
+                s.archived_at,
                 COUNT(c.id) AS message_count
             FROM chat_sessions s
             LEFT JOIN conversations c ON c.session_id = s.session_id
+            {archived_filter}
             GROUP BY s.session_id
             ORDER BY s.updated_at DESC
             LIMIT ?
@@ -164,6 +187,7 @@ def get_chat_session(session_id: str) -> dict | None:
                 s.role,
                 s.created_at,
                 s.updated_at,
+                s.archived_at,
                 COUNT(c.id) AS message_count
             FROM chat_sessions s
             LEFT JOIN conversations c ON c.session_id = s.session_id

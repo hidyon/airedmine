@@ -110,8 +110,9 @@ export function postChat(
   })
 }
 
-export function fetchChatSessions(): Promise<ChatSessionsResponse> {
-  return request('/chat/sessions')
+export function fetchChatSessions(includeArchived = false): Promise<ChatSessionsResponse> {
+  const query = includeArchived ? '?include_archived=true' : ''
+  return request(`/chat/sessions${query}`)
 }
 
 export function fetchChatSession(sessionId: string): Promise<ChatSessionDetailResponse> {
@@ -125,6 +126,14 @@ export function patchChatSessionTitle(
   return request(`/chat/sessions/${encodeURIComponent(sessionId)}`, {
     method: 'PATCH',
     body: JSON.stringify({ title }),
+  })
+}
+
+export function archiveChatSession(
+  sessionId: string,
+): Promise<{ session: import('./types').ChatSession }> {
+  return request(`/chat/sessions/${encodeURIComponent(sessionId)}/archive`, {
+    method: 'POST',
   })
 }
 
