@@ -3551,7 +3551,7 @@ Priority: High
 
 ### ISS-108: 開発体験に合わせて embedding 対象を再設計する
 
-Status: Open
+Status: Closed
 Priority: High
 
 要求仕様:
@@ -3579,3 +3579,55 @@ Priority: High
 - 代表質問（承認フロー、PM判断待ち、リリースリスク、性能劣化）に対して、現行embedding対象で拾える issue / 拾えない issue を比較する。
 - 新しい embedding 対象案で期待される改善と、再embeddingコスト・stalenessリスクを記録する。
 - 分析結果を `docs/semantic-index-freshness.md` または専用ドキュメントに記録する。
+
+実装結果:
+
+- `docs/semantic-embedding-scope.md` を追加し、現行 semantic search の代表質問結果、必要な embedding 対象、候補フィールド比較、推奨 v1、取得方式、freshness 影響を整理した。
+- 現行 index では、件名に近い `承認フロー`、`PM判断待ち`、`リリースリスク` は一定拾えるが、コメントに原因が残る `性能劣化の原因` は検索結果がずれやすいことを確認した。
+- 推奨 v1 は `subject`、`tracker`、`status`、`priority`、`assigned_to`、`fixed_version`、`due_date`、`description`、直近コメント 3〜5 件を 1 issue 1 embedding にまとめる方針とした。
+- `list_issues` だけでは description / journals を取得できないため、index build 時に `get_issue_detail` を全 issue に対して呼ぶ方式を後続実装候補とした。
+- 後続 issue として `ISS-109` と `ISS-110` を追加した。
+
+### ISS-109: semantic index に説明・直近コメント・主要メタ情報を含める
+
+Status: Open
+Priority: High
+
+要求仕様:
+
+- semantic search が件名だけでなく、説明、直近コメント、担当者、期日、バージョンなどを検索手がかりにできるようにする。
+- 対象外: embedding モデル変更、ベクトル DB 導入、コメント単位 embedding への分割。
+
+機能仕様:
+
+- `_issue_text()` / `_issue_body()` を `docs/semantic-embedding-scope.md` の推奨 v1 に沿って拡張する。
+- index build 時に `get_issue_detail(issue_id)` を使って description と journals を取得する。
+- コメントは notes がある直近 5 件まで、コメント合計は 1600〜2000 文字程度に抑える。
+- detail fetch / encode / write の timing を記録し、index build の遅さを確認できるようにする。
+
+テスト仕様:
+
+- fake connector で description / journals を含む detail を返し、`issue_embeddings.body` に説明と直近コメントが保存されることを確認する。
+- 代表質問 `性能劣化の原因` で、原因コメントを持つ issue が検索候補に入りやすくなることを確認する。
+- `GET /api/ai/index/freshness` が拡張後も stale / orphan / missing を返せることを確認する。
+
+### ISS-110: semantic search の代表質問評価スクリプトを追加する
+
+Status: Open
+Priority: Medium
+
+要求仕様:
+
+- embedding 対象変更の前後で semantic search の検索品質を比較できるようにする。
+- 対象外: 自動採点や LLM judge の導入。
+
+機能仕様:
+
+- 代表質問セットを固定する。
+- 各質問の top 5 issue id、subject、score を JSON または Markdown に出力する。
+- 評価質問には `承認フローの仕様揺れ`、`PM判断待ち`、`リリースリスク`、`性能劣化の原因` を含める。
+
+テスト仕様:
+
+- semantic index が構築済みの状態でスクリプトを実行し、各質問に top result が出力されることを確認する。
+- 出力を `docs/performance.md` または専用ログに貼れる形式にする。
