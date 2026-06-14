@@ -198,6 +198,23 @@ export default function DeveloperChatView() {
               <span className="block text-[11px] text-slate-500 mt-0.5">
                 {session.role} / {session.message_count} messages
               </span>
+              {(session.related_issue_ids.length > 0 || session.last_proposal_action) && (
+                <span className="mt-1.5 flex flex-wrap gap-1">
+                  {session.related_issue_ids.slice(0, 3).map(issueId => (
+                    <span
+                      key={issueId}
+                      className="text-[10px] px-1.5 py-0.5 rounded border border-slate-200 bg-slate-50 text-slate-500"
+                    >
+                      #{issueId}
+                    </span>
+                  ))}
+                  {session.last_proposal_action && (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded border border-emerald-200 bg-emerald-50 text-emerald-700">
+                      {session.last_proposal_action}
+                    </span>
+                  )}
+                </span>
+              )}
             </button>
           ))}
         </div>

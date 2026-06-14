@@ -34,8 +34,8 @@ backend は `chat_sessions` を metadata、`conversations` を message 履歴と
 - `created_at`
 - `updated_at`
 - `message_count`
-- `related_issue_ids`: 会話中に参照・提案された issue ID の候補
-- `last_proposal_action`: 最後に提示された proposal の action 候補
+- `related_issue_ids`: assistant payload の proposal / references から抽出した issue ID（最大 5 件）
+- `last_proposal_action`: 最後に提示された proposal の action
 
 初期 title は最初の user message から作る。
 後続で LLM 要約や手動リネームを検討するが、ISS-112 では単純な切り詰めでよい。
@@ -109,3 +109,10 @@ ISS-119:
 - session detail API は message ごとに `payload` を返す。payload がない既存履歴では null を返す。
 - Chat UI は assistant message の payload があれば、ProposalCard、references、tool call badges を復元して表示する。
 - AI 文脈には従来通り `content` のみを渡し、payload 全量は渡さない。
+
+ISS-120:
+
+- session 一覧 API は保存済み assistant payload から `related_issue_ids` と `last_proposal_action` を返す。
+- `related_issue_ids` は proposal の `issue_id` / `issue_ids` / `target_issue` / `related_issue_id` / `issue_targets` と、issue references から重複なしで抽出する。
+- Chat UI の session 一覧は関連 issue と最後の proposal action を小さな badge として表示する。
+- payload がない古い session では `related_issue_ids: []`、`last_proposal_action: null` として従来表示に fallback する。

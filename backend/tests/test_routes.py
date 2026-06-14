@@ -339,6 +339,8 @@ def test_chat_sessions_list_and_detail(monkeypatch):
     assert alpha["title"] == "今日まず何からやればいい？"
     assert alpha["role"] == "developer"
     assert alpha["message_count"] == 2
+    assert alpha["related_issue_ids"] == []
+    assert alpha["last_proposal_action"] is None
 
     detail = client.get("/api/chat/sessions/session-alpha")
     assert detail.status_code == 200
@@ -377,6 +379,54 @@ def test_chat_session_detail_restores_assistant_payload(monkeypatch):
     assert assistant["payload"]["session_id"] == "session-proposal"
     assert assistant["payload"]["proposal"]["action"] == "comment"
     assert assistant["payload"]["proposal"]["issue_id"] == 1208
+
+
+def test_chat_session_list_summarizes_payload_metadata(monkeypatch):
+    with get_connection() as conn:
+        conn.execute("DELETE FROM conversations")
+        conn.execute("DELETE FROM chat_sessions")
+        conn.commit()
+
+    async def fake_agent(question, messages, role, connector, **kwargs):
+        if "proposal" in question:
+            return {
+                "answer": "確認待ちの提案を作成しました。",
+                "references": [{"type": "issue", "id": 1358, "title": "関連 issue"}],
+                "clarification": None,
+                "proposal": {
+                    "status": "confirmation_required",
+                    "action": "bulk_update",
+                    "issue_ids": [1208, 1358],
+                    "change_summary": "2 件を Feedback にします",
+                    "draft": "",
+                    "reason": "確認待ちを揃える",
+                },
+            }
+        return {
+            "answer": "#1401 を確認しました。",
+            "references": [{"type": "issue", "id": 1401, "title": "参照 issue"}],
+            "clarification": None,
+            "proposal": None,
+        }
+
+    monkeypatch.setattr(chat_router, "run_agent", fake_agent)
+    proposal = client.post("/api/chat", json={
+        "question": "proposal session",
+        "session_id": "session-with-proposal",
+    })
+    reference = client.post("/api/chat", json={
+        "question": "reference session",
+        "session_id": "session-with-reference",
+    })
+    assert proposal.status_code == 200
+    assert reference.status_code == 200
+
+    sessions = client.get("/api/chat/sessions").json()["sessions"]
+    by_id = {session["session_id"]: session for session in sessions}
+    assert by_id["session-with-proposal"]["related_issue_ids"] == [1208, 1358]
+    assert by_id["session-with-proposal"]["last_proposal_action"] == "bulk_update"
+    assert by_id["session-with-reference"]["related_issue_ids"] == [1401]
+    assert by_id["session-with-reference"]["last_proposal_action"] is None
 
 
 def test_chat_uses_stored_session_context(monkeypatch):

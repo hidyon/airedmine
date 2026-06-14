@@ -134,7 +134,10 @@ def list_chat_sessions(limit: int = 50) -> list[dict]:
             """,
             (limit,),
         ).fetchall()
-    return [dict(r) for r in rows]
+    sessions = [dict(r) for r in rows]
+    for session in sessions:
+        session.update(_session_payload_summary(session["session_id"]))
+    return sessions
 
 
 def get_chat_session(session_id: str) -> dict | None:
@@ -155,7 +158,11 @@ def get_chat_session(session_id: str) -> dict | None:
             """,
             (session_id,),
         ).fetchone()
-    return dict(row) if row else None
+    if not row:
+        return None
+    session = dict(row)
+    session.update(_session_payload_summary(session_id))
+    return session
 
 
 def get_conversation_messages(session_id: str) -> list[dict]:
@@ -183,6 +190,58 @@ def _conversation_row(row: sqlite3.Row) -> dict:
     except json.JSONDecodeError:
         result["payload"] = None
     return result
+
+
+def _session_payload_summary(session_id: str) -> dict:
+    messages = get_conversation_messages(session_id)
+    issue_ids: list[int] = []
+    last_proposal_action: str | None = None
+
+    for message in messages:
+        payload = message.get("payload")
+        if not isinstance(payload, dict):
+            continue
+        for issue_id in _payload_issue_ids(payload):
+            if issue_id not in issue_ids:
+                issue_ids.append(issue_id)
+        proposal = payload.get("proposal")
+        if isinstance(proposal, dict) and proposal.get("action"):
+            last_proposal_action = str(proposal["action"])
+
+    return {
+        "related_issue_ids": issue_ids[:5],
+        "last_proposal_action": last_proposal_action,
+    }
+
+
+def _payload_issue_ids(payload: dict) -> list[int]:
+    issue_ids: list[int] = []
+
+    proposal = payload.get("proposal")
+    if isinstance(proposal, dict):
+        _append_issue_id(issue_ids, proposal.get("issue_id"))
+        _append_issue_id(issue_ids, (proposal.get("target_issue") or {}).get("id"))
+        _append_issue_id(issue_ids, proposal.get("related_issue_id"))
+        for issue_id in proposal.get("issue_ids") or []:
+            _append_issue_id(issue_ids, issue_id)
+        for target in proposal.get("issue_targets") or []:
+            if isinstance(target, dict):
+                _append_issue_id(issue_ids, target.get("id"))
+
+    for ref in payload.get("references") or []:
+        if isinstance(ref, dict) and ref.get("type") == "issue":
+            _append_issue_id(issue_ids, ref.get("id"))
+
+    return issue_ids
+
+
+def _append_issue_id(issue_ids: list[int], value: object) -> None:
+    try:
+        issue_id = int(value)  # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        return
+    if issue_id > 0 and issue_id not in issue_ids:
+        issue_ids.append(issue_id)
 
 
 def _now() -> str:

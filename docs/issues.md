@@ -14,7 +14,7 @@
 
 ### ISS-001: アプリの目的と共同開発ループを文書化する
 
-Status: In Progress
+Status: Closed
 Priority: High
 
 要求仕様:
@@ -3988,7 +3988,7 @@ Priority: Medium
 
 ### ISS-120: Chat session に関連 issue と最後の proposal action を表示する
 
-Status: Open
+Status: In Progress
 Priority: Medium
 
 要求仕様:
@@ -4007,6 +4007,21 @@ Priority: Medium
 
 - proposal あり session と references あり session で、一覧に代表 issue / action が表示されることを確認する。
 - payload なし session で表示が壊れないことを確認する。
+
+実施結果:
+
+- `GET /api/chat/sessions` と `GET /api/chat/sessions/{session_id}` が、保存済み assistant payload から `related_issue_ids` と `last_proposal_action` を返すようにした。
+- `related_issue_ids` は proposal の `issue_id` / `issue_ids` / `target_issue` / `related_issue_id` / `issue_targets` と issue references から重複なしで抽出する。
+- Chat UI の session 一覧に、関連 issue ID と最後の proposal action を小さな badge として表示するようにした。
+- payload がない session では `related_issue_ids: []`、`last_proposal_action: null` を返し、従来表示に fallback する。
+- `docs/spec.md` と `docs/chat-sessions.md` に session metadata の返却内容と表示方針を反映した。
+
+確認結果:
+
+- `docker compose exec -T backend python -m pytest tests/test_routes.py -q` で 33 件成功。
+- `test_chat_session_list_summarizes_payload_metadata` を追加し、proposal 由来と references 由来の related issue / action が一覧で返ることを確認した。
+- `npm run build` を frontend で実行し、TypeScript build / Vite build が成功した。
+- `git diff --check` で whitespace 問題がないことを確認した。
 
 ### ISS-121: Chat session のリネーム・アーカイブ・削除の初期方針を決める
 

@@ -154,6 +154,8 @@ export interface ChatSession {
   created_at: string
   updated_at: string
   message_count: number
+  related_issue_ids: number[]
+  last_proposal_action: string | null
 }
 
 export interface ChatSessionMessage {
