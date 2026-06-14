@@ -3764,7 +3764,7 @@ Priority: High
 
 ### ISS-114: セッション履歴を AI の文脈に安全に渡す方針を実装する
 
-Status: Open
+Status: Closed
 Priority: Medium
 
 要求仕様:
@@ -3784,3 +3784,11 @@ Priority: Medium
 - 同一セッションの前回発話を参照する質問で文脈が渡ることを確認する。
 - 別セッションの発話が混入しないことを確認する。
 - 長い履歴でも上限を超えて AI に渡さないことを確認する。
+
+実装結果:
+
+- `POST /api/chat` が同じ `session_id` の保存済み user / assistant messages を `conversations` から読み込み、AI 文脈へ渡すようにした。
+- 保存済み履歴がない場合のみ、frontend から送られた `messages[]` を fallback として使うようにし、frontend 側の履歴送信依存を弱めた。
+- AI 文脈は直近 10 messages、合計 6000 文字までに制限し、空 content や user / assistant 以外の role は除外するようにした。
+- 切り詰め後に assistant message だけで文脈が始まる場合は先頭 assistant を落とし、会話履歴として扱いやすい形に整えるようにした。
+- 同一セッション履歴の利用、別セッション混入防止、長い履歴の件数上限を backend route test で確認した。

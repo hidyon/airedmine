@@ -173,6 +173,7 @@ FastAPI バックエンド (:8000)
 
 - `role`: JWT のロールを使用（UI での変更不可）
 - `session_id`: 空の場合は backend が `chat-{uuid}` 形式で発行し、レスポンスにも含める
+- `messages`: 保存済み履歴がない場合の fallback 会話履歴。通常は backend が同じ `session_id` の履歴を `conversations` から読み込む
 - `redmine_user_id`: ログインユーザーの Redmine user_id。システムプロンプトに注入されて「私の issue」の解決に使われる
 - `display_name`: ユーザーの表示名
 
@@ -249,7 +250,7 @@ FastAPI バックエンド (:8000)
    - ログインユーザーの `display_name`, `redmine_user_id` を注入する。
    - チームメンバー一覧（username・表示名・redmine_user_id）を注入する（名前→ID解決に使用）。
    - `assigned_to_id="me"` の使用を禁止し、数値 ID の使用を指示する。
-3. **会話履歴の組み立て**: `messages[]` を Anthropic API 形式に変換し、今回の `question` を末尾に追加する。
+3. **会話履歴の組み立て**: 同じ `session_id` の保存済み user / assistant messages を `conversations` から読み込み、直近 10 messages / 6000 文字までに切り詰める。保存済み履歴がない場合は request の `messages[]` を fallback として使い、今回の `question` を末尾に追加する。
 4. **tool_use ループ（最大 5 ラウンド）**:
    - Anthropic API に `TOOL_SCHEMAS`（19 ツール）と `messages` を渡す。
    - `stop_reason == "end_turn"` になったら最終回答を返す。

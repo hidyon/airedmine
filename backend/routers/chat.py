@@ -16,6 +16,8 @@ from db import (
 
 router = APIRouter()
 ConnectorDep = Annotated[RedmineConnector, Depends(get_connector)]
+MAX_CONTEXT_MESSAGES = 10
+MAX_CONTEXT_CHARS = 6000
 
 
 @router.post("/api/chat")
@@ -26,7 +28,7 @@ async def chat(request: ChatRequest, connector: ConnectorDep) -> dict:
 
     session_id = request.session_id.strip() or f"chat-{uuid4().hex}"
     try:
-        messages = [m.model_dump() for m in request.messages]
+        messages = _context_messages(session_id, [m.model_dump() for m in request.messages])
         users = get_all_users()
         result = await run_agent(
             question=question,
@@ -67,6 +69,39 @@ def _save_chat_turn(session_id: str, role: str, question: str, result: dict) -> 
     upsert_chat_session(session_id, title, role)
     add_conversation_message(session_id, "user", question)
     add_conversation_message(session_id, "assistant", _assistant_content(result))
+
+
+def _context_messages(session_id: str, fallback_messages: list[dict]) -> list[dict]:
+    stored = [
+        {"role": row["role"], "content": row["content"]}
+        for row in get_conversation_messages(session_id)
+        if row.get("role") in {"user", "assistant"} and row.get("content")
+    ]
+    source = stored if stored else fallback_messages
+    return _trim_context(source)
+
+
+def _trim_context(messages: list[dict]) -> list[dict]:
+    selected: list[dict] = []
+    total_chars = 0
+    for message in reversed(messages):
+        role = message.get("role")
+        content = " ".join(str(message.get("content") or "").split())
+        if role not in {"user", "assistant"} or not content:
+            continue
+        if len(selected) >= MAX_CONTEXT_MESSAGES:
+            break
+        remaining = MAX_CONTEXT_CHARS - total_chars
+        if remaining <= 0:
+            break
+        if len(content) > remaining:
+            content = content[-remaining:]
+        selected.append({"role": role, "content": content})
+        total_chars += len(content)
+    trimmed = list(reversed(selected))
+    while trimmed and trimmed[0]["role"] == "assistant":
+        trimmed.pop(0)
+    return trimmed
 
 
 def _session_title(question: str) -> str:

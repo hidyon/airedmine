@@ -342,6 +342,88 @@ def test_chat_sessions_list_and_detail(monkeypatch):
     assert missing.status_code == 404
 
 
+def test_chat_uses_stored_session_context(monkeypatch):
+    with get_connection() as conn:
+        conn.execute("DELETE FROM conversations")
+        conn.execute("DELETE FROM chat_sessions")
+        conn.execute(
+            "INSERT INTO chat_sessions(session_id, title, role, created_at, updated_at) VALUES (?, ?, ?, ?, ?)",
+            ("ctx-a", "ctx", "developer", "2026-06-14T00:00:00+00:00", "2026-06-14T00:00:00+00:00"),
+        )
+        conn.execute(
+            "INSERT INTO chat_sessions(session_id, title, role, created_at, updated_at) VALUES (?, ?, ?, ?, ?)",
+            ("ctx-b", "other", "developer", "2026-06-14T00:00:00+00:00", "2026-06-14T00:00:00+00:00"),
+        )
+        conn.execute(
+            "INSERT INTO conversations(session_id, role, content, created_at) VALUES (?, ?, ?, ?)",
+            ("ctx-a", "user", "前回の質問", "2026-06-14T00:00:00+00:00"),
+        )
+        conn.execute(
+            "INSERT INTO conversations(session_id, role, content, created_at) VALUES (?, ?, ?, ?)",
+            ("ctx-a", "assistant", "前回の回答", "2026-06-14T00:00:01+00:00"),
+        )
+        conn.execute(
+            "INSERT INTO conversations(session_id, role, content, created_at) VALUES (?, ?, ?, ?)",
+            ("ctx-b", "user", "別セッションの質問", "2026-06-14T00:00:00+00:00"),
+        )
+        conn.commit()
+
+    captured = {}
+
+    async def fake_agent(question, messages, role, connector, **kwargs):
+        captured["messages"] = messages
+        return {"answer": "文脈を確認しました。", "references": [], "clarification": None, "proposal": None}
+
+    monkeypatch.setattr(chat_router, "run_agent", fake_agent)
+    resp = client.post("/api/chat", json={
+        "question": "続きは？",
+        "session_id": "ctx-a",
+        "messages": [{"role": "user", "content": "frontend fallback"}],
+    })
+
+    assert resp.status_code == 200
+    assert captured["messages"] == [
+        {"role": "user", "content": "前回の質問"},
+        {"role": "assistant", "content": "前回の回答"},
+    ]
+    assert all("別セッション" not in m["content"] for m in captured["messages"])
+
+
+def test_chat_context_is_trimmed(monkeypatch):
+    with get_connection() as conn:
+        conn.execute("DELETE FROM conversations")
+        conn.execute("DELETE FROM chat_sessions")
+        conn.execute(
+            "INSERT INTO chat_sessions(session_id, title, role, created_at, updated_at) VALUES (?, ?, ?, ?, ?)",
+            ("ctx-long", "long", "developer", "2026-06-14T00:00:00+00:00", "2026-06-14T00:00:00+00:00"),
+        )
+        for i in range(14):
+            conn.execute(
+                "INSERT INTO conversations(session_id, role, content, created_at) VALUES (?, ?, ?, ?)",
+                (
+                    "ctx-long",
+                    "user" if i % 2 == 0 else "assistant",
+                    f"message-{i}",
+                    f"2026-06-14T00:00:{i:02d}+00:00",
+                ),
+            )
+        conn.commit()
+
+    captured = {}
+
+    async def fake_agent(question, messages, role, connector, **kwargs):
+        captured["messages"] = messages
+        return {"answer": "trimmed", "references": [], "clarification": None, "proposal": None}
+
+    monkeypatch.setattr(chat_router, "run_agent", fake_agent)
+    resp = client.post("/api/chat", json={"question": "続き", "session_id": "ctx-long"})
+
+    assert resp.status_code == 200
+    assert len(captured["messages"]) == chat_router.MAX_CONTEXT_MESSAGES
+    assert captured["messages"][0]["content"] == "message-4"
+    assert captured["messages"][-1]["content"] == "message-13"
+
+
 def test_chat_clarification(monkeypatch):
     monkeypatch.setattr(chat_router, "run_agent", _fake_run_agent)
     resp = client.post("/api/chat", json={"question": "なんか更新して"})
