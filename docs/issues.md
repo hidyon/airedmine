@@ -3801,3 +3801,97 @@ Priority: Medium
 - AI 文脈は直近 10 messages、合計 6000 文字までに制限し、空 content や user / assistant 以外の role は除外するようにした。
 - 切り詰め後に assistant message だけで文脈が始まる場合は先頭 assistant を落とし、会話履歴として扱いやすい形に整えるようにした。
 - 同一セッション履歴の利用、別セッション混入防止、長い履歴の件数上限を backend route test で確認した。
+
+### ISS-115: README とデモ手順を最新の Chat / Dashboard / Audit 体験に合わせる
+
+Status: Open
+Priority: Medium
+
+要求仕様:
+
+- 初見のユーザーが README だけで現在の AIRedmine の主要体験を試せるようにする。
+- Chat セッション、更新提案、一括更新、issue 詳細パネル、Audit View、semantic search の現在の見どころを README に反映する。
+- 対象外: 実装変更。README から辿る手順と説明の更新に絞る。
+
+機能仕様:
+
+- README の機能説明、起動手順、デモシナリオ、質問例、画面説明を現状に合わせる。
+- 代表チケット例は seed に description / journals が存在するものを使う。
+- Redmine / frontend / backend の URL、ログインユーザー、seed 再投入手順が最新か確認する。
+
+テスト仕様:
+
+- README の手順だけを読んで `http://localhost:5173` から主要画面を開けることを確認する。
+- README に記載した質問例で proposal または issue 詳細が確認できることを確認する。
+- 古い画面名、廃止済みフロー、存在しない issue 番号が残っていないことを確認する。
+
+### ISS-116: `docs/spec.md` と実装済み API / View / データ構造の差分を点検する
+
+Status: Open
+Priority: Medium
+
+要求仕様:
+
+- 仕様書が現在の backend / frontend 実装を正しく説明している状態にする。
+- API エンドポイント、request / response、View 構成、データ構造、テスト仕様のズレを減らす。
+- 対象外: 仕様外の新機能追加。
+
+機能仕様:
+
+- `backend/routers/`, `backend/models.py`, `frontend/src/api/`, `frontend/src/views/` と `docs/spec.md` を照合する。
+- Chat session、bulk update、issue detail、semantic index、PM stats timing / cache など直近で増えた仕様を重点確認する。
+- 手動確認チェックリストに、実際に見るべき代表操作と期待結果を残す。
+
+テスト仕様:
+
+- `rg` で主要 endpoint と View 名を突き合わせ、spec に記載漏れがないことを確認する。
+- 代表 API を `curl` または既存テストで確認し、spec の説明と矛盾しないことを確認する。
+- 更新結果を `docs/issues.md` の実装結果に記録する。
+
+### ISS-117: アーキテクチャ説明と主要データフローを最新化する
+
+Status: Open
+Priority: Medium
+
+要求仕様:
+
+- 現在の AIRedmine の責務分担とデータフローを、将来の開発者や Codex が追えるようにする。
+- Chat Agent、Redmine Connector、Proposal / Audit、Chat Sessions、Semantic Index、seed データの関係を文書化する。
+- 対象外: 大きな責務分離やリファクタリング。
+
+機能仕様:
+
+- 既存の README / docs にあるアーキテクチャ説明を確認し、必要なら `docs/architecture.md` または関連文書を更新する。
+- Chat の「質問 → tool_use → proposal → 承認 → Redmine 更新 → Audit log」の流れを記録する。
+- Issue 詳細の「一覧取得」と「詳細取得（description / journals）」の違いを明記する。
+- Semantic Index の入力範囲と stale / rebuild の扱いを関連ドキュメントへつなげる。
+
+テスト仕様:
+
+- 文書内のファイルパス、endpoint、テーブル名が実装と一致することを確認する。
+- 主要データフローを README または spec から辿れることを確認する。
+- 古い Node 版 / 廃止済み View / 存在しない責務分離方針が残っていないことを確認する。
+
+### ISS-118: スクリーンショットと手動確認チェックリストを更新する
+
+Status: Open
+Priority: Low
+
+要求仕様:
+
+- README と docs で参照する画面イメージを現在の UI に合わせる。
+- Chat セッション、issue 詳細パネル、ProposalCard、Audit View の代表状態を確認できるようにする。
+- 対象外: UI デザイン変更。スクリーンショットと確認観点の更新に絞る。
+
+機能仕様:
+
+- `docs/screenshots/` の既存画像を確認し、必要なものを撮り直す。
+- Chat は更新提案または一括更新 proposal が表示された状態を候補にする。
+- Audit View は成功 / 失敗 / retryable / category が分かる状態を候補にする。
+- README や spec の手動確認チェックリストから、どの画面を見ればよいか分かるようにする。
+
+テスト仕様:
+
+- ブラウザで `http://localhost:5173` を開き、対象画面が表示できることを確認する。
+- 画像ファイルへの参照が README / docs で壊れていないことを確認する。
+- Chrome / Chromium がない環境では、未実施理由と代替確認内容を issue に記録する。
