@@ -3904,7 +3904,7 @@ Priority: Medium
 
 ### ISS-118: スクリーンショットと手動確認チェックリストを更新する
 
-Status: In Progress
+Status: Closed
 Priority: Low
 
 要求仕様:
@@ -3941,11 +3941,22 @@ Priority: Low
 - `which firefox firefox-esr wkhtmltoimage playwright` は該当なし。
 - `npm run perf:frontend` は `Frontend measurement needs Chrome/Chromium.` で終了した。
 
-残作業:
+追加実施結果:
 
-- Chrome / Chromium または `BROWSER_PATH` が使える環境で `http://localhost:5173` を開き、`docs/screenshots/developer-chat.png` を Chat session 一覧、ProposalCard、issue 詳細パネルが分かる状態で撮り直す。
-- 必要に応じて `docs/screenshots/pm-dashboard.png` も issue 詳細パネルが開いた状態で撮り直す。
-- 撮り直し後に ISS-118 を Closed にする。
+- Playwright Chromium を一時環境に用意し、ホスト側 Vite dev server (`http://127.0.0.1:5174`) で `docs/screenshots/developer-chat.png`、`docs/screenshots/pm-dashboard.png`、`docs/screenshots/audit-view.png` を撮り直した。
+- Chat は通常 / 全履歴切替、アーカイブ済み session、ProposalCard、issue 詳細パネルが分かる状態にした。
+- PM Dashboard はバーンダウン、停滞 issue、期限切れ issue、担当者別負荷、優先度サマリー、issue 詳細パネルが分かる状態にした。
+- Audit View は成功 / 失敗ログ、category、retryable、フィルタ UI が分かる状態にした。
+
+追加確認結果:
+
+- `file docs/screenshots/developer-chat.png docs/screenshots/pm-dashboard.png docs/screenshots/audit-view.png` で 3 枚とも PNG であることを確認した。
+- `identify docs/screenshots/developer-chat.png docs/screenshots/pm-dashboard.png docs/screenshots/audit-view.png` で 3 枚とも 1440x980 であることを確認した。
+- 画像を目視し、README / docs/spec.md の代表状態と一致していることを確認した。
+
+クローズ判定:
+
+- 要求仕様、機能仕様、テスト仕様を満たしたため ISS-118 を Closed とする。
 
 ### ISS-119: Chat session 再開時に assistant 応答 payload を復元する
 

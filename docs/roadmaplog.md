@@ -4,6 +4,35 @@
 
 ## 終了したマイルストーン
 
+## Milestone 22: 文書最新化と仕様整合性レビュー
+
+優先度: Medium
+状態: Completed
+
+背景: M14 と M21 で Chat の更新操作、セッション、issue 詳細表示、seed / semantic search 周辺の実装が進んだ。
+README、`docs/spec.md`、アーキテクチャ説明、スクリーンショット、手動確認チェックリストを現在の実装に合わせた。
+
+関連 issue:
+
+- `ISS-115` Closed: README とデモ手順を最新の Chat / Dashboard / Audit 体験に合わせる。
+- `ISS-116` Closed: `docs/spec.md` と実装済み API / View / データ構造の差分を点検する。
+- `ISS-117` Closed: アーキテクチャ説明と主要データフローを最新化する。
+- `ISS-118` Closed: スクリーンショットと手動確認チェックリストを更新する。
+- `ISS-126` Closed: README に Chat session 整理操作を反映する。
+
+期待成果:
+
+- 初見のユーザーが README から現在の主要体験を迷わず試せる。
+- 仕様書、ロードマップ、issue、実装の説明が矛盾しない。
+- Chat の更新提案、セッション、issue 詳細、Audit、semantic search の現在の責務が文書から追える。
+- Chat session の名前変更、アーカイブ、全履歴参照、通常一覧への復帰が README から分かる。
+- ブラウザ確認で見るべき画面と代表操作が明確になる。
+
+完了条件:
+
+- ISS-115〜118 と ISS-126 が完了し、README / docs / screenshots / 手動確認チェックリストが現在の実装と整合している。
+- `agent.md` の開発ループに沿って、文書更新の対象と検証結果が `docs/issues.md` に記録されている。
+
 ## Milestone 26: Chat Session アーカイブ解除の実装
 
 優先度: Medium
