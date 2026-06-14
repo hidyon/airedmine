@@ -3470,3 +3470,33 @@ Priority: High
 
 - `npm run seed:demo:reset` 後に semantic index を再構築し、`GET /api/ai/index/status` が現在の seed 件数と整合することを確認する。
 - 意味検索結果の issue ID が現在の Redmine project の issue ID 範囲に入ることを確認する。
+
+### ISS-106: issue 更新が semantic index に与える影響を分析する
+
+Status: Open
+Priority: High
+
+要求仕様:
+
+- Redmine issue の件名、説明、ステータス、優先度、担当者、コメント履歴が更新されたとき、semantic index がどの程度古くなるかを明らかにする。
+- AIRedmine からの更新提案実行、Redmine UI からの直接更新、seed 再投入のそれぞれで影響を分けて整理する。
+- 対象外: この issue では自動同期や差分更新の実装までは行わない。
+
+背景:
+
+- 現在の `issue_embeddings` は issue_id、subject、body、embedding、indexed_at を持つが、Redmine 側の `updated_on` とは比較していない。
+- 現在の embedding text は主に件名、ステータス、優先度で構成されており、説明やコメント履歴の更新が意味検索に反映されるかも検討が必要。
+- AIRedmine からコメント追加・ステータス変更・優先度変更などを実行しても、semantic index の該当 issue は自動更新されない。
+
+機能仕様:
+
+- semantic index が参照している issue 内容と、Redmine の現在内容がズレるケースを一覧化する。
+- `indexed_at` と Redmine `updated_on` を比較して stale issue を検出できるか検討する。
+- どの更新種別で再embeddingが必要か、どの更新種別は検索品質上許容できるかを分類する。
+- 後続実装候補として、全再構築、issue単位再構築、更新実行後の部分更新、stale検出APIのいずれが妥当か整理する。
+
+テスト仕様:
+
+- 代表 issue の件名または優先度を変更した場合に、semantic index の内容が古くなることを確認する。
+- `indexed_at` と Redmine `updated_on` から stale 判定できるかを確認する。
+- 分析結果を `docs/performance.md` または専用ドキュメントに記録し、後続実装issueを切れる粒度にする。
