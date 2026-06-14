@@ -3357,7 +3357,7 @@ Priority: Medium
 
 ### ISS-101: パフォーマンス計測結果と改善候補を文書化する
 
-Status: Open
+Status: Closed
 Priority: Medium
 
 要求仕様:
@@ -3376,3 +3376,69 @@ Priority: Medium
 
 - `docs/performance.md` から計測手順と結果を追えることを確認する。
 - 少なくとも 1 つ以上の後続改善候補が明文化されていることを確認する。
+
+実装結果:
+
+- `docs/performance.md` に M19 の計測手順、初回 API ベースライン、Chat timing baseline、Frontend 計測手順を整理した。
+- semantic search 初回モデルロード、`GET /api/pm/stats`、Claude API 待ち、Frontend 初期表示、issue detail / Audit logs の扱いをボトルネック候補として分類した。
+- 改善候補を「すぐ改善する」「後で検証する」「現時点では許容」に分けて記録した。
+- 後続候補として `ISS-102`、`ISS-103`、`ISS-104` を追加した。
+
+### ISS-102: semantic search の初回ロードを warm-up する
+
+Status: Open
+Priority: High
+
+要求仕様:
+
+- semantic search 初回利用時の sentence-transformers モデルロード待ちを短縮し、初回 Chat 体験の大きな待ち時間を避ける。
+- 対象外: embedding モデルの変更や検索品質改善。
+
+機能仕様:
+
+- backend 起動後、または semantic index build 後にモデルを warm-up する方法を検討する。
+- モデルロード状態を確認できるログまたは API を用意する。
+- warm-up が失敗しても通常の Chat / search が致命的に失敗しないようにする。
+
+テスト仕様:
+
+- backend 再起動後の semantic search 初回 timing が改善することを確認する。
+- `semantic.search.encode_query` の `model_was_loaded` と duration から改善効果を確認する。
+
+### ISS-103: PM stats の集計ボトルネックを分解する
+
+Status: Open
+Priority: Medium
+
+要求仕様:
+
+- `GET /api/pm/stats` が PM Dashboard 初期表示を遅くしている可能性を検証し、改善方針を決める。
+- 対象外: 本格的な監視基盤や永続キャッシュの導入。
+
+機能仕様:
+
+- PM stats 内の Redmine API 呼び出し、ページング、集計処理の時間を分けて測る。
+- 必要なら短時間キャッシュ、取得件数削減、project 絞り込みの候補を比較する。
+
+テスト仕様:
+
+- `npm run perf:api -- --skip-chat` で `GET /api/pm/stats` の改善前後を比較できることを確認する。
+
+### ISS-104: フロントエンド画面別 ready time の実測ベースラインを取る
+
+Status: Open
+Priority: Medium
+
+要求仕様:
+
+- Chrome / Chromium が使える環境で Chat / Developer Dashboard / PM Dashboard / Audit の初期表示時間を実測し、画面別の遅さを比較できるようにする。
+- 対象外: Lighthouse スコア改善や UI 最適化の実装。
+
+機能仕様:
+
+- `npm run perf:frontend` を実行し、画面別の load / ready / API count / API total / slowest API を記録する。
+- API 待ちが支配的な画面と、描画待ちが支配的な画面を分けて整理する。
+
+テスト仕様:
+
+- Chrome / Chromium がある環境で `npm run perf:frontend` が成功し、`docs/performance.md` に結果を追記できることを確認する。

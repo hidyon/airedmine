@@ -4,6 +4,60 @@
 
 ## 終了したマイルストーン
 
+## Milestone 18: 実プロジェクトに近い seed データ整備
+
+優先度: High
+状態: Completed
+
+背景: 現在の seed データは AIRedmine の機能確認には使えるが、実プロジェクトに近いリスク、依存関係、判断履歴、担当者負荷を再現するにはまだ薄い。
+Chat / Dashboard / Audit / 意味検索の価値が初見でも伝わるよう、Redmine デモデータを「プロジェクトの状態を読む」ための素材として整えた。
+
+関連 issue:
+
+- `ISS-094` Closed: seed データのプロジェクトシナリオを設計する。
+- `ISS-095` Closed: seed issue とコメント履歴を実プロジェクトらしく拡充する。
+- `ISS-096` Closed: seed 再投入とリセットの扱いを改善する。
+- `ISS-097` Closed: README にデモシナリオと質問例を追加する。
+
+期待成果:
+
+- PM Dashboard で停滞、期限切れ、担当者偏り、優先度偏りが自然に見える。
+- Chat が issue の背景、判断履歴、関連 issue を材料に具体的な回答を返しやすくなる。
+- 初見のユーザーが README の質問例を使って AIRedmine の体験価値を確認できる。
+
+完了条件:
+
+- seed データに複数のエピック、依存関係、コメント履歴、ブロッカー、期限、担当者負荷が含まれる。
+- seed の再投入手順が明確で、壊れたデモ状態を戻しやすい。
+- README から代表的なデモシナリオを辿れる。
+
+## Milestone 19: パフォーマンス計測とボトルネック分析
+
+優先度: Medium
+状態: Completed
+
+背景: AI Chat、Redmine API、意味検索、Dashboard はそれぞれ性質の違う重さを持つ。
+改善を推測で始めるのではなく、実プロジェクトに近づけた seed データ上で計測し、どこが体験上のボトルネックかを判断できる状態にした。
+
+関連 issue:
+
+- `ISS-098` Closed: 主要 API のレスポンス時間を計測できるようにする。
+- `ISS-099` Closed: Chat / tool_use / semantic search の処理時間を切り分ける。
+- `ISS-100` Closed: フロントエンド主要画面の初期表示時間を確認する。
+- `ISS-101` Closed: パフォーマンス計測結果と改善候補を文書化する。
+
+期待成果:
+
+- `/api/chat`、issue 一覧、issue 詳細、PM stats、semantic search の遅さを切り分けられる。
+- sentence-transformers の初回ロード、Redmine API 待ち、Claude API 待ち、フロント描画のどこが支配的か分かる。
+- 次に最適化すべき箇所を、体感ではなく計測結果から選べる。
+
+完了条件:
+
+- ローカル環境で同じ手順を実行すれば主要 API と画面の計測値を得られる。
+- 計測結果が `docs/performance.md` にまとまっている。
+- 改善候補が issue 化できる粒度で整理されている。
+
 ## Milestone 1: Redmine 情報を体験できる入口
 
 優先度: High
