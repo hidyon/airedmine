@@ -107,10 +107,9 @@ async function measureTarget(target) {
         errors.push(`${response.status} ${response.statusText}: ${text.slice(0, 180)}`);
       } else {
         samples.push(durationMs);
-        if (target.captureTimings) {
-          const data = parseJsonOrNull(text);
-          if (data?.timings) capturedTimings.push(data.timings);
-        }
+        const data = parseJsonOrNull(text);
+        if (target.captureTimings && data?.timings) capturedTimings.push(data.timings);
+        if (data?.timings && target.name === "GET /api/pm/stats") capturedTimings.push(data.timings);
       }
     } catch (error) {
       errors.push(error.message);
@@ -182,6 +181,17 @@ function printSummary(currentConditions, currentResults) {
       console.log(`  error: ${result.name}: ${error}`);
     }
     for (const timings of result.captured_timings || []) {
+      if (result.name === "GET /api/pm/stats") {
+        console.log(`  timings: ${result.name}`);
+        for (const timing of timings) {
+          const extras = Object.entries(timing)
+            .filter(([key]) => !["name", "duration_ms"].includes(key))
+            .map(([key, value]) => `${key}=${value}`)
+            .join(" ");
+          console.log(`    pm: ${timing.name} duration=${timing.duration_ms}ms${extras ? ` ${extras}` : ""}`);
+        }
+        continue;
+      }
       console.log(`  timings: ${result.name}: total=${timings.total_ms}ms claude=${timings.claude_ms}ms tools=${timings.tool_total_ms}ms rounds=${timings.rounds}`);
       for (const tool of timings.tools || []) {
         console.log(`    tool: ${tool.name} category=${tool.category} duration=${tool.duration_ms}ms`);

@@ -117,6 +117,8 @@ FastAPI バックエンド (:8000)
 | GET | `/api/auth/me` | JWT からログイン中ユーザー情報を取得 | ISS-074 |
 | GET | `/api/issues` | issue 一覧（assigned_to_id, status_id, limit, sort, offset でフィルタ） | ISS-008 |
 | GET | `/api/issues/{id}` | issue 詳細（description, journals 含む） | ISS-047 |
+| GET | `/api/pm/burndown` | PM Dashboard 用バーンダウン系列 | ISS-076 |
+| GET | `/api/pm/stats` | PM Dashboard 用統計（timings / cache 状態を含む） | ISS-078, ISS-103 |
 | POST | `/api/chat` | 自然言語質問 → AI Agent が Redmine を参照して回答・提案を返す | ISS-066 |
 | POST | `/api/proposals/comment` | コメント追加を Redmine に実行する | ISS-026 |
 | POST | `/api/proposals/update` | ステータス・担当者・期日・優先度・進捗率・バージョンを Redmine に実行する | ISS-073, ISS-080, ISS-081, ISS-082 |
@@ -126,7 +128,7 @@ FastAPI バックエンド (:8000)
 | GET | `/api/experience/notes` | 体験メモ一覧・サマリー | ISS-051 |
 | POST | `/api/experience/notes` | 体験メモ作成 | ISS-051 |
 | GET | `/api/ai/health` | Anthropic API 疎通確認 | ISS-063 |
-| GET | `/api/ai/index/status` | 意味検索インデックスの件数・状態 | ISS-070 |
+| GET | `/api/ai/index/status` | 意味検索インデックスの件数・状態・モデル warm-up 状態 | ISS-070, ISS-102 |
 | GET | `/api/ai/index/freshness` | 意味検索インデックスと Redmine の stale / orphan 診断 | ISS-107 |
 | POST | `/api/ai/index/build` | 意味検索インデックスの強制再構築 | ISS-070 |
 

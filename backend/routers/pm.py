@@ -1,4 +1,5 @@
 from datetime import date, timedelta
+from time import perf_counter
 from typing import Annotated
 from fastapi import APIRouter, Depends, Query
 from services.redmine_connector import RedmineConnector, RedmineApiError
@@ -7,6 +8,9 @@ from fastapi import HTTPException
 
 router = APIRouter()
 ConnectorDep = Annotated[RedmineConnector, Depends(get_connector)]
+PM_STATS_CACHE_TTL_SECONDS = 15
+_pm_stats_cache: dict | None = None
+_pm_stats_cache_at = 0.0
 
 
 @router.get("/api/pm/burndown")
@@ -52,19 +56,37 @@ async def burndown(connector: ConnectorDep, days: int = Query(default=14, ge=7, 
 
 @router.get("/api/pm/stats")
 async def pm_stats(connector: ConnectorDep) -> dict:
+    global _pm_stats_cache, _pm_stats_cache_at
+
+    started_total = perf_counter()
+    if _pm_stats_cache and perf_counter() - _pm_stats_cache_at < PM_STATS_CACHE_TTL_SECONDS:
+        cached = {
+            **_pm_stats_cache,
+            "cache": {"hit": True, "ttl_seconds": PM_STATS_CACHE_TTL_SECONDS},
+        }
+        cached["timings"] = [_timing("pm.stats.cache_hit", started_total)]
+        return cached
+
     today = date.today()
     seven_days_ago = today - timedelta(days=7)
+    timings = []
 
     try:
+        started = perf_counter()
         open_issues = await _fetch_all(connector, {"status_id": "open", "limit": 100})
+        timings.append(_timing("pm.stats.fetch_open", started, {"count": len(open_issues)}))
+
+        started = perf_counter()
         closed_issues = await _fetch_all(connector, {
             "status_id": "closed",
             "limit": 100,
             "sort": "updated_on:desc",
         })
+        timings.append(_timing("pm.stats.fetch_closed", started, {"count": len(closed_issues)}))
     except RedmineApiError as exc:
         raise HTTPException(status_code=exc.status, detail={"error": str(exc)}) from exc
 
+    started = perf_counter()
     # 停滞: 7 日以上更新なし
     stalled = []
     for issue in open_issues:
@@ -119,14 +141,24 @@ async def pm_stats(connector: ConnectorDep) -> dict:
             })
     overdue.sort(key=lambda x: x["due_date"])
     overdue = overdue[:20]
+    timings.append(_timing("pm.stats.aggregate", started, {
+        "open_count": len(open_issues),
+        "closed_count": len(closed_issues),
+    }))
+    timings.append(_timing("pm.stats.total", started_total))
 
-    return {
+    response = {
         "stalled": stalled,
         "assignee_load": assignee_load,
         "priority_summary": priority_summary,
         "closed_this_week": closed_this_week,
         "overdue": overdue,
+        "cache": {"hit": False, "ttl_seconds": PM_STATS_CACHE_TTL_SECONDS},
+        "timings": timings,
     }
+    _pm_stats_cache = response
+    _pm_stats_cache_at = perf_counter()
+    return response
 
 
 async def _fetch_all(connector: RedmineConnector, params: dict) -> list[dict]:
@@ -151,3 +183,11 @@ def _parse_date(value: str | None) -> date | None:
         return date.fromisoformat(value[:10])
     except ValueError:
         return None
+
+
+def _timing(name: str, started: float, extra: dict | None = None) -> dict:
+    return {
+        "name": name,
+        "duration_ms": round((perf_counter() - started) * 1000, 1),
+        **(extra or {}),
+    }

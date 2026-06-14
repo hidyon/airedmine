@@ -501,6 +501,40 @@ ISS-084 の一括操作は誤操作リスクが高いため、このマイルス
 - 危険操作の判定ルールと二段階確認 UI が実装されている。
 - Chat の更新提案で必要な ID は参照ツールで取得され、推測に依存しない。
 
+## Milestone 20: 計測結果にもとづく性能改善
+
+優先度: Medium
+状態: Completed
+
+背景: M19 で API、Chat 内部、Frontend の計測手順と初回ベースラインがそろった。
+次は、計測で見えた待ち時間の大きい箇所を小さく改善し、初回体験と PM Dashboard の体感速度を上げる。
+
+関連 issue:
+
+- `ISS-102` Closed: semantic search の初回ロードを warm-up する。
+- `ISS-103` Closed: PM stats の集計ボトルネックを分解する。
+- `ISS-104` Closed: フロントエンド画面別 ready time の実測ベースラインを取る。
+- `ISS-105` Closed: seed 再投入後に semantic index を洗い替える。
+- `ISS-106` Closed: issue 更新が semantic index に与える影響を分析する。
+- `ISS-107` Closed: semantic index の stale / orphan 状態を検出する。
+- `ISS-108` Closed: 開発体験に合わせて embedding 対象を再設計する。
+- `ISS-109` Closed: semantic index に説明・直近コメント・主要メタ情報を含める。
+- `ISS-110` Closed: semantic search の代表質問評価スクリプトを追加する。
+
+期待成果:
+
+- semantic search 初回利用時の極端な待ち時間を減らす。
+- seed 再投入後も意味検索が現在の Redmine issue を参照する。
+- issue 更新後に意味検索がどの程度古い情報を返しうるか判断できる。
+- semantic index の stale / orphan 状態を検出できる。
+- 意味検索が件名だけでなく、背景、判断履歴、ブロッカー、未決事項を拾えるようになる。
+- PM Dashboard の遅さが Redmine API 待ち、集計処理、描画のどこにあるか分かる。
+- Chrome / Chromium がある環境で画面別の ready time を比較できる。
+
+完了条件:
+
+- ISS-102〜110 の結果が `docs/performance.md` または関連ドキュメントに追記され、次に最適化すべき箇所が更新されている。
+
 ## 変更履歴
 
 - 2026-06-06: アプリの目的を「AI エージェント経由の Redmine 利用体験を明らかにするプロトタイプ」として定義した。
@@ -513,6 +547,7 @@ ISS-084 の一括操作は誤操作リスクが高いため、このマイルス
 - 2026-06-13: ISS-090 を完了。Proposal 実行失敗時に message / HTTP status / category / retryable / detail を表示し、Audit ログにも失敗メタ情報を残すようにした。
 - 2026-06-13: ISS-091 を完了。Closed / Urgent / 過去日期日などの危険操作で Proposal カードに二段階確認を追加した。
 - 2026-06-13: ISS-092 を完了。web Chat 側に projects / statuses / priorities / users の参照ツールを追加し、ID を推測せず提案するルールを強化した。M17 を Completed とした。
+- 2026-06-14: ISS-102〜104 を完了。semantic model warm-up、PM stats timing / cache、frontend ready 計測の環境制約記録を追加し、ISS-105〜110 とあわせて M20 を Completed とした。
 - 2026-06-08: ISS-079 を完了し、チャットから issue を新規作成できるようにした（提案 → 確認 → 実行フロー）。M14 の最初の issue。
 - 2026-06-13: ISS-080〜083 を完了し、チャットから期日・優先度・進捗率・バージョン割当・関連付けを提案 → 確認 → 実行できるようにした。`npm run build` と backend tests 19 件、ブラウザ起動確認が成功。ISS-084 は誤操作リスクが高いため Open のままとし、M14 は継続。
 - 2026-06-08: ISS-087 を完了し、MCP サーバーに更新系 5 ツール（期日・優先度・進捗率・バージョン割当・関連付け）を追加。公開ツールは 17 に。M16 を Completed とした。

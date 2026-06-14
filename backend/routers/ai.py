@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 import anthropic
 
 from services import issue_index
+from services import embedder
 from dependencies import get_connector
 from services.redmine_connector import RedmineConnector
 
@@ -35,7 +36,12 @@ async def ai_health() -> dict:
 @router.get("/api/ai/index/status")
 async def index_status() -> dict:
     summary = issue_index.index_summary()
-    return {"indexed_issues": summary["count"], "ready": summary["count"] > 0, **summary}
+    return {
+        "indexed_issues": summary["count"],
+        "ready": summary["count"] > 0,
+        "model": embedder.warmup_status(),
+        **summary,
+    }
 
 
 @router.get("/api/ai/index/freshness")

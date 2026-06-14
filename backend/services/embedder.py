@@ -2,9 +2,16 @@
 from __future__ import annotations
 
 import io
+from datetime import datetime, timezone
 import numpy as np
 
 _model = None
+_warmup_status = {
+    "state": "not_started",
+    "started_at": None,
+    "finished_at": None,
+    "error": None,
+}
 MODEL_NAME = "paraphrase-multilingual-MiniLM-L12-v2"
 
 
@@ -18,6 +25,39 @@ def _get_model():
 
 def is_model_loaded() -> bool:
     return _model is not None
+
+
+def warm_up() -> dict:
+    """Load the model and run a tiny encode so first user search is warm."""
+    _warmup_status.update({
+        "state": "running",
+        "started_at": _now(),
+        "finished_at": None,
+        "error": None,
+    })
+    try:
+        encode_one("warmup")
+    except Exception as exc:
+        _warmup_status.update({
+            "state": "failed",
+            "finished_at": _now(),
+            "error": str(exc),
+        })
+    else:
+        _warmup_status.update({
+            "state": "ready",
+            "finished_at": _now(),
+            "error": None,
+        })
+    return warmup_status()
+
+
+def warmup_status() -> dict:
+    return {
+        **_warmup_status,
+        "model": MODEL_NAME,
+        "loaded": is_model_loaded(),
+    }
 
 
 def encode(texts: list[str]) -> np.ndarray:
@@ -43,3 +83,7 @@ def from_blob(blob: bytes) -> np.ndarray:
 def cosine_similarity_matrix(query: np.ndarray, matrix: np.ndarray) -> np.ndarray:
     """query: (D,), matrix: (N, D) — returns (N,) similarities (already normalized)."""
     return matrix @ query
+
+
+def _now() -> str:
+    return datetime.now(timezone.utc).isoformat()

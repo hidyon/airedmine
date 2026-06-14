@@ -3386,7 +3386,7 @@ Priority: Medium
 
 ### ISS-102: semantic search の初回ロードを warm-up する
 
-Status: Open
+Status: Closed
 Priority: High
 
 要求仕様:
@@ -3405,9 +3405,17 @@ Priority: High
 - backend 再起動後の semantic search 初回 timing が改善することを確認する。
 - `semantic.search.encode_query` の `model_was_loaded` と duration から改善効果を確認する。
 
+実装結果:
+
+- backend lifespan で sentence-transformers model warm-up を background task として開始するようにした。
+- `services.embedder.warm_up()` / `warmup_status()` を追加し、`/api/ai/index/status` から model 名、loaded、state、started_at、finished_at、error を確認できるようにした。
+- warm-up は `AIREDMINE_DISABLE_WARMUP=1` で無効化できるようにし、テスト環境では重いモデルロードを避ける。
+- 稼働中 backend API で `model.state: ready`、`loaded: true`、warm-up 所要約 15.4 秒を確認した。
+- warm-up が失敗しても status に error を残すだけで、通常の search は lazy load の fallback で動作する。
+
 ### ISS-103: PM stats の集計ボトルネックを分解する
 
-Status: Open
+Status: Closed
 Priority: Medium
 
 要求仕様:
@@ -3424,9 +3432,16 @@ Priority: Medium
 
 - `npm run perf:api -- --skip-chat` で `GET /api/pm/stats` の改善前後を比較できることを確認する。
 
+実装結果:
+
+- `GET /api/pm/stats` に `timings` を追加し、`pm.stats.fetch_open`、`pm.stats.fetch_closed`、`pm.stats.aggregate`、`pm.stats.total` を分けて返すようにした。
+- `scripts/measure-api.mjs` が PM stats timing を表示できるようにした。
+- PM stats に 15 秒の短時間メモリキャッシュを追加し、連続表示では `cache.hit: true` と `pm.stats.cache_hit` を返すようにした。
+- `npm run perf:api -- --api-url=http://127.0.0.1:8000 --runs=2 --skip-chat` で、初回は open fetch 約 1930.8ms、closed fetch 約 674.8ms、aggregate 約 1.4ms、2 回目は cache hit で約 0ms になることを確認した。
+
 ### ISS-104: フロントエンド画面別 ready time の実測ベースラインを取る
 
-Status: Open
+Status: Closed
 Priority: Medium
 
 要求仕様:
@@ -3442,6 +3457,13 @@ Priority: Medium
 テスト仕様:
 
 - Chrome / Chromium がある環境で `npm run perf:frontend` が成功し、`docs/performance.md` に結果を追記できることを確認する。
+
+実装結果:
+
+- `npm run perf:frontend` を実行し、現在の実行環境では Chrome / Chromium が見つからないため実測できないことを確認した。
+- frontend service は `http://localhost:5173` で応答しており、計測対象アプリは起動済みであることを確認した。
+- `docs/performance.md` に、Chrome / Chromium がある環境での実測手順と、今回の環境制約を記録した。
+- 画面別 ready time の実数は、Chrome / Chromium を利用できる環境で `BROWSER_PATH` を指定して再実行する。
 
 ### ISS-105: seed 再投入後に semantic index を洗い替える
 

@@ -8,11 +8,13 @@ os.environ["DOCS_ROOT"] = "/project"
 os.environ["REDMINE_BASE_URL"] = ""
 os.environ["REDMINE_API_KEY"] = ""
 os.environ["JWT_SECRET"] = "test-secret"
+os.environ["AIREDMINE_DISABLE_WARMUP"] = "1"
 
 from db import get_connection, init_db  # noqa: E402
 from main import app  # noqa: E402
 from dependencies import get_connector  # noqa: E402
 from routers import chat as chat_router  # noqa: E402
+from routers import pm as pm_router  # noqa: E402
 from services import issue_index  # noqa: E402
 from services.redmine_connector import RedmineApiError  # noqa: E402
 from services.tools import execute_tool  # noqa: E402
@@ -127,6 +129,36 @@ class DetailIndexConnector:
         }
 
 
+class PmStatsConnector:
+    async def list_issues(self, query: dict) -> dict:
+        status = query.get("status_id")
+        issues = []
+        if status == "open":
+            issues = [
+                {
+                    "id": 20,
+                    "subject": "遅れている issue",
+                    "status": {"name": "In Progress"},
+                    "priority": {"name": "High"},
+                    "assigned_to": {"name": "鈴木"},
+                    "updated_on": "2026-01-01T00:00:00Z",
+                    "due_date": "2026-01-05",
+                }
+            ]
+        elif status == "closed":
+            issues = [
+                {
+                    "id": 21,
+                    "subject": "完了した issue",
+                    "status": {"name": "Closed"},
+                    "priority": {"name": "Normal"},
+                    "assigned_to": {"name": "佐藤"},
+                    "updated_on": "2026-06-14T00:00:00Z",
+                }
+            ]
+        return {"issues": issues, "total_count": len(issues)}
+
+
 def test_health():
     resp = client.get("/health")
     assert resp.status_code == 200
@@ -177,6 +209,35 @@ def test_ai_index_freshness_reports_stale_orphan_and_missing():
     assert data["samples"]["stale"][0]["issue_id"] == 1
     assert data["samples"]["orphan"][0]["issue_id"] == 2
     assert data["samples"]["missing"][0]["issue_id"] == 3
+
+
+def test_pm_stats_reports_timings_and_cache():
+    pm_router._pm_stats_cache = None
+    pm_router._pm_stats_cache_at = 0
+    app.dependency_overrides[get_connector] = lambda: PmStatsConnector()
+    try:
+        first = client.get("/api/pm/stats")
+        second = client.get("/api/pm/stats")
+    finally:
+        app.dependency_overrides.clear()
+        pm_router._pm_stats_cache = None
+        pm_router._pm_stats_cache_at = 0
+
+    assert first.status_code == 200
+    first_data = first.json()
+    assert first_data["cache"]["hit"] is False
+    assert {t["name"] for t in first_data["timings"]} >= {
+        "pm.stats.fetch_open",
+        "pm.stats.fetch_closed",
+        "pm.stats.aggregate",
+        "pm.stats.total",
+    }
+    assert first_data["assignee_load"] == [{"name": "鈴木", "count": 1}]
+
+    assert second.status_code == 200
+    second_data = second.json()
+    assert second_data["cache"]["hit"] is True
+    assert second_data["timings"][0]["name"] == "pm.stats.cache_hit"
 
 
 @pytest.mark.asyncio
