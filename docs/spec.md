@@ -478,6 +478,21 @@ npm run build
 
 `http://localhost:5173` をブラウザで開き、以下を確認する。
 
+#### スクリーンショット確認
+
+| 画像 | 画面 | 代表状態 |
+| --- | --- | --- |
+| `docs/screenshots/developer-chat.png` | `/developer/chat` | Chat session 一覧、会話履歴、ProposalCard、`#NNN` から開く issue 詳細パネル |
+| `docs/screenshots/pm-dashboard.png` | `/pm/dashboard` | バーンダウン、停滞 issue、担当者別負荷、優先度サマリー、issue 詳細パネル |
+| `docs/screenshots/audit-view.png` | `/audit` | 成功 / 失敗ログ、category、retryable、HTTP status、操作種別・結果・issue_id フィルタ |
+
+- [ ] README の `docs/screenshots/developer-chat.png` が表示できる
+- [ ] README の `docs/screenshots/pm-dashboard.png` が表示できる
+- [ ] README の `docs/screenshots/audit-view.png` が表示できる
+- [ ] Chat の代表状態として、セッション一覧、issue 詳細パネル、ProposalCard のいずれかが確認できる
+- [ ] Audit の代表状態として、成功ログ、失敗ログ、category、retryable、フィルタ UI が確認できる
+- [ ] Chrome / Chromium がない環境では、撮り直し未実施の理由と代替確認内容を `docs/issues.md` に記録する
+
 #### ログイン
 
 - [ ] 未ログインで `/developer/chat` にアクセスすると `/login` にリダイレクトされる

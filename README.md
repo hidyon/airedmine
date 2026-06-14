@@ -25,6 +25,8 @@ Redmine に集約された issue、進捗、担当、判断履歴に加えて、
 
 ![開発者 Chat](docs/screenshots/developer-chat.png)
 
+確認観点: Chat ではセッション切替、`#NNN` からの issue 詳細パネル、更新 proposal の確認カードを代表状態として確認します。
+
 ### PM の体験
 
 PM は、Redmine の一覧やガントチャートを細かく巡回する代わりに、AI エージェントからプロジェクトの兆候を受け取ります。
@@ -36,12 +38,16 @@ PM は、Redmine の一覧やガントチャートを細かく巡回する代わ
 
 ![PM Dashboard](docs/screenshots/pm-dashboard.png)
 
+確認観点: PM Dashboard ではバーンダウン、停滞 issue、担当者別負荷、優先度サマリー、issue 詳細パネルを確認します。
+
 ### 人間が確認する境界
 
 AIRedmine では、AI が勝手に Redmine を操作する体験を目指しません。
 AI は情報収集・要約・更新案の作成を支援し、人間は判断・承認・クローズ・Redmine への反映を確認します。
 
 ![Audit View](docs/screenshots/audit-view.png)
+
+確認観点: Audit では成功 / 失敗ログ、category、retryable、HTTP status、操作種別・結果・issue_id フィルタを確認します。
 
 ## View 構成
 

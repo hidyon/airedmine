@@ -3904,7 +3904,7 @@ Priority: Medium
 
 ### ISS-118: スクリーンショットと手動確認チェックリストを更新する
 
-Status: Open
+Status: In Progress
 Priority: Low
 
 要求仕様:
@@ -3925,3 +3925,24 @@ Priority: Low
 - ブラウザで `http://localhost:5173` を開き、対象画面が表示できることを確認する。
 - 画像ファイルへの参照が README / docs で壊れていないことを確認する。
 - Chrome / Chromium がない環境では、未実施理由と代替確認内容を issue に記録する。
+
+実施結果:
+
+- README の各スクリーンショット直下に、確認すべき代表状態を追記した。
+- `docs/spec.md` の手動確認チェックリストに、スクリーンショット対象ファイル、画面 URL、代表状態、Chrome / Chromium がない場合の記録方針を追加した。
+- 既存画像 `docs/screenshots/developer-chat.png`、`docs/screenshots/pm-dashboard.png`、`docs/screenshots/audit-view.png` の存在と画像サイズを確認した。
+- `docs/screenshots/audit-view.png` は成功 / 失敗ログ、category、retryable、フィルタ UI が写っており、現在の Audit 確認観点に合っている。
+
+確認結果:
+
+- `test -f docs/screenshots/developer-chat.png docs/screenshots/pm-dashboard.png docs/screenshots/audit-view.png` 相当で README 参照画像が存在することを確認した。
+- `identify` で画像サイズを確認した: developer-chat 1280x800、pm-dashboard 1280x900、audit-view 1440x980。
+- `which chromium chromium-browser google-chrome google-chrome-stable` は該当なし。
+- `which firefox firefox-esr wkhtmltoimage playwright` は該当なし。
+- `npm run perf:frontend` は `Frontend measurement needs Chrome/Chromium.` で終了した。
+
+残作業:
+
+- Chrome / Chromium または `BROWSER_PATH` が使える環境で `http://localhost:5173` を開き、`docs/screenshots/developer-chat.png` を Chat session 一覧、ProposalCard、issue 詳細パネルが分かる状態で撮り直す。
+- 必要に応じて `docs/screenshots/pm-dashboard.png` も issue 詳細パネルが開いた状態で撮り直す。
+- 撮り直し後に ISS-118 を Closed にする。
