@@ -12,6 +12,7 @@ from db import (
     get_chat_session,
     get_conversation_messages,
     list_chat_sessions,
+    unarchive_chat_session,
     update_chat_session_title,
     upsert_chat_session,
 )
@@ -84,6 +85,13 @@ async def update_chat_session(session_id: str, request: ChatSessionUpdateRequest
 @router.post("/api/chat/sessions/{session_id}/archive")
 async def archive_chat_session_route(session_id: str) -> dict:
     if not archive_chat_session(session_id):
+        raise HTTPException(status_code=404, detail={"error": "session not found"})
+    return {"session": get_chat_session(session_id)}
+
+
+@router.post("/api/chat/sessions/{session_id}/unarchive")
+async def unarchive_chat_session_route(session_id: str) -> dict:
+    if not unarchive_chat_session(session_id):
         raise HTTPException(status_code=404, detail={"error": "session not found"})
     return {"session": get_chat_session(session_id)}
 

@@ -137,6 +137,14 @@ export function archiveChatSession(
   })
 }
 
+export function unarchiveChatSession(
+  sessionId: string,
+): Promise<{ session: import('./types').ChatSession }> {
+  return request(`/chat/sessions/${encodeURIComponent(sessionId)}/unarchive`, {
+    method: 'POST',
+  })
+}
+
 export interface BurndownPoint {
   date: string
   open: number

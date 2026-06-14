@@ -7,6 +7,7 @@ import {
   fetchChatSessions,
   patchChatSessionTitle,
   postChat,
+  unarchiveChatSession,
   postCommentProposal,
   postUpdateProposal,
   postCreateIssueProposal,
@@ -200,6 +201,18 @@ export default function DeveloperChatView() {
     }
   }
 
+  async function unarchiveCurrentSession() {
+    if (!currentSession || !currentSession.archived_at || loading || sessionLoading) return
+    try {
+      const res = await unarchiveChatSession(currentSession.session_id)
+      setSessions(prev => prev.map(session =>
+        session.session_id === res.session.session_id ? res.session : session,
+      ))
+    } catch {
+      window.alert('セッションを通常一覧に戻せませんでした。')
+    }
+  }
+
   return (
     <div className="flex flex-col md:flex-row h-full overflow-hidden">
       <aside className="md:w-72 md:min-w-72 border-b md:border-b-0 md:border-r border-slate-200 bg-slate-50 flex flex-col max-h-52 md:max-h-none">
@@ -319,6 +332,15 @@ export default function DeveloperChatView() {
                       className="text-xs text-slate-400 hover:text-rose-600 transition-colors cursor-pointer disabled:text-slate-300 disabled:cursor-not-allowed"
                     >
                       アーカイブ
+                    </button>
+                  )}
+                  {currentSession.archived_at && (
+                    <button
+                      onClick={unarchiveCurrentSession}
+                      disabled={loading || sessionLoading}
+                      className="text-xs text-slate-400 hover:text-blue-600 transition-colors cursor-pointer disabled:text-slate-300 disabled:cursor-not-allowed"
+                    >
+                      通常一覧に戻す
                     </button>
                   )}
                 </>

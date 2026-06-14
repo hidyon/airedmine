@@ -136,6 +136,20 @@ def archive_chat_session(session_id: str) -> bool:
     return result.rowcount > 0
 
 
+def unarchive_chat_session(session_id: str) -> bool:
+    with get_connection() as conn:
+        result = conn.execute(
+            """
+            UPDATE chat_sessions
+            SET archived_at = NULL, updated_at = ?
+            WHERE session_id = ?
+            """,
+            (_now(), session_id),
+        )
+        conn.commit()
+    return result.rowcount > 0
+
+
 def add_conversation_message(session_id: str, role: str, content: str, payload: dict | None = None) -> None:
     payload_text = json.dumps(payload, ensure_ascii=False, default=str) if payload is not None else None
     with get_connection() as conn:

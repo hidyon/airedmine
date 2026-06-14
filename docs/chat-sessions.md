@@ -109,7 +109,14 @@ ISS-124:
 - Chat UI の session sidebar で通常表示と全履歴表示を切り替えられるようにする。
 - 全履歴表示では `include_archived=true` を使い、アーカイブ済み session も一覧に出す。
 - アーカイブ済み session は一覧と詳細ヘッダーでラベル表示し、通常 session と区別する。
-- アーカイブ済み session の再アーカイブ、アーカイブ解除、削除は初期スコープ外にする。
+- アーカイブ済み session の再アーカイブ、削除は初期スコープ外にする。
+
+ISS-125:
+
+- `POST /api/chat/sessions/{session_id}/unarchive` は `archived_at` を null に戻す。
+- Chat UI はアーカイブ済み session を開いているときだけ「通常一覧に戻す」を表示する。
+- 解除後も messages と assistant payload は保持し、通常一覧から再び選択できる。
+- 削除、検索、一括解除は初期スコープ外にする。
 
 ### 後続 issue 候補
 

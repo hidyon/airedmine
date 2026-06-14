@@ -4,6 +4,29 @@
 
 ## 終了したマイルストーン
 
+## Milestone 26: Chat Session アーカイブ解除の実装
+
+優先度: Medium
+状態: Completed
+
+背景: M24〜25 で Chat session をアーカイブし、全履歴から参照できるようにした。
+誤ってアーカイブした session や再び使う相談を通常一覧に戻せるようにし、整理操作を片道にしない形にした。
+
+関連 issue:
+
+- `ISS-125` Closed: アーカイブ済み Chat session を通常一覧に戻せるようにする。
+
+期待成果:
+
+- アーカイブ済み session を履歴を保ったまま通常一覧へ戻せる。
+- アーカイブ操作を安心して使える。
+
+完了条件:
+
+- API で `archived_at` を null に戻せる。
+- Chat UI でアーカイブ済み session を通常一覧へ戻せる。
+- 解除後の session が通常一覧に表示される。
+
 ## Milestone 25: Chat Session アーカイブ参照性の改善
 
 優先度: Medium

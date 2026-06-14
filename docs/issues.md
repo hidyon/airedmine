@@ -4181,3 +4181,43 @@ Priority: Medium
 クローズ判定:
 
 - 要求仕様、機能仕様、テスト仕様を満たしたため ISS-124 を Closed とする。
+
+### ISS-125: アーカイブ済み Chat session を通常一覧に戻せるようにする
+
+Status: Closed
+Priority: Medium
+
+要求仕様:
+
+- 誤ってアーカイブした session や再利用したい session を通常一覧に戻せるようにする。
+- messages、assistant payload、metadata は削除せず維持する。
+- 対象外: 物理削除、検索、複数 session の一括解除。
+
+機能仕様:
+
+- `POST /api/chat/sessions/{session_id}/unarchive` を追加し、`chat_sessions.archived_at` を null に戻す。
+- 存在しない session は 404 を返す。
+- Chat UI はアーカイブ済み session を開いている場合に「通常一覧に戻す」を表示する。
+- 解除後は session 一覧の対象 session を更新し、通常表示でも見える状態にする。
+
+テスト仕様:
+
+- backend route test で archive → unarchive → 通常一覧に戻ることを確認する。
+- frontend build で API 型と UI 変更が型エラーにならないことを確認する。
+
+実装結果:
+
+- `POST /api/chat/sessions/{session_id}/unarchive` を追加し、`archived_at` を null に戻せるようにした。
+- Chat UI はアーカイブ済み session を開いているときだけ「通常一覧に戻す」を表示するようにした。
+- 解除後は session 一覧上の対象 session を更新し、通常表示でも取得できる状態にした。
+- `docs/spec.md` と `docs/chat-sessions.md` に API、テスト、UI 方針を反映した。
+
+確認結果:
+
+- `docker compose exec -T backend python -m pytest tests/test_routes.py -q` で 36 件成功。
+- `test_chat_session_can_be_unarchived` を追加し、archive → unarchive → 通常一覧復帰、詳細履歴保持、存在しない session の 404 を確認した。
+- `npm run build` を frontend で実行し、TypeScript build / Vite build が成功した。
+
+クローズ判定:
+
+- 要求仕様、機能仕様、テスト仕様を満たしたため ISS-125 を Closed とする。

@@ -126,6 +126,7 @@ FastAPI バックエンド (:8000)
 | GET | `/api/chat/sessions/{session_id}` | チャットセッション詳細・メッセージ履歴 | ISS-112 |
 | PATCH | `/api/chat/sessions/{session_id}` | チャットセッション title を手動更新する | ISS-122 |
 | POST | `/api/chat/sessions/{session_id}/archive` | チャットセッションを通常一覧から隠す | ISS-123 |
+| POST | `/api/chat/sessions/{session_id}/unarchive` | アーカイブ済みチャットセッションを通常一覧に戻す | ISS-125 |
 | POST | `/api/proposals/comment` | コメント追加を Redmine に実行する | ISS-026 |
 | POST | `/api/proposals/update` | ステータス・担当者・期日・優先度・進捗率・バージョンを Redmine に実行する | ISS-073, ISS-080, ISS-081, ISS-082 |
 | POST | `/api/proposals/create_issue` | issue 作成を Redmine に実行する | ISS-079 |
@@ -383,6 +384,7 @@ FastAPI バックエンド (:8000)
 `GET /api/chat/sessions` と `GET /api/chat/sessions/{session_id}` は、保存済み assistant payload から表示用 metadata として `related_issue_ids` と `last_proposal_action` も返す。
 アーカイブ済み session も詳細 API では取得でき、保存済み messages と assistant payload は削除しない。
 Chat UI の session sidebar は通常表示と全履歴表示を切り替えられ、全履歴表示ではアーカイブ済み session にラベルを表示する。
+アーカイブ済み session を開くと、履歴を保持したまま通常一覧へ戻せる。
 
 チャットセッション体験の要件と初期スコープは [`chat-sessions.md`](chat-sessions.md) に記録する。
 初期方針では、UI に表示する履歴と AI に渡す文脈を分ける。UI は assistant message の `payload` があれば proposal / references / tool calls を復元し、AI には同一 `session_id` の直近 message の `content` のみを渡す。
@@ -441,6 +443,7 @@ docker compose exec backend python -m pytest tests/ -v
 | test_chat_session_list_summarizes_payload_metadata | session 一覧で関連 issue と最後の proposal action を返す |
 | test_chat_session_title_can_be_updated | session title の更新、空 title 拒否、存在しない session の 404 |
 | test_chat_session_can_be_archived | session archive、通常一覧からの除外、include_archived での参照、詳細履歴保持 |
+| test_chat_session_can_be_unarchived | session unarchive、通常一覧への復帰、詳細履歴保持 |
 | test_chat_uses_stored_session_context | 同一 session_id の保存済み履歴を AI 文脈に渡す |
 | test_chat_context_is_trimmed | AI 文脈を件数上限で切り詰める |
 | test_chat_clarification | 曖昧な更新依頼で clarification を返す |
