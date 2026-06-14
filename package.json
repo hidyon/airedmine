@@ -10,6 +10,7 @@
     "perf:api": "node scripts/measure-api.mjs",
     "perf:frontend": "node scripts/measure-frontend.mjs",
     "seed:demo": "node scripts/seed-demo.mjs",
+    "seed:demo:no-index": "node scripts/seed-demo.mjs --skip-index",
     "seed:demo:reset": "node scripts/seed-demo.mjs --reset"
   },
   "engines": {

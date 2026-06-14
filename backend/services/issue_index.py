@@ -43,7 +43,8 @@ async def _fetch_all_issues(connector: Any) -> list[dict]:
 async def build_index(connector: Any, force: bool = False, timings: list[dict] | None = None) -> int:
     """
     Redmine から全 issue を取得して埋め込みインデックスを構築する。
-    既存のエントリは上書きする。force=False の場合はインデックスが空のときのみ実行。
+    force=True の場合は既存のエントリを洗い替える。
+    force=False の場合はインデックスが空のときのみ実行。
     Returns: 登録件数
     """
     if not force and index_count() > 0:
@@ -64,6 +65,8 @@ async def build_index(connector: Any, force: bool = False, timings: list[dict] |
     now = _now()
     started = datetime.now(timezone.utc)
     with get_connection() as conn:
+        if force:
+            conn.execute("DELETE FROM issue_embeddings")
         for issue, vec in zip(issues, embeddings):
             conn.execute(
                 """

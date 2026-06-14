@@ -191,7 +191,9 @@ npm run seed:demo:reset
 
 `seed:demo:reset` は Redmine 上の `kintai-next` project と配下の issue を削除してから再投入します。seed 用 project 以外をリセットする用途には使わないでください。
 
-投入後、出力された API キーを `.env` の `REDMINE_API_KEY` に設定してバックエンドを再起動します。
+`seed:demo` / `seed:demo:reset` は投入後に semantic index も再構築します。seed だけ実行したい場合は `npm run seed:demo:no-index` を使えます。
+
+初回投入後、出力された API キーを `.env` の `REDMINE_API_KEY` に設定してバックエンドを再起動します。
 
 ### デモで試す質問例
 
@@ -217,7 +219,7 @@ Dashboard では、開発者として担当 issue の優先度とブロッカー
 
 ### 意味検索インデックスを構築する
 
-初回は手動でインデックスを構築します（以降は `/api/ai/index/build` の初回呼び出しで自動構築）。
+seed を使わずに Redmine 側の issue を大きく変更した場合は、手動でインデックスを再構築します。
 
 ```bash
 curl -X POST http://localhost:8000/api/ai/index/build

@@ -3445,7 +3445,7 @@ Priority: Medium
 
 ### ISS-105: seed 再投入後に semantic index を洗い替える
 
-Status: Open
+Status: Closed
 Priority: High
 
 要求仕様:
@@ -3470,6 +3470,16 @@ Priority: High
 
 - `npm run seed:demo:reset` 後に semantic index を再構築し、`GET /api/ai/index/status` が現在の seed 件数と整合することを確認する。
 - 意味検索結果の issue ID が現在の Redmine project の issue ID 範囲に入ることを確認する。
+
+実装結果:
+
+- `scripts/seed-demo.mjs` が seed 成功後に `POST /api/ai/index/build` を呼び、semantic index を再構築するようにした。
+- `npm run seed:demo` / `npm run seed:demo:reset` で seed と semantic index rebuild が一連で実行されるようにした。
+- index 再構築に失敗した場合は、seed 成功後の index rebuild failure として分かるエラーを表示するようにした。
+- seed だけ実行したい場合のために `npm run seed:demo:no-index` を追加した。
+- README に seed と semantic index の関係を追記した。
+- `npm run seed:demo` 実行後、`GET /api/ai/index/status` が現在の Redmine 全体 issue 数と一致する `indexed_issues: 517` を返すことを確認した。
+- 意味検索結果が現在の seed project issue ID 範囲に入ることを確認した。
 
 ### ISS-106: issue 更新が semantic index に与える影響を分析する
 
