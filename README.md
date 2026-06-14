@@ -292,6 +292,7 @@ docker compose exec backend python -m pytest tests/ -v
 - `docs/issues.md`: issue 管理
 - `docs/issueslog.md`: issue の検討ログ
 - `docs/spec.md`: 要求・機能・テスト仕様
+- `docs/architecture.md`: 現在の構成・責務・主要データフロー
 - `docs/chat-sessions.md`: チャットセッションの体験要件と実装方針
 - `docs/semantic-embedding-scope.md`: 意味検索の embedding 対象と freshness 方針
 - `docs/performance.md`: API / frontend の計測結果とボトルネック分析

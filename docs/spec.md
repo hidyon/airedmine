@@ -94,6 +94,8 @@ FastAPI バックエンド (:8000)
         +--> Experience Notes (SQLite)
 ```
 
+詳細な責務分担と主要データフローは `docs/architecture.md` を参照する。
+
 ### View 構成
 
 | View | URL | 対象ロール | 主な機能 |

@@ -3867,7 +3867,7 @@ Priority: Medium
 
 ### ISS-117: アーキテクチャ説明と主要データフローを最新化する
 
-Status: Open
+Status: Closed
 Priority: Medium
 
 要求仕様:
@@ -3888,6 +3888,19 @@ Priority: Medium
 - 文書内のファイルパス、endpoint、テーブル名が実装と一致することを確認する。
 - 主要データフローを README または spec から辿れることを確認する。
 - 古い Node 版 / 廃止済み View / 存在しない責務分離方針が残っていないことを確認する。
+
+実施結果:
+
+- `docs/architecture.md` を追加し、Runtime Topology、責務分担、主要データフロー、現在の境界を文書化した。
+- Chat の「質問 → tool_use → proposal → 承認 → Redmine 更新 → Audit log」の流れを、`/api/chat`、proposal endpoint、`_update_logs` と対応づけて記録した。
+- Issue 一覧 `GET /api/issues` と詳細 `GET /api/issues/{issue_id}` の違い、`IssueDetailPanel` が description / journals を詳細 endpoint から読むことを明記した。
+- Semantic Index の入力範囲、`issue_embeddings`、freshness、seed 後の rebuild 方針を関連 docs へ接続した。
+- README の開発ドキュメント一覧と `docs/spec.md` のアーキテクチャ節から `docs/architecture.md` に辿れるようにした。
+
+確認結果:
+
+- `rg` で `backend/routers/*.py`、`backend/services/*.py`、`backend/db.py`、`frontend/src/*`、`scripts/seed-demo.mjs` の endpoint / ファイルパス / テーブル名と照合した。
+- `git diff --check` で Markdown 差分の whitespace 問題がないことを確認した。
 
 ### ISS-118: スクリーンショットと手動確認チェックリストを更新する
 
