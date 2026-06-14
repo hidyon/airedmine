@@ -104,7 +104,7 @@ FastAPI バックエンド (:8000)
 | Dashboard | `/pm/dashboard` | pm | バーンダウン、停滞 issue、担当者別負荷、優先度サマリー |
 | Audit | `/audit` | 全員 | 更新提案ログ一覧 |
 
-ナビゲーションはロール別にフィルタリングされる（PM: Chat + Audit、開発者: Chat + Dashboard + Audit）。
+ナビゲーションはロール別にフィルタリングされる（PM: Chat + Dashboard + Audit、開発者: Chat + Dashboard + Audit）。
 未ログイン状態で保護ルートにアクセスすると `/login` にリダイレクトされる。
 
 ### API エンドポイント
@@ -419,14 +419,58 @@ docker compose exec backend python -m pytest tests/ -v
 | --- | --- |
 | test_health | GET /health → `{"status": "ok"}` |
 | test_config_mock_mode | GET /api/config → mode == "mock" |
+| test_ai_index_freshness_reports_stale_orphan_and_missing | semantic index の stale / orphan / missing 診断 |
+| test_pm_stats_reports_timings_and_cache | `/api/pm/stats` が timings と cache 状態を返す |
+| test_build_index_stores_description_and_recent_comments | semantic index に description と直近 comments が入る |
 | test_issues_list_mock | GET /api/issues → issues[] が返る |
 | test_issue_detail_mock | GET /api/issues/1208 → id=1208 + journals |
 | test_issue_detail_not_found | GET /api/issues/9999 → 404 |
 | test_chat_basic | POST /api/chat → answer が返る（Anthropic API が必要） |
+| test_chat_sessions_list_and_detail | Chat session 一覧・詳細 API と保存済み messages |
+| test_chat_uses_stored_session_context | 同一 session_id の保存済み履歴を AI 文脈に渡す |
+| test_chat_context_is_trimmed | AI 文脈を件数上限で切り詰める |
+| test_chat_clarification | 曖昧な更新依頼で clarification を返す |
+| test_chat_no_clarification_with_issue_id | issue ID 付き更新依頼は clarification なしで proposal を返す |
 | test_proposals_logs_empty | GET /api/proposals/logs → logs[] |
+| test_execute_due_date_update_mock | 期日変更 proposal 実行 |
+| test_execute_priority_update_mock | 優先度変更 proposal 実行 |
+| test_execute_done_ratio_update_mock | 進捗率更新 proposal 実行 |
+| test_execute_done_ratio_rejects_out_of_range | 進捗率 0〜100 外を validation error にする |
+| test_execute_update_records_retryable_server_error | Redmine 5xx を retryable failure log として記録 |
+| test_execute_update_records_non_retryable_validation_error | Redmine 422 を non-retryable failure log として記録 |
+| test_execute_version_update_mock | バージョン割当 proposal 実行 |
+| test_execute_add_relation_mock | issue 関連付け proposal 実行 |
+| test_execute_add_relation_rejects_unknown_type | 未知の relation_type を拒否 |
+| test_execute_bulk_status_update_mock | 複数 issue のステータス一括更新 proposal 実行 |
+| test_execute_bulk_update_rejects_more_than_20 | 21 件以上の一括更新を拒否 |
+| test_reference_tools_return_lookup_values | project / status / priority / user / version 参照ツール |
+| test_bulk_update_tool_returns_confirmation_and_rejects_large_sets | bulk_update tool が確認待ち proposal と件数制限を返す |
 | test_experience_notes_get | GET /api/experience/notes → notes + total |
 | test_experience_notes_create | POST /api/experience/notes → 201 + note |
 | test_experience_notes_create_missing_note | POST (note 空) → 400 |
+
+### 自動テスト（フロントエンド）
+
+```bash
+cd frontend
+npm run build
+```
+
+- TypeScript 型チェック（`tsc -b`）が成功する。
+- Vite production build が成功する。
+- ProposalCard、Chat session UI、IssueDetailPanel の型変更が API 型定義と矛盾しない。
+
+### API 手動確認
+
+ローカル起動済み環境で、実 Redmine seed と backend のつながりを確認する。
+
+- [ ] `curl http://localhost:8000/api/issues/1327` → `description` と `journals[]` が返る。
+- [ ] `curl http://localhost:8000/api/chat/sessions` → `sessions[]` が返る。
+- [ ] `curl -X POST http://localhost:8000/api/ai/index/build` → `indexed_issues > 0`。
+- [ ] `curl http://localhost:8000/api/ai/index/status` → `ready: true`。
+- [ ] `curl http://localhost:8000/api/ai/index/freshness` → stale / orphan / missing の診断キーが返る。
+- [ ] `POST /api/chat` で `#1327 のステータスを Feedback に変更する提案を作って` → `proposal.action == "status_change"`、`tool_calls` に `get_issue`, `list_issue_statuses`, `change_status` が含まれる。
+- [ ] `POST /api/proposals/bulk_update` に 21 件以上の `issue_ids` を送る → 400 validation error。
 
 ### 手動確認チェックリスト
 
@@ -443,7 +487,7 @@ docker compose exec backend python -m pytest tests/ -v
 #### ナビゲーション（ロール別）
 
 - [ ] 開発者でログイン → Chat / Dashboard / Audit の 3 リンクが表示される
-- [ ] PM でログイン → Chat / Audit の 2 リンクが表示される
+- [ ] PM でログイン → Chat / Dashboard / Audit の 3 リンクが表示される
 
 #### Developer Chat — 基本動作
 
@@ -464,12 +508,20 @@ docker compose exec backend python -m pytest tests/ -v
 - [ ] proposal カードの「Redmine に送信」をクリック → 「✓ Redmine に送信済み」になる
 - [ ] 「#1208 のステータスを進行中にして」→ ステータス変更 proposal カードが表示される
 - [ ] ステータス変更 proposal の「実行」をクリック → 「✓ Redmine を更新しました」になる
+- [ ] 「#1327 の期日を 2026-07-01 にして」→ 期日変更 proposal カードが表示される
+- [ ] 「#1327 の優先度を Urgent にして」→ 優先度変更 proposal カードが表示され、危険操作の追加確認が出る
+- [ ] 「#1327 の進捗率を 60% にして」→ 進捗率更新 proposal カードが表示される
+- [ ] 「#1327 を Sprint 3 に割り当てて」→ バージョン割当 proposal カードが表示される
+- [ ] 「#1327 と #1358 を関連付けて」→ 関連付け proposal カードが表示される
+- [ ] 「#1327 と #1358 を Feedback にして」→ 一括更新 proposal カードに対象件数・対象 issue・追加確認が表示される
 
 #### Developer Chat — マルチターン会話
 
 - [ ] 「停滞 issue は？」→ 回答を受け取る
 - [ ] 続けて「そのうち優先度が高いものは？」→ 前の文脈を踏まえた回答が返る
-- [ ] 「会話をリセット」ボタンで履歴がクリアされる
+- [ ] 新規セッションを作成すると空の会話から始まる
+- [ ] 既存セッションを選ぶと保存済み messages が復元される
+- [ ] 同じセッションで続けて質問すると、前回の文脈を踏まえた回答が返る
 
 #### Developer Dashboard
 
@@ -482,11 +534,21 @@ docker compose exec backend python -m pytest tests/ -v
 
 - [ ] ログがない場合はガイドメッセージが表示される
 - [ ] Chat で proposal を実行後、ログが表示される
+- [ ] 成功ログに action / issue_id / message が表示される
+- [ ] 失敗ログに category / retryable / HTTP status が表示される
+- [ ] 操作種別・結果・issue_id で絞り込みできる
+
+#### PM Dashboard
+
+- [ ] PM ユーザーでログインし、Dashboard ナビをクリックすると PM Dashboard が表示される
+- [ ] 停滞 issue、担当者別負荷、優先度サマリー、期限切れ、今週クローズ数が表示される
+- [ ] 停滞 issue または期限切れ issue をクリックすると issue 詳細パネルが開く
 
 #### 意味検索インデックス
 
 - [ ] `curl -X POST http://localhost:8000/api/ai/index/build` が `indexed_issues > 0` を返す
 - [ ] `curl http://localhost:8000/api/ai/index/status` が `ready: true` を返す
+- [ ] seed 再投入後に `freshness` で stale / orphan が検出できる
 
 ---
 

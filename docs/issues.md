@@ -3827,7 +3827,7 @@ Priority: Medium
 
 ### ISS-116: `docs/spec.md` と実装済み API / View / データ構造の差分を点検する
 
-Status: Open
+Status: Closed
 Priority: Medium
 
 要求仕様:
@@ -3847,6 +3847,15 @@ Priority: Medium
 - `rg` で主要 endpoint と View 名を突き合わせ、spec に記載漏れがないことを確認する。
 - 代表 API を `curl` または既存テストで確認し、spec の説明と矛盾しないことを確認する。
 - 更新結果を `docs/issues.md` の実装結果に記録する。
+
+実装結果:
+
+- `backend/tests/test_routes.py` の現行テストを確認し、`docs/spec.md` の自動テスト一覧を 31 件相当の主要確認観点へ更新した。
+- Chat session、保存済み session context、bulk update、semantic freshness、PM stats timing / cache、proposal 失敗ログ、参照ツールのテスト仕様を追加した。
+- frontend の確認として `npm run build`（`tsc -b && vite build`）を自動テスト欄に追加した。
+- API 手動確認として issue detail、chat sessions、semantic index、chat 更新 proposal、bulk update validation を追加した。
+- ブラウザ手動確認に Chat session、各種更新 proposal、一括更新、Audit 絞り込み、PM Dashboard の確認観点を追加した。
+- 実装と矛盾していた PM ナビゲーション記述を Chat / Dashboard / Audit に修正した。
 
 ### ISS-117: アーキテクチャ説明と主要データフローを最新化する
 
