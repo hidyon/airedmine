@@ -127,6 +127,7 @@ FastAPI バックエンド (:8000)
 | POST | `/api/experience/notes` | 体験メモ作成 | ISS-051 |
 | GET | `/api/ai/health` | Anthropic API 疎通確認 | ISS-063 |
 | GET | `/api/ai/index/status` | 意味検索インデックスの件数・状態 | ISS-070 |
+| GET | `/api/ai/index/freshness` | 意味検索インデックスと Redmine の stale / orphan 診断 | ISS-107 |
 | POST | `/api/ai/index/build` | 意味検索インデックスの強制再構築 | ISS-070 |
 
 #### POST /api/auth/login

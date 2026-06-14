@@ -234,6 +234,7 @@ curl -X POST http://localhost:8000/api/ai/index/build
 curl http://localhost:8000/health
 curl http://localhost:8000/api/ai/health      # Anthropic API 疎通確認
 curl http://localhost:8000/api/ai/index/status  # 意味検索インデックスの状態
+curl http://localhost:8000/api/ai/index/freshness  # Redmine との鮮度差分
 ```
 
 ## 開発

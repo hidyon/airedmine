@@ -3520,7 +3520,7 @@ Priority: High
 
 ### ISS-107: semantic index の stale / orphan 状態を検出する
 
-Status: Open
+Status: Closed
 Priority: High
 
 要求仕様:
@@ -3540,6 +3540,14 @@ Priority: High
 
 - 現在の seed reset 後状態で orphan embedding が検出されることを確認する。
 - index 再構築後に stale / orphan count が減ることを確認する。
+
+実装結果:
+
+- `GET /api/ai/index/freshness` を追加し、indexed count、current Redmine count、fresh / stale / orphan / missing count、oldest / newest indexed_at、各サンプルを返すようにした。
+- stale issue は `issue_embeddings.issue_id` が Redmine に存在し、Redmine `updated_on` が `indexed_at` より新しいものとして判定する。
+- orphan embedding は `issue_embeddings.issue_id` が現在の Redmine issue 一覧に存在しないものとして判定する。
+- `GET /api/ai/index/status` に `min_issue_id`、`max_issue_id`、`oldest_indexed_at`、`newest_indexed_at` を追加した。
+- 一時的に orphan / stale 状態を作って freshness API で検出できること、削除・復元後に count が戻ることを確認した。
 
 ### ISS-108: 開発体験に合わせて embedding 対象を再設計する
 

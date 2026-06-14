@@ -17,7 +17,95 @@ def _now() -> str:
 def index_count() -> int:
     with get_connection() as conn:
         row = conn.execute("SELECT COUNT(*) FROM issue_embeddings").fetchone()
-        return row[0] if row else 0
+    return row[0] if row else 0
+
+
+def index_summary() -> dict:
+    with get_connection() as conn:
+        row = conn.execute(
+            """
+            SELECT
+                COUNT(*) AS count,
+                MIN(issue_id) AS min_issue_id,
+                MAX(issue_id) AS max_issue_id,
+                MIN(indexed_at) AS oldest_indexed_at,
+                MAX(indexed_at) AS newest_indexed_at
+            FROM issue_embeddings
+            """
+        ).fetchone()
+    return dict(row) if row else {
+        "count": 0,
+        "min_issue_id": None,
+        "max_issue_id": None,
+        "oldest_indexed_at": None,
+        "newest_indexed_at": None,
+    }
+
+
+async def freshness_report(connector: Any, sample_limit: int = 10) -> dict:
+    issues = await _fetch_all_issues(connector)
+    current_by_id = {int(issue["id"]): issue for issue in issues if issue.get("id") is not None}
+
+    with get_connection() as conn:
+        rows = conn.execute(
+            "SELECT issue_id, subject, indexed_at FROM issue_embeddings ORDER BY issue_id"
+        ).fetchall()
+
+    indexed_by_id = {int(row["issue_id"]): dict(row) for row in rows}
+    stale = []
+    fresh = 0
+
+    for issue_id, indexed in indexed_by_id.items():
+        current = current_by_id.get(issue_id)
+        if not current:
+            continue
+        current_updated = current.get("updated_on")
+        if current_updated and _parse_iso(current_updated) > _parse_iso(indexed["indexed_at"]):
+            stale.append({
+                "issue_id": issue_id,
+                "indexed_subject": indexed["subject"],
+                "current_subject": current.get("subject"),
+                "indexed_at": indexed["indexed_at"],
+                "updated_on": current_updated,
+            })
+        else:
+            fresh += 1
+
+    orphan = [
+        {
+            "issue_id": issue_id,
+            "subject": indexed["subject"],
+            "indexed_at": indexed["indexed_at"],
+        }
+        for issue_id, indexed in indexed_by_id.items()
+        if issue_id not in current_by_id
+    ]
+    missing = [
+        {
+            "issue_id": issue_id,
+            "subject": issue.get("subject"),
+            "updated_on": issue.get("updated_on"),
+        }
+        for issue_id, issue in current_by_id.items()
+        if issue_id not in indexed_by_id
+    ]
+
+    return {
+        "ready": bool(indexed_by_id),
+        "indexed_count": len(indexed_by_id),
+        "current_count": len(current_by_id),
+        "fresh_count": fresh,
+        "stale_count": len(stale),
+        "orphan_count": len(orphan),
+        "missing_count": len(missing),
+        "oldest_indexed_at": min((row["indexed_at"] for row in indexed_by_id.values()), default=None),
+        "newest_indexed_at": max((row["indexed_at"] for row in indexed_by_id.values()), default=None),
+        "samples": {
+            "stale": stale[:sample_limit],
+            "orphan": orphan[:sample_limit],
+            "missing": missing[:sample_limit],
+        },
+    }
 
 
 async def _fetch_all_issues(connector: Any) -> list[dict]:
@@ -162,3 +250,8 @@ def _issue_body(issue: dict) -> str:
     status = (issue.get("status") or {}).get("name") or ""
     priority = (issue.get("priority") or {}).get("name") or ""
     return f"{status} {priority}".strip()
+
+
+def _parse_iso(value: str) -> datetime:
+    parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    return parsed if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc)

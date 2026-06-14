@@ -8,7 +8,7 @@ os.environ["REDMINE_BASE_URL"] = ""
 os.environ["REDMINE_API_KEY"] = ""
 os.environ["JWT_SECRET"] = "test-secret"
 
-from db import init_db  # noqa: E402
+from db import get_connection, init_db  # noqa: E402
 from main import app  # noqa: E402
 from dependencies import get_connector  # noqa: E402
 from routers import chat as chat_router  # noqa: E402
@@ -72,6 +72,21 @@ class ReferenceConnector:
         return {"versions": [{"id": 3, "name": "Sprint 3", "status": "open"}]}
 
 
+class FreshnessConnector:
+    issues = [
+        {"id": 1, "subject": "stale issue", "updated_on": "2026-06-14T00:00:00Z"},
+        {"id": 3, "subject": "missing issue", "updated_on": "2026-06-14T00:00:00Z"},
+    ]
+
+    async def list_issues(self, query: dict) -> dict:
+        offset = int(query.get("offset", 0))
+        limit = int(query.get("limit", 100))
+        return {
+            "issues": self.issues[offset:offset + limit],
+            "total_count": len(self.issues),
+        }
+
+
 def test_health():
     resp = client.get("/health")
     assert resp.status_code == 200
@@ -85,6 +100,43 @@ def test_config_mock_mode():
     assert data["mode"] == "mock"
     assert "connected" in data
     assert "diagnostics" in data
+
+
+def test_ai_index_freshness_reports_stale_orphan_and_missing():
+    with get_connection() as conn:
+        conn.execute("DELETE FROM issue_embeddings")
+        conn.execute(
+            """
+            INSERT INTO issue_embeddings(issue_id, subject, body, embedding, indexed_at)
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            (1, "stale issue", "", b"0", "2000-01-01T00:00:00+00:00"),
+        )
+        conn.execute(
+            """
+            INSERT INTO issue_embeddings(issue_id, subject, body, embedding, indexed_at)
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            (2, "orphan issue", "", b"0", "2026-06-14T00:00:00+00:00"),
+        )
+        conn.commit()
+
+    app.dependency_overrides[get_connector] = lambda: FreshnessConnector()
+    try:
+        resp = client.get("/api/ai/index/freshness")
+    finally:
+        app.dependency_overrides.clear()
+
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["indexed_count"] == 2
+    assert data["current_count"] == 2
+    assert data["stale_count"] == 1
+    assert data["orphan_count"] == 1
+    assert data["missing_count"] == 1
+    assert data["samples"]["stale"][0]["issue_id"] == 1
+    assert data["samples"]["orphan"][0]["issue_id"] == 2
+    assert data["samples"]["missing"][0]["issue_id"] == 3
 
 
 def test_issues_list_mock():

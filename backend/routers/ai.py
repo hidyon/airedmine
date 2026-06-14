@@ -34,8 +34,13 @@ async def ai_health() -> dict:
 
 @router.get("/api/ai/index/status")
 async def index_status() -> dict:
-    count = issue_index.index_count()
-    return {"indexed_issues": count, "ready": count > 0}
+    summary = issue_index.index_summary()
+    return {"indexed_issues": summary["count"], "ready": summary["count"] > 0, **summary}
+
+
+@router.get("/api/ai/index/freshness")
+async def index_freshness(connector: ConnectorDep) -> dict:
+    return await issue_index.freshness_report(connector)
 
 
 @router.post("/api/ai/index/build")
