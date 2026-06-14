@@ -160,6 +160,7 @@ export interface ChatSessionMessage {
   id: number
   role: 'user' | 'assistant'
   content: string
+  payload: ChatResponse | null
   created_at: string
 }
 

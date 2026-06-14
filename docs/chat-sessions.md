@@ -47,8 +47,10 @@ backend は `chat_sessions` を metadata、`conversations` を message 履歴と
 UI 表示:
 
 - セッション内の user / assistant message を時系列に表示する。
-- proposal、tool call、references は assistant message の一部として見返せるのが望ましい。
-- 初期スコープでは text と response payload の保存範囲を小さくし、proposal / audit との厳密な結合は後続で扱う。
+- assistant message は `content` に回答本文、`payload` に ChatResponse 相当 JSON を保存する。
+- `payload` がある履歴では proposal、tool call、references を assistant message の一部として見返せる。
+- 古い履歴や user message では `payload` が null になり、text 表示に fallback する。
+- proposal / audit との厳密な結合は後続で扱う。
 
 AI 文脈:
 
@@ -100,3 +102,10 @@ ISS-114:
 - backend 側で session_id から直近 messages を読み込み、AI 文脈に含めるようにした。
 - frontend から送る `messages[]` は保存済み履歴がない場合の fallback とし、履歴送信依存を弱めた。
 - 文脈は直近 10 messages、合計 6000 文字までに制限し、別セッションの履歴を混ぜないようにした。
+
+ISS-119:
+
+- `conversations.payload` に assistant 応答の ChatResponse 相当 JSON を保存する。
+- session detail API は message ごとに `payload` を返す。payload がない既存履歴では null を返す。
+- Chat UI は assistant message の payload があれば、ProposalCard、references、tool call badges を復元して表示する。
+- AI 文脈には従来通り `content` のみを渡し、payload 全量は渡さない。

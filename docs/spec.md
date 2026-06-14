@@ -364,6 +364,7 @@ FastAPI バックエンド (:8000)
 | session_id | TEXT | フロントが生成するセッション ID |
 | role | TEXT | user / assistant |
 | content | TEXT | メッセージ本文 |
+| payload | TEXT nullable | assistant 応答の ChatResponse 相当 JSON。古い履歴や user message では null |
 | created_at | TEXT | ISO 8601 UTC |
 
 #### SQLite: chat_sessions
@@ -377,7 +378,7 @@ FastAPI バックエンド (:8000)
 | updated_at | TEXT | ISO 8601 UTC |
 
 チャットセッション体験の要件と初期スコープは [`chat-sessions.md`](chat-sessions.md) に記録する。
-初期方針では、UI に表示する履歴と AI に渡す文脈を分け、AI には同一 `session_id` の直近 message のみを渡す。
+初期方針では、UI に表示する履歴と AI に渡す文脈を分ける。UI は assistant message の `payload` があれば proposal / references / tool calls を復元し、AI には同一 `session_id` の直近 message の `content` のみを渡す。
 
 #### SQLite: issue_embeddings
 
@@ -429,6 +430,7 @@ docker compose exec backend python -m pytest tests/ -v
 | test_issue_detail_not_found | GET /api/issues/9999 → 404 |
 | test_chat_basic | POST /api/chat → answer が返る（Anthropic API が必要） |
 | test_chat_sessions_list_and_detail | Chat session 一覧・詳細 API と保存済み messages |
+| test_chat_session_detail_restores_assistant_payload | session detail で assistant payload と proposal を復元 |
 | test_chat_uses_stored_session_context | 同一 session_id の保存済み履歴を AI 文脈に渡す |
 | test_chat_context_is_trimmed | AI 文脈を件数上限で切り詰める |
 | test_chat_clarification | 曖昧な更新依頼で clarification を返す |

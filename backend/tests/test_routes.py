@@ -346,10 +346,37 @@ def test_chat_sessions_list_and_detail(monkeypatch):
     assert data["session"]["session_id"] == "session-alpha"
     assert [m["role"] for m in data["messages"]] == ["user", "assistant"]
     assert data["messages"][0]["content"] == "今日まず何からやればいい？"
+    assert data["messages"][0]["payload"] is None
     assert data["messages"][1]["content"] == "今日の優先候補を確認しました。"
+    assert data["messages"][1]["payload"]["answer"] == "今日の優先候補を確認しました。"
 
     missing = client.get("/api/chat/sessions/missing")
     assert missing.status_code == 404
+
+
+def test_chat_session_detail_restores_assistant_payload(monkeypatch):
+    with get_connection() as conn:
+        conn.execute("DELETE FROM conversations")
+        conn.execute("DELETE FROM chat_sessions")
+        conn.commit()
+
+    monkeypatch.setattr(chat_router, "run_agent", _fake_run_agent)
+    resp = client.post("/api/chat", json={
+        "question": "#1208 にコメントを追加して: 確認済みです",
+        "session_id": "session-proposal",
+        "role": "developer",
+    })
+    assert resp.status_code == 200
+
+    detail = client.get("/api/chat/sessions/session-proposal")
+    assert detail.status_code == 200
+    messages = detail.json()["messages"]
+    assistant = messages[1]
+    assert assistant["role"] == "assistant"
+    assert assistant["content"] == "確認待ちの提案を作成しました。"
+    assert assistant["payload"]["session_id"] == "session-proposal"
+    assert assistant["payload"]["proposal"]["action"] == "comment"
+    assert assistant["payload"]["proposal"]["issue_id"] == 1208
 
 
 def test_chat_uses_stored_session_context(monkeypatch):

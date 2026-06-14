@@ -14,7 +14,7 @@
 
 ### ISS-001: アプリの目的と共同開発ループを文書化する
 
-Status: Closed
+Status: In Progress
 Priority: High
 
 要求仕様:
@@ -3904,7 +3904,7 @@ Priority: Medium
 
 ### ISS-118: スクリーンショットと手動確認チェックリストを更新する
 
-Status: In Progress
+Status: Closed
 Priority: Low
 
 要求仕様:
@@ -3946,3 +3946,84 @@ Priority: Low
 - Chrome / Chromium または `BROWSER_PATH` が使える環境で `http://localhost:5173` を開き、`docs/screenshots/developer-chat.png` を Chat session 一覧、ProposalCard、issue 詳細パネルが分かる状態で撮り直す。
 - 必要に応じて `docs/screenshots/pm-dashboard.png` も issue 詳細パネルが開いた状態で撮り直す。
 - 撮り直し後に ISS-118 を Closed にする。
+
+### ISS-119: Chat session 再開時に assistant 応答 payload を復元する
+
+Status: Closed
+Priority: Medium
+
+要求仕様:
+
+- 過去の Chat session を開いたとき、assistant の回答本文だけでなく references / proposal / tool_calls を含む表示状態を復元できるようにする。
+- 更新提案や根拠 issue を含む会話を後から見返し、何を確認・判断したか追えるようにする。
+- 対象外: proposal / audit log との厳密な DB リレーション、セッション要約、長期記憶。
+
+機能仕様:
+
+- `conversations` に assistant 応答 payload を保存できる任意列を追加する。
+- `POST /api/chat` で assistant message を保存するとき、text に加えて ChatResponse 相当の payload を保存する。
+- `GET /api/chat/sessions/{session_id}` は message ごとに `payload` を返す。既存データでは `payload: null` とする。
+- Chat UI は session detail の assistant message に payload があれば `content` として復元し、ProposalCard / references / tool call badges を再表示する。
+
+テスト仕様:
+
+- backend route test で assistant payload が保存され、session detail から proposal を含めて取得できることを確認する。
+- 既存の payload がない messages でも session detail と AI 文脈投入が壊れないことを確認する。
+- frontend build で Chat session message 型と復元 UI が型エラーにならないことを確認する。
+
+実施結果:
+
+- SQLite `conversations` に nullable `payload` 列を追加し、既存 DB には `ALTER TABLE` で後方互換に追加するようにした。
+- `POST /api/chat` の assistant message 保存時に、`session_id` を含む ChatResponse 相当 payload を JSON として保存するようにした。
+- `GET /api/chat/sessions/{session_id}` が message ごとに parsed `payload` または null を返すようにした。
+- Chat UI は assistant message の `payload` がある場合、`content` として復元し、ProposalCard / references / tool call badges を再表示できるようにした。
+- `docs/spec.md` と `docs/chat-sessions.md` に `conversations.payload` と UI / AI 文脈の分離を反映した。
+
+確認結果:
+
+- `docker compose exec -T backend python -m pytest tests/test_routes.py -q` で 32 件成功。
+- `test_chat_session_detail_restores_assistant_payload` を追加し、proposal payload が session detail から取得できることを確認した。
+- `npm run build` を frontend で実行し、TypeScript build / Vite build が成功した。
+- `git diff --check` で whitespace 問題がないことを確認した。
+
+### ISS-120: Chat session に関連 issue と最後の proposal action を表示する
+
+Status: Open
+Priority: Medium
+
+要求仕様:
+
+- セッション一覧から、その session がどの issue や更新提案に関する相談か判断しやすくする。
+- Chat session metadata の設計にある `related_issue_ids` と `last_proposal_action` の初期実装方針を固める。
+- 対象外: 全文検索や高度な要約。
+
+機能仕様:
+
+- 保存済み assistant payload から related issue 候補と最後の proposal action を抽出する。
+- API または frontend のどちらで表示情報を組み立てるかを決め、一覧 UI に短い badge として表示する。
+- payload がない古い session では従来通り title / role / message_count を表示する。
+
+テスト仕様:
+
+- proposal あり session と references あり session で、一覧に代表 issue / action が表示されることを確認する。
+- payload なし session で表示が壊れないことを確認する。
+
+### ISS-121: Chat session のリネーム・アーカイブ・削除の初期方針を決める
+
+Status: Open
+Priority: Low
+
+要求仕様:
+
+- session が増えたとき、ユーザーが履歴を整理するために必要な最小操作を決める。
+- リネーム、アーカイブ、削除のうち初期実装で扱うものと先送りするものを明確にする。
+- 対象外: 監査ログ削除や Redmine データ削除。
+
+機能仕様:
+
+- `docs/chat-sessions.md` に整理操作の候補、リスク、初期スコープを追記する。
+- 実装する場合は API / UI / DB 変更を小さく切れる後続 issue に分ける。
+
+テスト仕様:
+
+- 方針文書から、どの操作をいつ実装するか判断できることを確認する。

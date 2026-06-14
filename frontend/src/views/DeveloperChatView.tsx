@@ -93,7 +93,7 @@ export default function DeveloperChatView() {
         id: `loaded-${m.id}`,
         role: m.role,
         text: m.content,
-        content: null,
+        content: m.role === 'assistant' ? m.payload : null,
       }))
       setCurrentSessionId(sessionId)
       setMessages(loadedMessages)

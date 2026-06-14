@@ -68,7 +68,7 @@ def _save_chat_turn(session_id: str, role: str, question: str, result: dict) -> 
     title = _session_title(question)
     upsert_chat_session(session_id, title, role)
     add_conversation_message(session_id, "user", question)
-    add_conversation_message(session_id, "assistant", _assistant_content(result))
+    add_conversation_message(session_id, "assistant", _assistant_content(result), {"session_id": session_id, **result})
 
 
 def _context_messages(session_id: str, fallback_messages: list[dict]) -> list[dict]:

@@ -1,4 +1,5 @@
 import os
+import json
 import sqlite3
 from datetime import datetime, timezone
 from pathlib import Path
@@ -32,9 +33,14 @@ def init_db() -> None:
                 session_id TEXT NOT NULL,
                 role       TEXT NOT NULL,
                 content    TEXT NOT NULL,
+                payload    TEXT,
                 created_at TEXT NOT NULL
             )
         """)
+        try:
+            conn.execute("ALTER TABLE conversations ADD COLUMN payload TEXT")
+        except Exception:
+            pass  # column already exists
         conn.execute("CREATE INDEX IF NOT EXISTS idx_conv_session ON conversations(session_id)")
         conn.execute("""
             CREATE TABLE IF NOT EXISTS chat_sessions (
@@ -96,14 +102,15 @@ def upsert_chat_session(session_id: str, title: str, role: str) -> None:
         conn.commit()
 
 
-def add_conversation_message(session_id: str, role: str, content: str) -> None:
+def add_conversation_message(session_id: str, role: str, content: str, payload: dict | None = None) -> None:
+    payload_text = json.dumps(payload, ensure_ascii=False, default=str) if payload is not None else None
     with get_connection() as conn:
         conn.execute(
             """
-            INSERT INTO conversations(session_id, role, content, created_at)
-            VALUES (?, ?, ?, ?)
+            INSERT INTO conversations(session_id, role, content, payload, created_at)
+            VALUES (?, ?, ?, ?, ?)
             """,
-            (session_id, role, content, _now()),
+            (session_id, role, content, payload_text, _now()),
         )
         conn.commit()
 
@@ -155,14 +162,27 @@ def get_conversation_messages(session_id: str) -> list[dict]:
     with get_connection() as conn:
         rows = conn.execute(
             """
-            SELECT id, role, content, created_at
+            SELECT id, role, content, payload, created_at
             FROM conversations
             WHERE session_id = ?
             ORDER BY id ASC
             """,
             (session_id,),
         ).fetchall()
-    return [dict(r) for r in rows]
+    return [_conversation_row(r) for r in rows]
+
+
+def _conversation_row(row: sqlite3.Row) -> dict:
+    result = dict(row)
+    payload = result.get("payload")
+    if not payload:
+        result["payload"] = None
+        return result
+    try:
+        result["payload"] = json.loads(payload)
+    except json.JSONDecodeError:
+        result["payload"] = None
+    return result
 
 
 def _now() -> str:
