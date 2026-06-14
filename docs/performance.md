@@ -50,6 +50,37 @@ npm run perf:api -- --runs=1 --chat-runs=1 --chat-question=パフォーマンス
 
 `semantic.search.encode_query` の `model_was_loaded=false` が初回ロードを含む計測、`true` がロード済み状態の計測を示す。
 
+## Semantic Search 評価
+
+embedding 対象を変えた前後の検索品質は、固定した代表質問セットで比較する。
+
+```bash
+npm run eval:semantic
+npm run eval:semantic -- --format json
+```
+
+既定の質問:
+
+- 承認フローの仕様揺れ
+- PM判断待ち
+- リリースリスク
+- 性能劣化の原因
+
+ISS-110 時点の確認:
+
+日時: 2026-06-14
+commit: `98280bb` の index 再構築後
+seed issue 件数: 517
+コマンド: `docker compose exec -T backend python scripts/evaluate_semantic_search.py --format markdown`
+条件: ローカル Docker Compose、semantic index rebuilt after ISS-109
+
+| 質問 | top 1 | 評価 |
+| --- | --- | --- |
+| 承認フローの仕様揺れ | `#1477 一括承認で一部が承認されないバグを報告する` | 承認系 issue は拾うが、仕様確定 issue は top 5 |
+| PM判断待ち | `#1167 PM判断待ち: v1.0 のリリース日程を最終確定する` | prefix により安定 |
+| リリースリスク | `#1146 リリース遅延リスクを評価して対応策を立案する` | 意図に近い |
+| 性能劣化の原因 | `#1528 欠陥密度を計算してコンポーネント別リスクを評価する` | 抽象クエリではまだズレる |
+
 ## 記録テンプレート
 
 ```text

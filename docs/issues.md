@@ -3623,7 +3623,7 @@ Priority: High
 
 ### ISS-110: semantic search の代表質問評価スクリプトを追加する
 
-Status: Open
+Status: Closed
 Priority: Medium
 
 要求仕様:
@@ -3641,3 +3641,11 @@ Priority: Medium
 
 - semantic index が構築済みの状態でスクリプトを実行し、各質問に top result が出力されることを確認する。
 - 出力を `docs/performance.md` または専用ログに貼れる形式にする。
+
+実装結果:
+
+- `backend/scripts/evaluate_semantic_search.py` を追加し、固定代表質問セットの top 5 issue id、subject、score を Markdown または JSON で出力できるようにした。
+- `package.json` に `npm run eval:semantic` を追加した。
+- README に評価コマンドを追記した。
+- `docs/performance.md` に使い方と ISS-110 時点の top 1 結果を記録した。
+- `docker compose exec -T backend python scripts/evaluate_semantic_search.py --format markdown` で 4 つの代表質問すべてに top 5 が出力されることを確認した。

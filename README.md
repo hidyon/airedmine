@@ -228,6 +228,12 @@ curl -X POST http://localhost:8000/api/ai/index/build
 
 再構築が必要なとき（チケットが大幅に増えた場合など）も同じコマンドを実行します。
 
+意味検索の代表質問セットを評価する場合は、次のコマンドで top 5 を Markdown 出力できます。
+
+```bash
+npm run eval:semantic
+```
+
 ### ヘルスチェック
 
 ```bash
