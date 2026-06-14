@@ -99,7 +99,7 @@ FastAPI バックエンド (:8000)
 | View | URL | 対象ロール | 主な機能 |
 | --- | --- | --- | --- |
 | Login | `/login` | 全員 | ユーザー名・パスワードでログイン。JWT をローカルストレージに保存 |
-| Chat | `/developer/chat` | developer / pm | セッション一覧付きマルチターン AI チャット、ツール呼び出し表示、proposal カード |
+| Chat | `/developer/chat` | developer / pm | セッション一覧付きマルチターン AI チャット、ツール呼び出し表示、proposal カード、issue 詳細パネル |
 | Dashboard | `/developer/dashboard` | developer | 担当 issue 一覧、issue 詳細パネル |
 | Dashboard | `/pm/dashboard` | pm | バーンダウン、停滞 issue、担当者別負荷、優先度サマリー |
 | Audit | `/audit` | 全員 | 更新提案ログ一覧 |
@@ -116,7 +116,7 @@ FastAPI バックエンド (:8000)
 | POST | `/api/auth/login` | ユーザー名・パスワードで JWT を取得 | ISS-074 |
 | GET | `/api/auth/me` | JWT からログイン中ユーザー情報を取得 | ISS-074 |
 | GET | `/api/issues` | issue 一覧（assigned_to_id, status_id, limit, sort, offset でフィルタ） | ISS-008 |
-| GET | `/api/issues/{id}` | issue 詳細（description, journals 含む） | ISS-047 |
+| GET | `/api/issues/{id}` | issue 詳細（description, journals, tracker, fixed_version, updated_on 含む） | ISS-047 |
 | GET | `/api/pm/burndown` | PM Dashboard 用バーンダウン系列 | ISS-076 |
 | GET | `/api/pm/stats` | PM Dashboard 用統計（timings / cache 状態を含む） | ISS-078, ISS-103 |
 | POST | `/api/chat` | 自然言語質問 → AI Agent が Redmine を参照して回答・提案を返す | ISS-066 |
@@ -312,6 +312,13 @@ FastAPI バックエンド (:8000)
 - `#NNN` パターンを検出して `[#NNN](#issue-NNN)` リンクに変換する（`linkifyIssues()` 関数）。
 - リンクをクリックすると右サイドに issue 詳細パネルが開く（`IssueDetailPanel`）。
 
+### Issue 詳細パネル（`frontend/src/components/IssueDetailPanel.tsx`）
+
+- Chat 回答内の issue リンク、Developer Dashboard、PM Dashboard から開く。
+- `GET /api/issues/{id}` を呼び、一覧データではなく詳細データを表示する。
+- 表示項目: subject, tracker, status, priority, assignee, project, fixed_version, due_date, updated_on, description, journals。
+- `description` と `journals` は seed に存在する issue では表示し、空の場合はコメントなし表示にする。
+
 ### 意味検索インデックス（`backend/services/issue_index.py`）
 
 - モデル: `paraphrase-multilingual-MiniLM-L12-v2`（日本語対応、384 次元）
@@ -452,7 +459,7 @@ docker compose exec backend python -m pytest tests/ -v
 - [ ] `tanaka` でログインして「私の今日の issue を教えて」→ tanaka（redmine_user_id=5）の担当 issue が返る
 - [ ] 「田中の issue を見せて」→ 表示名から user_id=5 を解決して担当 issue が返る
 - [ ] 「認証関連の issue を探して」→ `search_issues_semantic` ツールが呼ばれ、意味的に近い issue が返る
-- [ ] 回答内の `#NNN` をクリック → 右に issue 詳細パネルが開く
+- [ ] 回答内の `#NNN` をクリック → 右に issue 詳細パネルが開き、tracker / version / updated_on / description / journals が表示される
 - [ ] 「#841 にコメントを追加して: テスト送信」→ proposal カード（緑）が表示される
 - [ ] proposal カードの「Redmine に送信」をクリック → 「✓ Redmine に送信済み」になる
 - [ ] 「#1208 のステータスを進行中にして」→ ステータス変更 proposal カードが表示される
@@ -467,7 +474,7 @@ docker compose exec backend python -m pytest tests/ -v
 #### Developer Dashboard
 
 - [ ] 担当 issue 一覧が表示される
-- [ ] issue 行をクリック → 右に詳細パネル（description, meta, journals）が開く
+- [ ] issue 行をクリック → 右に詳細パネル（tracker / version / updated_on / description / journals）が開く
 - [ ] 別の issue をクリック → パネルが切り替わる
 - [ ] ✕ ボタンでパネルが閉じる
 
