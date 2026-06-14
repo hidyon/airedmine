@@ -99,7 +99,7 @@ FastAPI バックエンド (:8000)
 | View | URL | 対象ロール | 主な機能 |
 | --- | --- | --- | --- |
 | Login | `/login` | 全員 | ユーザー名・パスワードでログイン。JWT をローカルストレージに保存 |
-| Chat | `/developer/chat` | developer / pm | マルチターン AI チャット、ツール呼び出し表示、proposal カード |
+| Chat | `/developer/chat` | developer / pm | セッション一覧付きマルチターン AI チャット、ツール呼び出し表示、proposal カード |
 | Dashboard | `/developer/dashboard` | developer | 担当 issue 一覧、issue 詳細パネル |
 | Dashboard | `/pm/dashboard` | pm | バーンダウン、停滞 issue、担当者別負荷、優先度サマリー |
 | Audit | `/audit` | 全員 | 更新提案ログ一覧 |

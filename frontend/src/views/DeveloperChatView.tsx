@@ -1,9 +1,17 @@
 import { useState, useRef, useEffect } from 'react'
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import { postChat, postCommentProposal, postUpdateProposal, postCreateIssueProposal, postAddRelationProposal } from '../api/client'
+import {
+  fetchChatSession,
+  fetchChatSessions,
+  postChat,
+  postCommentProposal,
+  postUpdateProposal,
+  postCreateIssueProposal,
+  postAddRelationProposal,
+} from '../api/client'
 import type { ApiError, ChatHistoryMessage } from '../api/client'
-import type { ChatResponse, ChatReference, UpdateProposal } from '../api/types'
+import type { ChatResponse, ChatReference, ChatSession, UpdateProposal } from '../api/types'
 import IssueDetailPanel from '../components/IssueDetailPanel'
 import { getUser } from '../auth'
 
@@ -36,22 +44,68 @@ function generateSessionId(): string {
 
 export default function DeveloperChatView() {
   const [messages, setMessages] = useState<Message[]>([])
+  const [sessions, setSessions] = useState<ChatSession[]>([])
+  const [currentSessionId, setCurrentSessionId] = useState(generateSessionId())
+  const [sessionsLoading, setSessionsLoading] = useState(false)
+  const [sessionLoading, setSessionLoading] = useState(false)
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const role: Role = getUser()?.role ?? 'developer'
   const [selectedIssueId, setSelectedIssueId] = useState<number | null>(null)
-  const sessionIdRef = useRef<string>(generateSessionId())
   const historyRef = useRef<ChatHistoryMessage[]>([])
   const bottomRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    refreshSessions()
+  }, [])
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, loading])
 
   function resetConversation() {
+    const nextSessionId = generateSessionId()
     setMessages([])
     historyRef.current = []
-    sessionIdRef.current = generateSessionId()
+    setCurrentSessionId(nextSessionId)
+    setSelectedIssueId(null)
+  }
+
+  async function refreshSessions() {
+    setSessionsLoading(true)
+    try {
+      const res = await fetchChatSessions()
+      setSessions(res.sessions)
+    } catch {
+      setSessions([])
+    } finally {
+      setSessionsLoading(false)
+    }
+  }
+
+  async function selectSession(sessionId: string) {
+    if (loading || sessionLoading) return
+    setSessionLoading(true)
+    try {
+      const res = await fetchChatSession(sessionId)
+      const loadedMessages = res.messages.map(m => ({
+        id: `loaded-${m.id}`,
+        role: m.role,
+        text: m.content,
+        content: null,
+      }))
+      setCurrentSessionId(sessionId)
+      setMessages(loadedMessages)
+      historyRef.current = res.messages.map(m => ({ role: m.role, content: m.content }))
+      setSelectedIssueId(null)
+    } catch {
+      setMessages(prev => [
+        ...prev,
+        { id: `e-${Date.now()}`, role: 'assistant', text: 'セッション履歴を読み込めませんでした。', content: null },
+      ])
+    } finally {
+      setSessionLoading(false)
+    }
   }
 
   async function send() {
@@ -64,12 +118,15 @@ export default function DeveloperChatView() {
       const currentUser = getUser()
       const res = await postChat(
         q,
-        sessionIdRef.current,
+        currentSessionId,
         role,
         historyRef.current,
         currentUser?.redmine_user_id,
         currentUser?.display_name,
       )
+      if (res.session_id && res.session_id !== currentSessionId) {
+        setCurrentSessionId(res.session_id)
+      }
       // 会話履歴を更新
       historyRef.current = [
         ...historyRef.current,
@@ -80,6 +137,7 @@ export default function DeveloperChatView() {
         ...prev,
         { id: `a-${Date.now()}`, role: 'assistant', text: res.answer ?? '', content: res },
       ])
+      refreshSessions()
     } catch {
       setMessages(prev => [
         ...prev,
@@ -102,20 +160,65 @@ export default function DeveloperChatView() {
   }
 
   return (
-    <div className="flex h-full overflow-hidden">
+    <div className="flex flex-col md:flex-row h-full overflow-hidden">
+      <aside className="md:w-72 md:min-w-72 border-b md:border-b-0 md:border-r border-slate-200 bg-slate-50 flex flex-col max-h-52 md:max-h-none">
+        <div className="px-3 py-3 border-b border-slate-200 flex items-center justify-between gap-2">
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-slate-800 m-0">Sessions</p>
+            <p className="text-xs text-slate-500 m-0 truncate">{sessions.length} sessions</p>
+          </div>
+          <button
+            onClick={resetConversation}
+            disabled={loading || sessionLoading}
+            className="px-2.5 py-1.5 text-xs font-semibold text-blue-600 border border-blue-200 bg-white hover:bg-blue-50 rounded-lg transition-colors disabled:text-slate-300 disabled:border-slate-200 disabled:cursor-not-allowed cursor-pointer"
+          >
+            新規
+          </button>
+        </div>
+        <div className="overflow-y-auto p-2 flex flex-col gap-1">
+          {sessionsLoading && (
+            <p className="text-xs text-slate-400 px-2 py-2 m-0">読み込み中…</p>
+          )}
+          {!sessionsLoading && sessions.length === 0 && (
+            <p className="text-xs text-slate-400 px-2 py-2 m-0">まだセッションはありません。</p>
+          )}
+          {sessions.map(session => (
+            <button
+              key={session.session_id}
+              onClick={() => selectSession(session.session_id)}
+              disabled={loading || sessionLoading}
+              className={`text-left px-3 py-2 rounded-lg border transition-colors cursor-pointer disabled:cursor-not-allowed ${
+                session.session_id === currentSessionId
+                  ? 'bg-blue-50 border-blue-200 text-blue-900'
+                  : 'bg-white border-transparent hover:border-slate-200 text-slate-700'
+              }`}
+            >
+              <span className="block text-xs font-semibold truncate">{session.title}</span>
+              <span className="block text-[11px] text-slate-500 mt-0.5">
+                {session.role} / {session.message_count} messages
+              </span>
+            </button>
+          ))}
+        </div>
+      </aside>
+
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
         {messages.length > 0 && (
-          <div className="flex items-center justify-end px-4 py-2 border-b border-slate-200 bg-slate-50 flex-shrink-0">
+          <div className="flex items-center justify-between px-4 py-2 border-b border-slate-200 bg-slate-50 flex-shrink-0">
+            <p className="text-xs text-slate-500 m-0 truncate">session: {currentSessionId}</p>
             <button
               onClick={resetConversation}
               className="text-xs text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
             >
-              会話をリセット
+              新規セッション
             </button>
           </div>
         )}
 
         <div className="flex-1 overflow-y-auto px-4 py-6 flex flex-col gap-4">
+          {sessionLoading && (
+            <p className="text-sm text-slate-400 text-center m-0">セッションを読み込み中…</p>
+          )}
           {messages.length === 0 && (
             <div className="flex flex-col items-center justify-center flex-1 py-16 text-center">
               <p className="text-xl font-bold text-slate-800 mb-2">AIRedmine Chat</p>

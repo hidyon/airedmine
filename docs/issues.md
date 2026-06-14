@@ -3734,7 +3734,7 @@ Priority: High
 
 ### ISS-113: Chat UI でセッション作成・切替・再開をできるようにする
 
-Status: Open
+Status: Closed
 Priority: High
 
 要求仕様:
@@ -3752,6 +3752,15 @@ Priority: High
 
 - 新規セッションで質問し、別セッションへ切り替えて戻っても履歴が残ることを確認する。
 - ブラウザでセッション作成・切替・再開を確認する。
+
+実装結果:
+
+- `DeveloperChatView` にセッション一覧ペインを追加し、既存セッションの一覧、現在セッション、新規セッション作成を表示できるようにした。
+- `fetchChatSessions()` / `fetchChatSession()` を使い、過去セッションを選択すると保存済み messages を時系列で表示して再開できるようにした。
+- `POST /api/chat` の戻り値 `session_id` を current session として反映し、送信後にセッション一覧を再読み込みするようにした。
+- モバイル幅ではセッション一覧を上部に縦積みし、会話領域を潰しすぎないようにした。
+- `npm run build` で frontend build が成功することを確認した。
+- この実行環境には Chrome / Chromium がないため、ブラウザ実機確認は未実施。ISS-104 と同じく Chrome あり環境で画面確認する。
 
 ### ISS-114: セッション履歴を AI の文脈に安全に渡す方針を実装する
 
