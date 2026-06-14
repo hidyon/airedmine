@@ -3530,3 +3530,34 @@ Priority: High
 
 - 現在の seed reset 後状態で orphan embedding が検出されることを確認する。
 - index 再構築後に stale / orphan count が減ることを確認する。
+
+### ISS-108: 開発体験に合わせて embedding 対象を再設計する
+
+Status: Open
+Priority: High
+
+要求仕様:
+
+- AIRedmine の意味検索が、開発者や PM の実際の質問に対して、件名一致に近い検索ではなく「背景、判断履歴、ブロッカー、未決事項」を拾えるようにする。
+- 現在の embedding 対象（件名、ステータス、優先度）で足りるものと、説明・コメント履歴・担当者・バージョン・期日・関連 issue を含めるべきものを整理する。
+- 対象外: この issue では embedding モデル変更やベクトルDB導入は行わない。
+
+背景:
+
+- 現在の `_issue_text()` は `subject + status + priority` のみを embedding している。
+- M18 で seed issue の説明やコメント履歴を実プロジェクトらしく拡充したが、現状の semantic index ではその情報が意味検索に使われない。
+- 「承認フローの仕様揺れ」「PM判断待ち」「リリースリスク」「性能劣化の原因」のような質問は、件名だけでなく説明・コメント履歴・判断メモに依存する。
+
+機能仕様:
+
+- 開発者向け、PM 向け、更新提案向けの代表質問ごとに、必要な embedding 対象を整理する。
+- issue 説明、直近コメント、重要コメント、ステータス、優先度、担当者、バージョン、期日を候補として比較する。
+- コメント履歴を含める場合、長さ制限、古いコメントの扱い、個人名やノイズの扱いを決める。
+- embedding 対象を広げた場合の freshness 影響（コメント追加や説明変更で再embeddingが必要になる範囲）を整理する。
+- 後続実装issueとして、`_issue_text()` / `_issue_body()` の拡張と検索結果の評価手順を切れる粒度にする。
+
+テスト仕様:
+
+- 代表質問（承認フロー、PM判断待ち、リリースリスク、性能劣化）に対して、現行embedding対象で拾える issue / 拾えない issue を比較する。
+- 新しい embedding 対象案で期待される改善と、再embeddingコスト・stalenessリスクを記録する。
+- 分析結果を `docs/semantic-index-freshness.md` または専用ドキュメントに記録する。
