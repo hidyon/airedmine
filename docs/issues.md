@@ -2806,7 +2806,7 @@ Priority: Medium
 
 ### ISS-084: チャットから複数 issue を一括操作できるようにする
 
-Status: Open
+Status: Closed
 Priority: Low
 
 要求仕様:
@@ -2827,6 +2827,15 @@ Priority: Low
 - 「停滞 issue を全部 Feedback にして」で対象 issue リストが提案カードに表示されることを確認する。
 - 21 件以上を指定した場合にエラーメッセージが返ることを確認する。
 - `npx tsc --noEmit` エラーなし。
+
+実装結果:
+
+- `backend/services/tools.py` に `bulk_update` ツールを追加し、複数 issue の status_change / assignee_change 提案を作れるようにした。
+- `bulk_update` は重複 issue ID を除外し、1〜20 件に制限する。21 件以上は分割を促すエラーを返す。
+- `backend/services/agent.py` で `bulk_update` の tool result を proposal に変換し、件数、対象 issue、変更内容、理由を ProposalCard に渡すようにした。
+- `POST /api/proposals/bulk_update` を追加し、承認後に各 issue へ同じ更新 fields を順番に適用し、Audit ログに一括操作として記録するようにした。
+- `ProposalCard` で対象 issue 一覧と「{n} 件を一括更新」ボタンを表示し、一括更新は追加確認を必須にした。
+- backend route test 31 件、frontend build（`tsc -b && vite build`）が成功した。
 
 ### ISS-085: Redmine MCP サーバーを追加し Claude Code から操作できるようにする
 

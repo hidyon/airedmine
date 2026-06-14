@@ -159,6 +159,34 @@ async def run_agent(
                         "next_step": "",
                     }
 
+            if block.name == "bulk_update":
+                result_json = json.loads(result_str)
+                if result_json.get("confirmation_required"):
+                    issue_ids = result_json["issue_ids"]
+                    action = result_json["action"]
+                    if action == "status_change":
+                        label = result_json.get("new_status_name") or str(result_json.get("new_status_id"))
+                        change_summary = f"{len(issue_ids)} 件のステータスを「{label}」に変更"
+                    else:
+                        label = result_json.get("new_assigned_to_name") or str(result_json.get("new_assigned_to_id"))
+                        change_summary = f"{len(issue_ids)} 件の担当者を「{label}」に変更"
+                    proposal = {
+                        "status": "confirmation_required",
+                        "action": "bulk_update",
+                        "issue_ids": issue_ids,
+                        "bulk_action": action,
+                        "new_status_id": result_json.get("new_status_id"),
+                        "new_status_name": result_json.get("new_status_name"),
+                        "new_assigned_to_id": result_json.get("new_assigned_to_id"),
+                        "new_assigned_to_name": result_json.get("new_assigned_to_name"),
+                        "reason": result_json.get("reason", ""),
+                        "title": f"一括更新 {len(issue_ids)} 件",
+                        "change_summary": change_summary,
+                        "draft": result_json.get("reason", ""),
+                        "checklist": ["対象 issue と件数が意図通りか確認する"],
+                        "next_step": "",
+                    }
+
             if block.name == "update_due_date":
                 result_json = json.loads(result_str)
                 if result_json.get("confirmation_required"):
@@ -344,6 +372,7 @@ def _tool_category(name: str) -> str:
         "assign_version",
         "add_relation",
         "create_issue",
+        "bulk_update",
     }:
         return "proposal"
     return "other"

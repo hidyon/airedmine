@@ -98,11 +98,15 @@ export interface UpdateProposal {
     | 'done_ratio'
     | 'version'
     | 'add_relation'
+    | 'bulk_update'
   // comment
   target_issue?: IssueReference | null
   notes?: string
   // status_change / assignee_change
   issue_id?: number
+  issue_ids?: number[]
+  issue_targets?: Array<{ id: number; title?: string }>
+  bulk_action?: 'status_change' | 'assignee_change'
   new_status_id?: number
   new_status_name?: string
   new_assigned_to_id?: number

@@ -117,6 +117,9 @@ class UpdateProposal(BaseModel):
     title: str
     action: str
     target_issue: Optional[IssueReference] = None
+    issue_id: Optional[int] = None
+    issue_ids: list[int] = []
+    issue_targets: list[dict[str, Any]] = []
     change_summary: str
     draft: str
     reason: str
@@ -186,6 +189,16 @@ class AddRelationRequest(BaseModel):
         "copied_to",
         "copied_from",
     ] = "relates"
+    reason: Optional[str] = None
+
+
+class BulkUpdateRequest(BaseModel):
+    issue_ids: list[int]
+    action: Literal["status_change", "assignee_change"]
+    new_status_id: Optional[int] = None
+    new_status_name: Optional[str] = None
+    new_assigned_to_id: Optional[int] = None
+    new_assigned_to_name: Optional[str] = None
     reason: Optional[str] = None
 
 

@@ -1,7 +1,13 @@
 import time
 from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException
-from models import CommentProposalRequest, UpdateProposalRequest, CreateIssueRequest, AddRelationRequest
+from models import (
+    AddRelationRequest,
+    BulkUpdateRequest,
+    CommentProposalRequest,
+    CreateIssueRequest,
+    UpdateProposalRequest,
+)
 from services.redmine_connector import RedmineConnector, RedmineApiError
 from dependencies import get_connector
 from routers.issues import _redmine_error_payload
@@ -168,6 +174,59 @@ async def execute_add_relation(request: AddRelationRequest, connector: Connector
         raise HTTPException(status_code=exc.status, detail={**payload, "log": log}) from exc
 
 
+@router.post("/api/proposals/bulk_update")
+async def execute_bulk_update(request: BulkUpdateRequest, connector: ConnectorDep) -> dict:
+    global _log_seq
+
+    issue_ids = _unique_issue_ids(request.issue_ids)
+    if not issue_ids:
+        raise HTTPException(status_code=400, detail={
+            "error": "issue_ids are required",
+            "category": "validation",
+            "retryable": False,
+        })
+    if len(issue_ids) > 20:
+        raise HTTPException(status_code=400, detail={
+            "error": "bulk update supports up to 20 issues",
+            "category": "validation",
+            "retryable": False,
+        })
+
+    fields, label = _bulk_update_fields(request)
+    log_base = {
+        "id": f"log-{int(time.time() * 1000)}-{_log_seq}",
+        "created_at": _now_iso(),
+        "actor": "browser-user",
+        "issue_id": issue_ids[0],
+        "target_title": f"{len(issue_ids)} issues",
+        "action": f"bulk_{request.action}",
+        "draft": f"{label}: {request.reason or ''}",
+    }
+    _log_seq += 1
+
+    results = []
+    try:
+        for issue_id in issue_ids:
+            results.append(await connector.update_issue(issue_id, fields))
+        message = f"{len(issue_ids)} 件の Redmine issue を一括更新しました。"
+        log = _record_log({**log_base, "result": "success", "message": message})
+        return {
+            "updated": True,
+            "issue_ids": issue_ids,
+            "fields": fields,
+            "results": results,
+            "message": message,
+            "log": log,
+        }
+    except RedmineApiError as exc:
+        payload = _redmine_error_payload(exc)
+        log = _record_log(_failure_log({
+            **log_base,
+            "draft": f"{label}: {len(results)}/{len(issue_ids)} updated before failure",
+        }, payload))
+        raise HTTPException(status_code=exc.status, detail={**payload, "log": log}) from exc
+
+
 @router.get("/api/proposals/logs")
 async def get_logs() -> dict:
     return {"logs": _update_logs[:20]}
@@ -195,3 +254,27 @@ def _failure_log(log_base: dict, payload: dict) -> dict:
 def _now_iso() -> str:
     from datetime import datetime, timezone
     return datetime.now(timezone.utc).isoformat()
+
+
+def _bulk_update_fields(request: BulkUpdateRequest) -> tuple[dict, str]:
+    if request.action == "status_change" and request.new_status_id is not None:
+        return {"status_id": request.new_status_id}, request.new_status_name or str(request.new_status_id)
+    if request.action == "assignee_change" and request.new_assigned_to_id is not None:
+        return {"assigned_to_id": request.new_assigned_to_id}, request.new_assigned_to_name or str(request.new_assigned_to_id)
+    raise HTTPException(status_code=400, detail={
+        "error": "invalid bulk action or missing fields",
+        "category": "validation",
+        "retryable": False,
+    })
+
+
+def _unique_issue_ids(values: list[int]) -> list[int]:
+    issue_ids: list[int] = []
+    seen: set[int] = set()
+    for value in values:
+        issue_id = int(value)
+        if issue_id <= 0 or issue_id in seen:
+            continue
+        issue_ids.append(issue_id)
+        seen.add(issue_id)
+    return issue_ids

@@ -130,6 +130,51 @@ TOOL_SCHEMAS = [
         },
     },
     {
+        "name": "bulk_update",
+        "description": (
+            "複数の Redmine issue に同じステータス変更または担当者変更を行う提案を作成する。"
+            "最大 20 件まで。実行前にユーザーの確認を求める。"
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "issue_ids": {
+                    "type": "array",
+                    "items": {"type": "integer"},
+                    "description": "一括更新する issue 番号の配列。最大 20 件。",
+                    "minItems": 1,
+                    "maxItems": 20,
+                },
+                "action": {
+                    "type": "string",
+                    "description": "一括更新の種類",
+                    "enum": ["status_change", "assignee_change"],
+                },
+                "new_status_id": {
+                    "type": "integer",
+                    "description": "status_change の場合の新しいステータス ID",
+                },
+                "new_status_name": {
+                    "type": "string",
+                    "description": "status_change の場合の新しいステータス表示名",
+                },
+                "new_assigned_to_id": {
+                    "type": "integer",
+                    "description": "assignee_change の場合の新しい担当者 Redmine user_id",
+                },
+                "new_assigned_to_name": {
+                    "type": "string",
+                    "description": "assignee_change の場合の新しい担当者表示名",
+                },
+                "reason": {
+                    "type": "string",
+                    "description": "一括更新が必要な理由",
+                },
+            },
+            "required": ["issue_ids", "action"],
+        },
+    },
+    {
         "name": "list_projects",
         "description": "プロジェクト一覧を取得する。create_issue の project_id を調べるのに使う。",
         "input_schema": {
@@ -392,6 +437,33 @@ async def execute_tool(
             "message": "担当者変更の準備ができました。ユーザーの確認後に実行します。",
         }, ensure_ascii=False)
 
+    if name == "bulk_update":
+        issue_ids = _unique_issue_ids(tool_input.get("issue_ids", []))
+        if not issue_ids:
+            return json.dumps({"error": "issue_ids を 1 件以上指定してください"}, ensure_ascii=False)
+        if len(issue_ids) > 20:
+            return json.dumps({"error": "一括更新は 20 件以下に分割してください", "issue_count": len(issue_ids)}, ensure_ascii=False)
+        action = tool_input.get("action")
+        if action == "status_change":
+            if tool_input.get("new_status_id") is None:
+                return json.dumps({"error": "status_change には new_status_id が必要です"}, ensure_ascii=False)
+        elif action == "assignee_change":
+            if tool_input.get("new_assigned_to_id") is None:
+                return json.dumps({"error": "assignee_change には new_assigned_to_id が必要です"}, ensure_ascii=False)
+        else:
+            return json.dumps({"error": "bulk_update action は status_change または assignee_change を指定してください"}, ensure_ascii=False)
+        return json.dumps({
+            "confirmation_required": True,
+            "issue_ids": issue_ids,
+            "action": action,
+            "new_status_id": tool_input.get("new_status_id"),
+            "new_status_name": tool_input.get("new_status_name", ""),
+            "new_assigned_to_id": tool_input.get("new_assigned_to_id"),
+            "new_assigned_to_name": tool_input.get("new_assigned_to_name", ""),
+            "reason": tool_input.get("reason", ""),
+            "message": "一括更新の準備ができました。ユーザーの確認後に実行します。",
+        }, ensure_ascii=False)
+
     if name == "list_projects":
         result = await connector.list_projects()
         return json.dumps(result, ensure_ascii=False)
@@ -518,3 +590,18 @@ def _detail_issue(i: dict) -> dict:
         "description": (i.get("description") or "")[:800],
         "journals": journals[-5:],
     }
+
+
+def _unique_issue_ids(values: list[Any]) -> list[int]:
+    issue_ids: list[int] = []
+    seen: set[int] = set()
+    for value in values:
+        try:
+            issue_id = int(value)
+        except (TypeError, ValueError):
+            continue
+        if issue_id <= 0 or issue_id in seen:
+            continue
+        issue_ids.append(issue_id)
+        seen.add(issue_id)
+    return issue_ids

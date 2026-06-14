@@ -126,6 +126,7 @@ FastAPI バックエンド (:8000)
 | POST | `/api/proposals/update` | ステータス・担当者・期日・優先度・進捗率・バージョンを Redmine に実行する | ISS-073, ISS-080, ISS-081, ISS-082 |
 | POST | `/api/proposals/create_issue` | issue 作成を Redmine に実行する | ISS-079 |
 | POST | `/api/proposals/add_relation` | issue 関連付けを Redmine に実行する | ISS-083 |
+| POST | `/api/proposals/bulk_update` | 複数 issue のステータス・担当者変更を Redmine に実行する | ISS-084 |
 | GET | `/api/proposals/logs` | 更新提案の実行ログ（直近 20 件） | ISS-028 |
 | GET | `/api/experience/notes` | 体験メモ一覧・サマリー | ISS-051 |
 | POST | `/api/experience/notes` | 体験メモ作成 | ISS-051 |
@@ -215,6 +216,20 @@ FastAPI バックエンド (:8000)
 }
 ```
 
+#### POST /api/proposals/bulk_update リクエスト形式
+
+```json
+{
+  "issue_ids": [1208, 1207],
+  "action": "status_change",
+  "new_status_id": 3,
+  "new_status_name": "Feedback",
+  "reason": "停滞 issue を確認待ちに戻す"
+}
+```
+
+`action` は `"status_change"` / `"assignee_change"` に対応する。対象 issue は 1〜20 件で、21 件以上は分割実行を求める。
+
 #### Redmine API 連携
 
 | 操作 | Redmine エンドポイント | 入力 | 出力 | 失敗時 |
@@ -252,10 +267,10 @@ FastAPI バックエンド (:8000)
    - `assigned_to_id="me"` の使用を禁止し、数値 ID の使用を指示する。
 3. **会話履歴の組み立て**: 同じ `session_id` の保存済み user / assistant messages を `conversations` から読み込み、直近 10 messages / 6000 文字までに切り詰める。保存済み履歴がない場合は request の `messages[]` を fallback として使い、今回の `question` を末尾に追加する。
 4. **tool_use ループ（最大 5 ラウンド）**:
-   - Anthropic API に `TOOL_SCHEMAS`（19 ツール）と `messages` を渡す。
+   - Anthropic API に `TOOL_SCHEMAS`（20 ツール）と `messages` を渡す。
    - `stop_reason == "end_turn"` になったら最終回答を返す。
    - `tool_use` ブロックがある場合は `execute_tool()` を実行し、結果を `tool_result` として履歴に追加して再度 API を呼ぶ。
-   - `add_comment` / `create_issue` / `change_status` / `change_assignee` / `update_due_date` / `update_priority` / `update_done_ratio` / `assign_version` / `add_relation` ツールは Redmine を直接更新せず、`confirmation_required` フラグ付きの proposal を返す。
+   - `add_comment` / `create_issue` / `change_status` / `change_assignee` / `bulk_update` / `update_due_date` / `update_priority` / `update_done_ratio` / `assign_version` / `add_relation` ツールは Redmine を直接更新せず、`confirmation_required` フラグ付きの proposal を返す。
    - project/status/priority/user/version の ID が必要な場合は参照ツールで確認し、推測した ID では proposal を作らない。
 5. **レスポンス**: `{"answer", "proposal", "tool_calls"}` を返す。
 
@@ -282,6 +297,7 @@ FastAPI バックエンド (:8000)
 | `add_comment` | コメント追加（確認待ちを返す） | issue_id, notes |
 | `change_status` | ステータス変更（確認待ちを返す） | issue_id, new_status_id, new_status_name, reason |
 | `change_assignee` | 担当者変更（確認待ちを返す） | issue_id, new_assigned_to_id, new_assigned_to_name, reason |
+| `bulk_update` | 複数 issue のステータス・担当者変更（確認待ちを返す） | issue_ids, action, new_status_id / new_assigned_to_id, reason |
 | `create_issue` | issue 作成（確認待ちを返す） | project_id, subject, description, assigned_to_id, priority_id, due_date |
 | `update_due_date` | 期日変更（確認待ちを返す） | issue_id, due_date, reason |
 | `update_priority` | 優先度変更（確認待ちを返す） | issue_id, new_priority_id, new_priority_name, reason |

@@ -204,6 +204,31 @@ export function postAddRelationProposal(
   })
 }
 
+export function postBulkUpdateProposal(
+  issueIds: number[],
+  action: 'status_change' | 'assignee_change',
+  opts: {
+    newStatusId?: number
+    newStatusName?: string
+    newAssignedToId?: number
+    newAssignedToName?: string
+    reason?: string
+  },
+): Promise<unknown> {
+  return request('/proposals/bulk_update', {
+    method: 'POST',
+    body: JSON.stringify({
+      issue_ids: issueIds,
+      action,
+      new_status_id: opts.newStatusId,
+      new_status_name: opts.newStatusName,
+      new_assigned_to_id: opts.newAssignedToId,
+      new_assigned_to_name: opts.newAssignedToName,
+      reason: opts.reason,
+    }),
+  })
+}
+
 export function postCreateIssueProposal(opts: {
   projectId: string
   subject: string

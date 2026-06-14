@@ -1,4 +1,5 @@
 import os
+import json
 import pytest
 import numpy as np
 from fastapi.testclient import TestClient
@@ -57,6 +58,15 @@ class FailingConnector:
 
     async def update_issue(self, issue_id: int, fields: dict) -> dict:
         raise RedmineApiError("Redmine API error", self.status, self.body)
+
+
+class TrackingConnector:
+    def __init__(self):
+        self.updates = []
+
+    async def update_issue(self, issue_id: int, fields: dict) -> dict:
+        self.updates.append((issue_id, fields))
+        return {"mode": "mock", "issue_id": issue_id, "fields": fields, "updated": True}
 
 
 class ReferenceConnector:
@@ -575,6 +585,41 @@ def test_execute_add_relation_rejects_unknown_type():
     assert resp.status_code == 422
 
 
+def test_execute_bulk_status_update_mock():
+    connector = TrackingConnector()
+    app.dependency_overrides[get_connector] = lambda: connector
+    try:
+        resp = client.post("/api/proposals/bulk_update", json={
+            "issue_ids": [1208, 1207, 1208],
+            "action": "status_change",
+            "new_status_id": 3,
+            "new_status_name": "Feedback",
+            "reason": "停滞 issue を確認待ちに戻す",
+        })
+    finally:
+        app.dependency_overrides.clear()
+
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["issue_ids"] == [1208, 1207]
+    assert data["fields"] == {"status_id": 3}
+    assert connector.updates == [
+        (1208, {"status_id": 3}),
+        (1207, {"status_id": 3}),
+    ]
+    assert data["log"]["action"] == "bulk_status_change"
+
+
+def test_execute_bulk_update_rejects_more_than_20():
+    resp = client.post("/api/proposals/bulk_update", json={
+        "issue_ids": list(range(1, 22)),
+        "action": "assignee_change",
+        "new_assigned_to_id": 5,
+    })
+    assert resp.status_code == 400
+    assert resp.json()["detail"]["category"] == "validation"
+
+
 @pytest.mark.asyncio
 async def test_reference_tools_return_lookup_values():
     connector = ReferenceConnector()
@@ -590,6 +635,29 @@ async def test_reference_tools_return_lookup_values():
     assert "Urgent" in priorities
     assert "tanaka" in users
     assert "Sprint 3" in versions
+
+
+@pytest.mark.asyncio
+async def test_bulk_update_tool_returns_confirmation_and_rejects_large_sets():
+    connector = ReferenceConnector()
+
+    proposal = json.loads(await execute_tool("bulk_update", {
+        "issue_ids": [1208, 1207, 1208],
+        "action": "assignee_change",
+        "new_assigned_to_id": 5,
+        "new_assigned_to_name": "田中 健太",
+    }, connector, None))
+    too_many = json.loads(await execute_tool("bulk_update", {
+        "issue_ids": list(range(1, 22)),
+        "action": "status_change",
+        "new_status_id": 3,
+        "new_status_name": "Feedback",
+    }, connector, None))
+
+    assert proposal["confirmation_required"] is True
+    assert proposal["issue_ids"] == [1208, 1207]
+    assert proposal["action"] == "assignee_change"
+    assert "20 件以下" in too_many["error"]
 
 
 def test_experience_notes_get():

@@ -9,6 +9,7 @@ import {
   postUpdateProposal,
   postCreateIssueProposal,
   postAddRelationProposal,
+  postBulkUpdateProposal,
 } from '../api/client'
 import type { ApiError, ChatHistoryMessage } from '../api/client'
 import type { ChatResponse, ChatReference, ChatSession, UpdateProposal } from '../api/types'
@@ -317,6 +318,10 @@ interface ProposalDetail {
 }
 
 function proposalTarget(proposal: UpdateProposal): string {
+  if (proposal.action === 'bulk_update') {
+    const count = proposal.issue_ids?.length ?? 0
+    return count > 0 ? `${count} 件の issue` : '複数 issue'
+  }
   if (proposal.action === 'comment' && proposal.target_issue) {
     return `#${proposal.target_issue.id} ${proposal.target_issue.title}`
   }
@@ -345,6 +350,19 @@ function proposalDetails(proposal: UpdateProposal): ProposalDetail[] {
     case 'assignee_change':
       rows.push({ label: '変更内容', value: '担当者変更' })
       rows.push({ label: '変更後', value: proposal.new_assigned_to_name ?? String(proposal.new_assigned_to_id ?? '') })
+      break
+    case 'bulk_update':
+      rows.push({ label: '変更内容', value: proposal.bulk_action === 'assignee_change' ? '担当者一括変更' : 'ステータス一括変更' })
+      rows.push({
+        label: '変更後',
+        value: proposal.bulk_action === 'assignee_change'
+          ? proposal.new_assigned_to_name ?? String(proposal.new_assigned_to_id ?? '')
+          : proposal.new_status_name ?? String(proposal.new_status_id ?? ''),
+      })
+      rows.push({ label: '対象件数', value: `${proposal.issue_ids?.length ?? 0} 件` })
+      if (proposal.issue_ids?.length) {
+        rows.push({ label: '対象 issue', value: proposal.issue_ids.map(id => `#${id}`).join(', ') })
+      }
       break
     case 'due_date':
       rows.push({ label: '変更内容', value: '期日変更' })
@@ -384,6 +402,9 @@ function proposalDetails(proposal: UpdateProposal): ProposalDetail[] {
 }
 
 function proposalHazard(proposal: UpdateProposal): HazardInfo {
+  if (proposal.action === 'bulk_update') {
+    return { required: true, reason: `${proposal.issue_ids?.length ?? 0} 件の issue を一括更新します` }
+  }
   if (proposal.action === 'status_change') {
     const status = (proposal.new_status_name ?? '').toLowerCase()
     if (status === 'closed' || status === 'クローズ' || proposal.new_status_id === 5) {
@@ -423,9 +444,13 @@ function ProposalCard({ proposal }: { proposal: UpdateProposal }) {
   const isVersion = proposal.action === 'version' && proposal.issue_id != null && proposal.new_version_id != null
   const isRelation = proposal.action === 'add_relation' && proposal.issue_id != null && proposal.related_issue_id != null
   const isCreateIssue = proposal.action === 'create_issue' && !!proposal.project_id && !!proposal.subject
+  const isBulkUpdate =
+    proposal.action === 'bulk_update' &&
+    !!proposal.issue_ids?.length &&
+    (proposal.bulk_action === 'status_change' || proposal.bulk_action === 'assignee_change')
   const canExecute =
     isComment || isStatusChange || isAssigneeChange ||
-    isDueDate || isPriority || isDoneRatio || isVersion || isRelation || isCreateIssue
+    isDueDate || isPriority || isDoneRatio || isVersion || isRelation || isCreateIssue || isBulkUpdate
 
   async function execute() {
     if (hazard.required && !confirmArmed) {
@@ -492,6 +517,14 @@ function ProposalCard({ proposal }: { proposal: UpdateProposal }) {
           priorityId: proposal.priority_id,
           dueDate: proposal.due_date,
         })
+      } else if (isBulkUpdate && proposal.issue_ids && proposal.bulk_action) {
+        await postBulkUpdateProposal(proposal.issue_ids, proposal.bulk_action, {
+          newStatusId: proposal.new_status_id,
+          newStatusName: proposal.new_status_name,
+          newAssignedToId: proposal.new_assigned_to_id,
+          newAssignedToName: proposal.new_assigned_to_name,
+          reason: proposal.reason,
+        })
       }
       setSendState('done')
     } catch (e) {
@@ -500,12 +533,20 @@ function ProposalCard({ proposal }: { proposal: UpdateProposal }) {
     }
   }
 
-  const buttonLabel = isComment ? 'Redmine に送信' : isCreateIssue ? '作成' : '実行'
+  const buttonLabel = isComment
+    ? 'Redmine に送信'
+    : isCreateIssue
+      ? '作成'
+      : isBulkUpdate
+        ? `${proposal.issue_ids?.length ?? 0} 件を一括更新`
+        : '実行'
   const executeLabel = hazard.required && !confirmArmed ? '確認する' : buttonLabel
   const doneLabel = isComment
     ? '✓ Redmine に送信済み'
     : isCreateIssue
       ? '✓ Redmine に issue を作成しました'
+      : isBulkUpdate
+        ? '✓ Redmine を一括更新しました'
       : '✓ Redmine を更新しました'
 
   return (
