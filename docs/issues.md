@@ -3904,7 +3904,7 @@ Priority: Medium
 
 ### ISS-118: スクリーンショットと手動確認チェックリストを更新する
 
-Status: Closed
+Status: In Progress
 Priority: Low
 
 要求仕様:
@@ -4221,3 +4221,40 @@ Priority: Medium
 クローズ判定:
 
 - 要求仕様、機能仕様、テスト仕様を満たしたため ISS-125 を Closed とする。
+
+### ISS-126: README に Chat session 整理操作を反映する
+
+Status: Closed
+Priority: Low
+
+要求仕様:
+
+- README を読んだユーザーが、現在の Chat session 操作を誤解せず試せるようにする。
+- M24〜26 で追加した名前変更、アーカイブ、全履歴参照、通常一覧への復帰を README に反映する。
+- 対象外: スクリーンショット撮り直し、UI 実装変更。
+
+機能仕様:
+
+- README の Chat 体験説明、できること、アーキテクチャ上の Chat Sessions 説明を最新化する。
+- `docs/chat-sessions.md` への導線と矛盾しない表現にする。
+
+テスト仕様:
+
+- `rg` で README に session 整理操作の記述があることを確認する。
+- `git diff --check` で Markdown の whitespace 問題がないことを確認する。
+
+実装結果:
+
+- README の開発者体験に Chat session の名前変更、アーカイブ、全履歴参照、通常一覧への復帰を追記した。
+- Chat スクリーンショットの確認観点に通常 / 全履歴切替とアーカイブ済み session の復帰を追加した。
+- できること一覧に「セッション整理」を追加した。
+- アーキテクチャの Chat Sessions 説明に `archived_at` と履歴を消さない整理方針を追記した。
+
+確認結果:
+
+- `rg -n "名前変更|アーカイブ|全履歴|通常一覧|Chat Sessions|セッション整理" README.md docs/chat-sessions.md docs/spec.md` で README と関連 docs に記述があることを確認した。
+- `git diff --check` で whitespace 問題がないことを確認した。
+
+クローズ判定:
+
+- 要求仕様、機能仕様、テスト仕様を満たしたため ISS-126 を Closed とする。
