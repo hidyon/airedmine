@@ -3590,7 +3590,7 @@ Priority: High
 
 ### ISS-109: semantic index に説明・直近コメント・主要メタ情報を含める
 
-Status: Open
+Status: Closed
 Priority: High
 
 要求仕様:
@@ -3610,6 +3610,16 @@ Priority: High
 - fake connector で description / journals を含む detail を返し、`issue_embeddings.body` に説明と直近コメントが保存されることを確認する。
 - 代表質問 `性能劣化の原因` で、原因コメントを持つ issue が検索候補に入りやすくなることを確認する。
 - `GET /api/ai/index/freshness` が拡張後も stale / orphan / missing を返せることを確認する。
+
+実装結果:
+
+- index build 時に `get_issue_detail(issue_id)` を呼び、description と journals を含む詳細 issue で embedding text を作るようにした。
+- `_issue_text()` / `_issue_body()` を拡張し、subject、tracker、status、priority、assigned_to、fixed_version、due_date、description、直近コメント 5 件を readable text として保存するようにした。
+- `RedmineConnector` の issue 正規化で `fixed_version` と `due_date` を保持するようにした。
+- `semantic.build.fetch_issue_details` timing を追加し、詳細取得コストを計測できるようにした。
+- fake connector のテストで、`issue_embeddings.body` に説明、直近コメント、担当、バージョン、期日が保存されることを確認した。
+- demo DB の index を再構築し、`GET /api/ai/index/freshness` が `indexed_count: 517`、`stale_count: 0`、`orphan_count: 0` を返すことを確認した。
+- 具体的な質問 `月次カレンダーのパフォーマンス改善について、これまでの議論を要約して` では `#1327` が top 1 になった。一方、短い抽象クエリ `性能劣化の原因` はまだ上位がずれるため、ISS-110 で代表質問評価を継続する。
 
 ### ISS-110: semantic search の代表質問評価スクリプトを追加する
 

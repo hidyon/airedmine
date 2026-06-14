@@ -300,6 +300,8 @@ def _normalize_issue(issue: dict) -> dict:
         "status": issue.get("status"),
         "priority": issue.get("priority"),
         "assigned_to": issue.get("assigned_to"),
+        "fixed_version": issue.get("fixed_version"),
+        "due_date": issue.get("due_date"),
         "updated_on": issue.get("updated_on"),
     }
 
@@ -308,7 +310,6 @@ def _normalize_issue_detail(issue: dict) -> dict:
     return {
         **_normalize_issue(issue),
         "description": issue.get("description", ""),
-        "due_date": issue.get("due_date"),
         "journals": [
             {
                 "id": j["id"],

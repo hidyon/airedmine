@@ -1,5 +1,6 @@
 import os
 import pytest
+import numpy as np
 from fastapi.testclient import TestClient
 
 os.environ["DB_PATH"] = "/tmp/test_airedmaine.db"
@@ -12,6 +13,7 @@ from db import get_connection, init_db  # noqa: E402
 from main import app  # noqa: E402
 from dependencies import get_connector  # noqa: E402
 from routers import chat as chat_router  # noqa: E402
+from services import issue_index  # noqa: E402
 from services.redmine_connector import RedmineApiError  # noqa: E402
 from services.tools import execute_tool  # noqa: E402
 
@@ -87,6 +89,44 @@ class FreshnessConnector:
         }
 
 
+class DetailIndexConnector:
+    async def list_issues(self, query: dict) -> dict:
+        return {
+            "issues": [
+                {
+                    "id": 10,
+                    "subject": "月次カレンダーの性能劣化を調査する",
+                    "tracker": {"name": "Bug"},
+                    "status": {"name": "In Progress"},
+                    "priority": {"name": "High"},
+                    "assigned_to": {"name": "鈴木"},
+                    "fixed_version": {"name": "Sprint 3"},
+                    "due_date": "2026-06-30",
+                    "updated_on": "2026-06-14T00:00:00Z",
+                }
+            ],
+            "total_count": 1,
+        }
+
+    async def get_issue_detail(self, issue_id: int) -> dict:
+        return {
+            "id": issue_id,
+            "subject": "月次カレンダーの性能劣化を調査する",
+            "tracker": {"name": "Bug"},
+            "status": {"name": "In Progress"},
+            "priority": {"name": "High"},
+            "assigned_to": {"name": "鈴木"},
+            "fixed_version": {"name": "Sprint 3"},
+            "due_date": "2026-06-30",
+            "updated_on": "2026-06-14T00:00:00Z",
+            "description": "初期描画が遅く、月末の勤怠確認に支障がある。",
+            "journals": [
+                {"notes": "古いコメント", "created_on": "2026-06-10T00:00:00Z"},
+                {"notes": "原因は isHoliday() を各セルで毎回呼んでいること。", "created_on": "2026-06-11T00:00:00Z"},
+            ],
+        }
+
+
 def test_health():
     resp = client.get("/health")
     assert resp.status_code == 200
@@ -137,6 +177,32 @@ def test_ai_index_freshness_reports_stale_orphan_and_missing():
     assert data["samples"]["stale"][0]["issue_id"] == 1
     assert data["samples"]["orphan"][0]["issue_id"] == 2
     assert data["samples"]["missing"][0]["issue_id"] == 3
+
+
+@pytest.mark.asyncio
+async def test_build_index_stores_description_and_recent_comments(monkeypatch):
+    with get_connection() as conn:
+        conn.execute("DELETE FROM issue_embeddings")
+        conn.commit()
+
+    monkeypatch.setattr(issue_index, "encode", lambda texts: [np.array([1.0, 0.0], dtype=np.float32) for _ in texts])
+    timings = []
+
+    built = await issue_index.build_index(DetailIndexConnector(), force=True, timings=timings)
+
+    assert built == 1
+    assert any(t["name"] == "semantic.build.fetch_issue_details" for t in timings)
+    with get_connection() as conn:
+        row = conn.execute("SELECT subject, body FROM issue_embeddings WHERE issue_id = 10").fetchone()
+
+    assert row["subject"] == "月次カレンダーの性能劣化を調査する"
+    assert "説明:" in row["body"]
+    assert "初期描画が遅く" in row["body"]
+    assert "直近コメント:" in row["body"]
+    assert "isHoliday()" in row["body"]
+    assert "担当: 鈴木" in row["body"]
+    assert "バージョン: Sprint 3" in row["body"]
+    assert "期日: 2026-06-30" in row["body"]
 
 
 def test_issues_list_mock():

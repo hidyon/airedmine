@@ -128,6 +128,23 @@ async def _fetch_all_issues(connector: Any) -> list[dict]:
     return all_issues
 
 
+async def _fetch_index_issues(
+    connector: Any,
+    issues: list[dict],
+    timings: list[dict] | None = None,
+) -> list[dict]:
+    if not hasattr(connector, "get_issue_detail"):
+        return issues
+
+    started = datetime.now(timezone.utc)
+    detailed: list[dict] = []
+    for issue in issues:
+        detail = await connector.get_issue_detail(issue["id"])
+        detailed.append(detail or issue)
+    _append_timing(timings, "semantic.build.fetch_issue_details", started, {"count": len(detailed)})
+    return detailed
+
+
 async def build_index(connector: Any, force: bool = False, timings: list[dict] | None = None) -> int:
     """
     Redmine から全 issue を取得して埋め込みインデックスを構築する。
@@ -143,6 +160,7 @@ async def build_index(connector: Any, force: bool = False, timings: list[dict] |
     _append_timing(timings, "semantic.build.fetch_issues", started)
     if not issues:
         return 0
+    issues = await _fetch_index_issues(connector, issues, timings)
 
     texts = [_issue_text(i) for i in issues]
     model_was_loaded = is_model_loaded()
@@ -235,23 +253,63 @@ def _append_timing(timings: list[dict] | None, name: str, started: datetime, ext
 
 
 def _issue_text(issue: dict) -> str:
-    """埋め込みのテキスト表現（件名 + ステータス + 優先度）。"""
-    parts = [issue.get("subject") or ""]
-    status = (issue.get("status") or {}).get("name")
-    priority = (issue.get("priority") or {}).get("name")
-    if status:
-        parts.append(status)
-    if priority:
-        parts.append(priority)
-    return " ".join(parts)
+    """埋め込みのテキスト表現。"""
+    sections = [
+        _field_line("件名", issue.get("subject")),
+        _field_line("種別", _named(issue.get("tracker"))),
+        _field_line("状態", _named(issue.get("status"))),
+        _field_line("優先度", _named(issue.get("priority"))),
+        _field_line("担当", _named(issue.get("assigned_to"))),
+        _field_line("バージョン", _named(issue.get("fixed_version"))),
+        _field_line("期日", issue.get("due_date")),
+    ]
+    description = _truncate(issue.get("description") or "", 1200)
+    if description:
+        sections.extend(["", "説明:", description])
+
+    comments = _recent_comment_lines(issue.get("journals") or [])
+    if comments:
+        sections.extend(["", "直近コメント:", *comments])
+
+    return "\n".join(part for part in sections if part is not None).strip()
 
 
 def _issue_body(issue: dict) -> str:
-    status = (issue.get("status") or {}).get("name") or ""
-    priority = (issue.get("priority") or {}).get("name") or ""
-    return f"{status} {priority}".strip()
+    return _issue_text(issue)
 
 
 def _parse_iso(value: str) -> datetime:
     parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
     return parsed if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc)
+
+
+def _named(value: dict | None) -> str:
+    return (value or {}).get("name") or ""
+
+
+def _field_line(label: str, value: Any) -> str | None:
+    text = str(value or "").strip()
+    return f"{label}: {text}" if text else None
+
+
+def _recent_comment_lines(journals: list[dict], limit: int = 5) -> list[str]:
+    lines = []
+    budget = 2000
+    for journal in [j for j in journals if j.get("notes")][-limit:]:
+        note = _truncate(journal.get("notes") or "", min(400, budget))
+        if not note:
+            continue
+        prefix = journal.get("created_on") or "date unknown"
+        line = f"- {prefix}: {note}"
+        lines.append(line)
+        budget -= len(note)
+        if budget <= 0:
+            break
+    return lines
+
+
+def _truncate(value: str, limit: int) -> str:
+    text = " ".join(value.split())
+    if len(text) <= limit:
+        return text
+    return text[:limit].rstrip() + "..."
