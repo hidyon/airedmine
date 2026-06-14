@@ -1,5 +1,6 @@
 import os
 import sqlite3
+from datetime import datetime, timezone
 from pathlib import Path
 
 DB_PATH = Path(os.getenv("DB_PATH", "/app/data/airedmaine.db"))
@@ -36,6 +37,16 @@ def init_db() -> None:
         """)
         conn.execute("CREATE INDEX IF NOT EXISTS idx_conv_session ON conversations(session_id)")
         conn.execute("""
+            CREATE TABLE IF NOT EXISTS chat_sessions (
+                session_id    TEXT PRIMARY KEY,
+                title         TEXT NOT NULL,
+                role          TEXT NOT NULL,
+                created_at    TEXT NOT NULL,
+                updated_at    TEXT NOT NULL
+            )
+        """)
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_chat_sessions_updated ON chat_sessions(updated_at)")
+        conn.execute("""
             CREATE TABLE IF NOT EXISTS issue_embeddings (
                 issue_id   INTEGER PRIMARY KEY,
                 subject    TEXT NOT NULL,
@@ -67,3 +78,92 @@ def get_all_users() -> list[dict]:
             "SELECT username, display_name, role, redmine_user_id FROM users ORDER BY id"
         ).fetchall()
     return [dict(r) for r in rows]
+
+
+def upsert_chat_session(session_id: str, title: str, role: str) -> None:
+    now = _now()
+    with get_connection() as conn:
+        conn.execute(
+            """
+            INSERT INTO chat_sessions(session_id, title, role, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?)
+            ON CONFLICT(session_id) DO UPDATE SET
+                updated_at=excluded.updated_at,
+                role=excluded.role
+            """,
+            (session_id, title, role, now, now),
+        )
+        conn.commit()
+
+
+def add_conversation_message(session_id: str, role: str, content: str) -> None:
+    with get_connection() as conn:
+        conn.execute(
+            """
+            INSERT INTO conversations(session_id, role, content, created_at)
+            VALUES (?, ?, ?, ?)
+            """,
+            (session_id, role, content, _now()),
+        )
+        conn.commit()
+
+
+def list_chat_sessions(limit: int = 50) -> list[dict]:
+    with get_connection() as conn:
+        rows = conn.execute(
+            """
+            SELECT
+                s.session_id,
+                s.title,
+                s.role,
+                s.created_at,
+                s.updated_at,
+                COUNT(c.id) AS message_count
+            FROM chat_sessions s
+            LEFT JOIN conversations c ON c.session_id = s.session_id
+            GROUP BY s.session_id
+            ORDER BY s.updated_at DESC
+            LIMIT ?
+            """,
+            (limit,),
+        ).fetchall()
+    return [dict(r) for r in rows]
+
+
+def get_chat_session(session_id: str) -> dict | None:
+    with get_connection() as conn:
+        row = conn.execute(
+            """
+            SELECT
+                s.session_id,
+                s.title,
+                s.role,
+                s.created_at,
+                s.updated_at,
+                COUNT(c.id) AS message_count
+            FROM chat_sessions s
+            LEFT JOIN conversations c ON c.session_id = s.session_id
+            WHERE s.session_id = ?
+            GROUP BY s.session_id
+            """,
+            (session_id,),
+        ).fetchone()
+    return dict(row) if row else None
+
+
+def get_conversation_messages(session_id: str) -> list[dict]:
+    with get_connection() as conn:
+        rows = conn.execute(
+            """
+            SELECT id, role, content, created_at
+            FROM conversations
+            WHERE session_id = ?
+            ORDER BY id ASC
+            """,
+            (session_id,),
+        ).fetchall()
+    return [dict(r) for r in rows]
+
+
+def _now() -> str:
+    return datetime.now(timezone.utc).isoformat()

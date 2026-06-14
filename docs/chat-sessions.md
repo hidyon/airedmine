@@ -85,9 +85,9 @@ ISS-112〜114 で扱う初期スコープ:
 ISS-112:
 
 - `conversations` をセッション履歴として使う。
-- 必要なら `chat_sessions` metadata テーブルを追加する。
-- セッション一覧と詳細 API を追加する。
-- `POST /api/chat` が保存する user / assistant message と session metadata 更新を定義する。
+- `chat_sessions` metadata テーブルを追加した。
+- セッション一覧と詳細 API を追加した。
+- `POST /api/chat` が user / assistant message を保存し、session metadata を更新するようにした。
 
 ISS-113:
 

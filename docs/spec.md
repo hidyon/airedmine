@@ -120,6 +120,8 @@ FastAPI バックエンド (:8000)
 | GET | `/api/pm/burndown` | PM Dashboard 用バーンダウン系列 | ISS-076 |
 | GET | `/api/pm/stats` | PM Dashboard 用統計（timings / cache 状態を含む） | ISS-078, ISS-103 |
 | POST | `/api/chat` | 自然言語質問 → AI Agent が Redmine を参照して回答・提案を返す | ISS-066 |
+| GET | `/api/chat/sessions` | チャットセッション一覧 | ISS-112 |
+| GET | `/api/chat/sessions/{session_id}` | チャットセッション詳細・メッセージ履歴 | ISS-112 |
 | POST | `/api/proposals/comment` | コメント追加を Redmine に実行する | ISS-026 |
 | POST | `/api/proposals/update` | ステータス・担当者・期日・優先度・進捗率・バージョンを Redmine に実行する | ISS-073, ISS-080, ISS-081, ISS-082 |
 | POST | `/api/proposals/create_issue` | issue 作成を Redmine に実行する | ISS-079 |
@@ -170,6 +172,7 @@ FastAPI バックエンド (:8000)
 ```
 
 - `role`: JWT のロールを使用（UI での変更不可）
+- `session_id`: 空の場合は backend が `chat-{uuid}` 形式で発行し、レスポンスにも含める
 - `redmine_user_id`: ログインユーザーの Redmine user_id。システムプロンプトに注入されて「私の issue」の解決に使われる
 - `display_name`: ユーザーの表示名
 
@@ -336,6 +339,16 @@ FastAPI バックエンド (:8000)
 | role | TEXT | user / assistant |
 | content | TEXT | メッセージ本文 |
 | created_at | TEXT | ISO 8601 UTC |
+
+#### SQLite: chat_sessions
+
+| カラム | 型 | 説明 |
+| --- | --- | --- |
+| session_id | TEXT PK | セッション ID |
+| title | TEXT | 一覧表示用タイトル |
+| role | TEXT | developer / pm |
+| created_at | TEXT | ISO 8601 UTC |
+| updated_at | TEXT | ISO 8601 UTC |
 
 チャットセッション体験の要件と初期スコープは [`chat-sessions.md`](chat-sessions.md) に記録する。
 初期方針では、UI に表示する履歴と AI に渡す文脈を分け、AI には同一 `session_id` の直近 message のみを渡す。

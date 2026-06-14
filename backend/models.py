@@ -125,6 +125,7 @@ class UpdateProposal(BaseModel):
 
 
 class ChatResponse(BaseModel):
+    session_id: str = ""
     answer: Optional[str] = None
     clarification: Optional[ClarificationResponse] = None
     references: list[Any] = []

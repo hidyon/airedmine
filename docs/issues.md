@@ -3703,7 +3703,7 @@ Priority: High
 
 ### ISS-112: チャットセッション一覧・詳細 API を追加する
 
-Status: Open
+Status: Closed
 Priority: High
 
 要求仕様:
@@ -3722,6 +3722,15 @@ Priority: High
 
 - 複数 session_id の会話を保存し、一覧と詳細が混ざらず返ることを確認する。
 - 既存 Chat API の挙動が壊れないことを確認する。
+
+実装結果:
+
+- `chat_sessions` テーブルを追加し、session_id、title、role、created_at、updated_at を保存できるようにした。
+- `POST /api/chat` が session_id を返し、user / assistant message を `conversations` に保存し、session metadata を upsert するようにした。
+- `GET /api/chat/sessions` を追加し、session_id、title、role、created_at、updated_at、message_count を返すようにした。
+- `GET /api/chat/sessions/{session_id}` を追加し、session metadata と messages を時系列で返すようにした。
+- frontend API client に `fetchChatSessions()` / `fetchChatSession()` と関連型を追加した。
+- route test で複数 session_id の一覧順、詳細 messages、404 を確認した。
 
 ### ISS-113: Chat UI でセッション作成・切替・再開をできるようにする
 

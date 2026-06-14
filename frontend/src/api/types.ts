@@ -134,11 +134,37 @@ export interface UpdateProposal {
 }
 
 export interface ChatResponse {
+  session_id: string
   answer: string | null
   clarification: Clarification | null
   references: ChatReference[]
   proposal: UpdateProposal | null
   tool_calls?: string[]
+}
+
+export interface ChatSession {
+  session_id: string
+  title: string
+  role: string
+  created_at: string
+  updated_at: string
+  message_count: number
+}
+
+export interface ChatSessionMessage {
+  id: number
+  role: 'user' | 'assistant'
+  content: string
+  created_at: string
+}
+
+export interface ChatSessionsResponse {
+  sessions: ChatSession[]
+}
+
+export interface ChatSessionDetailResponse {
+  session: ChatSession
+  messages: ChatSessionMessage[]
 }
 
 // Experience notes

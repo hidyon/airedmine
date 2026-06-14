@@ -3,6 +3,8 @@ import type {
   IssueListResponse,
   IssueDetail,
   ChatResponse,
+  ChatSessionDetailResponse,
+  ChatSessionsResponse,
   ExperienceNotesResponse,
   ExperienceNoteCreate,
   ProposalLogsResponse,
@@ -106,6 +108,14 @@ export function postChat(
       display_name: displayName ?? '',
     }),
   })
+}
+
+export function fetchChatSessions(): Promise<ChatSessionsResponse> {
+  return request('/chat/sessions')
+}
+
+export function fetchChatSession(sessionId: string): Promise<ChatSessionDetailResponse> {
+  return request(`/chat/sessions/${encodeURIComponent(sessionId)}`)
 }
 
 export interface BurndownPoint {

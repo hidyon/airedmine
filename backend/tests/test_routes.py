@@ -295,8 +295,51 @@ def test_chat_basic(monkeypatch):
     assert resp.status_code == 200
     data = resp.json()
     assert "answer" in data
+    assert "session_id" in data
     assert "references" in data
     assert isinstance(data["references"], list)
+
+
+def test_chat_sessions_list_and_detail(monkeypatch):
+    with get_connection() as conn:
+        conn.execute("DELETE FROM conversations")
+        conn.execute("DELETE FROM chat_sessions")
+        conn.commit()
+
+    monkeypatch.setattr(chat_router, "run_agent", _fake_run_agent)
+    first = client.post("/api/chat", json={
+        "question": "今日まず何からやればいい？",
+        "session_id": "session-alpha",
+        "role": "developer",
+    })
+    second = client.post("/api/chat", json={
+        "question": "PM判断待ちをまとめて",
+        "session_id": "session-beta",
+        "role": "pm",
+    })
+
+    assert first.status_code == 200
+    assert first.json()["session_id"] == "session-alpha"
+    assert second.status_code == 200
+
+    sessions = client.get("/api/chat/sessions").json()["sessions"]
+    session_ids = [s["session_id"] for s in sessions]
+    assert session_ids == ["session-beta", "session-alpha"]
+    alpha = next(s for s in sessions if s["session_id"] == "session-alpha")
+    assert alpha["title"] == "今日まず何からやればいい？"
+    assert alpha["role"] == "developer"
+    assert alpha["message_count"] == 2
+
+    detail = client.get("/api/chat/sessions/session-alpha")
+    assert detail.status_code == 200
+    data = detail.json()
+    assert data["session"]["session_id"] == "session-alpha"
+    assert [m["role"] for m in data["messages"]] == ["user", "assistant"]
+    assert data["messages"][0]["content"] == "今日まず何からやればいい？"
+    assert data["messages"][1]["content"] == "今日の優先候補を確認しました。"
+
+    missing = client.get("/api/chat/sessions/missing")
+    assert missing.status_code == 404
 
 
 def test_chat_clarification(monkeypatch):
