@@ -82,6 +82,26 @@ ISS-112〜114 で扱う初期スコープ:
 - ユーザー横断の長期記憶
 - proposal / audit log との厳密な DB リレーション
 
+## 整理操作の方針
+
+セッションが増えたときの整理操作は、履歴の追跡性を壊さずに一覧の見通しをよくすることを優先する。
+Redmine 更新や Audit log の意味を後から確認できるよう、破壊的な削除は初期スコープに入れない。
+
+| 操作 | 初期判断 | 理由 | 想定変更 |
+| --- | --- | --- | --- |
+| リネーム | 実装候補 | 最初の質問から作る title は便利だが、相談が長引くと内容とずれる。履歴の意味を失わずに見つけやすくできる。 | `PATCH /api/chat/sessions/{session_id}` で `title` を更新し、Chat UI の一覧または詳細ヘッダーから編集する |
+| アーカイブ | 実装候補 | 完了した相談を通常一覧から隠せると、削除せずに整理できる。監査性を保ちやすい。 | `chat_sessions.archived_at` を nullable で追加し、一覧 API は初期表示で未アーカイブのみ返す。必要なら `include_archived` query を追加する |
+| 削除 | 当面やらない | proposal / audit / Redmine 更新判断の文脈を消すリスクが高い。削除は監査方針が固まるまで避ける。 | 将来扱う場合は soft delete を前提にし、物理削除や Audit log 削除とは分ける |
+
+初期実装順は、まずリネーム、次にアーカイブとする。
+削除は、監査ログ永続化や proposal との関連付け方針が決まるまで対象外にする。
+
+### 後続 issue 候補
+
+- Chat session title を手動リネームできるようにする。
+- Chat session をアーカイブし、通常一覧から隠せるようにする。
+- 削除が必要かを、Audit log 永続化や proposal 関連付けの設計後に再評価する。
+
 ## 後続 issue への分割
 
 ISS-112:
@@ -116,3 +136,10 @@ ISS-120:
 - `related_issue_ids` は proposal の `issue_id` / `issue_ids` / `target_issue` / `related_issue_id` / `issue_targets` と、issue references から重複なしで抽出する。
 - Chat UI の session 一覧は関連 issue と最後の proposal action を小さな badge として表示する。
 - payload がない古い session では `related_issue_ids: []`、`last_proposal_action: null` として従来表示に fallback する。
+
+ISS-121:
+
+- session 整理操作は、リネームとアーカイブを初期実装候補、削除を当面対象外とする。
+- リネームは `chat_sessions.title` の手動更新として、小さな API / UI 変更で実装できる。
+- アーカイブは `archived_at` による soft state とし、通常一覧から隠す方針にする。
+- 削除は監査性と履歴追跡への影響が大きいため、Audit log 永続化や proposal 関連付け方針が決まるまで先送りする。

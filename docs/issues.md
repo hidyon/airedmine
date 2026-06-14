@@ -3904,7 +3904,7 @@ Priority: Medium
 
 ### ISS-118: スクリーンショットと手動確認チェックリストを更新する
 
-Status: Closed
+Status: In Progress
 Priority: Low
 
 要求仕様:
@@ -3988,7 +3988,7 @@ Priority: Medium
 
 ### ISS-120: Chat session に関連 issue と最後の proposal action を表示する
 
-Status: In Progress
+Status: Closed
 Priority: Medium
 
 要求仕様:
@@ -4025,7 +4025,7 @@ Priority: Medium
 
 ### ISS-121: Chat session のリネーム・アーカイブ・削除の初期方針を決める
 
-Status: Open
+Status: Closed
 Priority: Low
 
 要求仕様:
@@ -4042,3 +4042,21 @@ Priority: Low
 テスト仕様:
 
 - 方針文書から、どの操作をいつ実装するか判断できることを確認する。
+
+実施結果:
+
+- `docs/chat-sessions.md` に「整理操作の方針」を追加し、リネーム、アーカイブ、削除の初期判断を整理した。
+- リネームは初期実装候補とし、`chat_sessions.title` を手動更新する小さな API / UI 変更で扱う方針にした。
+- アーカイブは初期実装候補とし、`archived_at` による soft state で通常一覧から隠す方針にした。
+- 削除は監査性と履歴追跡への影響が大きいため、Audit log 永続化や proposal 関連付け方針が決まるまで対象外にした。
+- 後続 issue 候補として、手動リネーム、アーカイブ、削除再評価を分けて記録した。
+
+確認結果:
+
+- `rg` で `docs/chat-sessions.md` に整理操作の判断表、初期実装順、後続 issue 候補、ISS-121 の記録が存在することを確認した。
+- `git diff --check` で Markdown 差分の whitespace 問題がないことを確認した。
+
+クローズ判定:
+
+- どの操作をいつ実装するか判断できる方針が文書化されたため、ISS-121 を Closed とする。
+- ISS-119〜121 が Closed になったため、Milestone 23 を Completed とする。
