@@ -124,6 +124,7 @@ FastAPI バックエンド (:8000)
 | POST | `/api/chat` | 自然言語質問 → AI Agent が Redmine を参照して回答・提案を返す | ISS-066 |
 | GET | `/api/chat/sessions` | チャットセッション一覧 | ISS-112 |
 | GET | `/api/chat/sessions/{session_id}` | チャットセッション詳細・メッセージ履歴 | ISS-112 |
+| PATCH | `/api/chat/sessions/{session_id}` | チャットセッション title を手動更新する | ISS-122 |
 | POST | `/api/proposals/comment` | コメント追加を Redmine に実行する | ISS-026 |
 | POST | `/api/proposals/update` | ステータス・担当者・期日・優先度・進捗率・バージョンを Redmine に実行する | ISS-073, ISS-080, ISS-081, ISS-082 |
 | POST | `/api/proposals/create_issue` | issue 作成を Redmine に実行する | ISS-079 |
@@ -434,6 +435,7 @@ docker compose exec backend python -m pytest tests/ -v
 | test_chat_sessions_list_and_detail | Chat session 一覧・詳細 API と保存済み messages |
 | test_chat_session_detail_restores_assistant_payload | session detail で assistant payload と proposal を復元 |
 | test_chat_session_list_summarizes_payload_metadata | session 一覧で関連 issue と最後の proposal action を返す |
+| test_chat_session_title_can_be_updated | session title の更新、空 title 拒否、存在しない session の 404 |
 | test_chat_uses_stored_session_context | 同一 session_id の保存済み履歴を AI 文脈に渡す |
 | test_chat_context_is_trimmed | AI 文脈を件数上限で切り詰める |
 | test_chat_clarification | 曖昧な更新依頼で clarification を返す |

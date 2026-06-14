@@ -4,6 +4,7 @@ import remarkGfm from 'remark-gfm'
 import {
   fetchChatSession,
   fetchChatSessions,
+  patchChatSessionTitle,
   postChat,
   postCommentProposal,
   postUpdateProposal,
@@ -55,6 +56,7 @@ export default function DeveloperChatView() {
   const [selectedIssueId, setSelectedIssueId] = useState<number | null>(null)
   const historyRef = useRef<ChatHistoryMessage[]>([])
   const bottomRef = useRef<HTMLDivElement>(null)
+  const currentSession = sessions.find(session => session.session_id === currentSessionId) ?? null
 
   useEffect(() => {
     refreshSessions()
@@ -160,6 +162,20 @@ export default function DeveloperChatView() {
     setSelectedIssueId(prev => (prev === id ? null : id))
   }
 
+  async function renameCurrentSession() {
+    if (!currentSession || loading || sessionLoading) return
+    const nextTitle = window.prompt('セッション名', currentSession.title)?.trim()
+    if (!nextTitle || nextTitle === currentSession.title) return
+    try {
+      const res = await patchChatSessionTitle(currentSession.session_id, nextTitle)
+      setSessions(prev => prev.map(session =>
+        session.session_id === res.session.session_id ? res.session : session,
+      ))
+    } catch {
+      window.alert('セッション名を更新できませんでした。')
+    }
+  }
+
   return (
     <div className="flex flex-col md:flex-row h-full overflow-hidden">
       <aside className="md:w-72 md:min-w-72 border-b md:border-b-0 md:border-r border-slate-200 bg-slate-50 flex flex-col max-h-52 md:max-h-none">
@@ -223,13 +239,26 @@ export default function DeveloperChatView() {
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
         {messages.length > 0 && (
           <div className="flex items-center justify-between px-4 py-2 border-b border-slate-200 bg-slate-50 flex-shrink-0">
-            <p className="text-xs text-slate-500 m-0 truncate">session: {currentSessionId}</p>
-            <button
-              onClick={resetConversation}
-              className="text-xs text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
-            >
-              新規セッション
-            </button>
+            <p className="text-xs text-slate-500 m-0 truncate">
+              {currentSession ? currentSession.title : `session: ${currentSessionId}`}
+            </p>
+            <div className="flex items-center gap-3">
+              {currentSession && (
+                <button
+                  onClick={renameCurrentSession}
+                  disabled={loading || sessionLoading}
+                  className="text-xs text-slate-400 hover:text-slate-600 transition-colors cursor-pointer disabled:text-slate-300 disabled:cursor-not-allowed"
+                >
+                  名前変更
+                </button>
+              )}
+              <button
+                onClick={resetConversation}
+                className="text-xs text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
+              >
+                新規セッション
+              </button>
+            </div>
           </div>
         )}
 

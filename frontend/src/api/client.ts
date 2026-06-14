@@ -118,6 +118,16 @@ export function fetchChatSession(sessionId: string): Promise<ChatSessionDetailRe
   return request(`/chat/sessions/${encodeURIComponent(sessionId)}`)
 }
 
+export function patchChatSessionTitle(
+  sessionId: string,
+  title: string,
+): Promise<{ session: import('./types').ChatSession }> {
+  return request(`/chat/sessions/${encodeURIComponent(sessionId)}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ title }),
+  })
+}
+
 export interface BurndownPoint {
   date: string
   open: number

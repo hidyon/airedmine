@@ -150,6 +150,10 @@ class ChatRequest(BaseModel):
     display_name: str = ""
 
 
+class ChatSessionUpdateRequest(BaseModel):
+    title: str
+
+
 class CommentProposalRequest(BaseModel):
     issue_id: Optional[int] = None
     notes: Optional[str] = None

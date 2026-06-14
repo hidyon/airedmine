@@ -587,6 +587,30 @@ ISS-084 の一括操作は誤操作リスクが高いため、このマイルス
 
 - ISS-102〜110 の結果が `docs/performance.md` または関連ドキュメントに追記され、次に最適化すべき箇所が更新されている。
 
+## Milestone 23: Chat Session の履歴体験を磨く
+
+優先度: Medium
+状態: Completed
+
+背景: M21 で Chat session の一覧・詳細 API、UI の切替、同一 session の文脈投入が入った。
+一方で、再開時の表示は assistant text が中心で、proposal、references、tool calls、関連 issue など「その会話で何を判断したか」を後から追いにくい。
+
+関連 issue:
+
+- `ISS-119` Closed: Chat session 再開時に assistant 応答 payload を復元する。
+- `ISS-120` Closed: Chat session に関連 issue と最後の proposal action を表示する。
+- `ISS-121` Closed: Chat session のリネーム・アーカイブ・削除の初期方針を決める。
+
+期待成果:
+
+- 過去 session を開いたとき、回答本文だけでなく、根拠 issue、proposal、tool call の代表情報も見返せる。
+- セッション一覧から、どの issue や更新提案に関する相談だったかを判断しやすくなる。
+- 履歴が増えても、不要な session を整理する方針が立つ。
+
+完了条件:
+
+- ISS-119〜121 が完了し、Chat session の保存・再開・整理方針が UI / API / docs で整合している。
+
 ## 変更履歴
 
 - 2026-06-06: アプリの目的を「AI エージェント経由の Redmine 利用体験を明らかにするプロトタイプ」として定義した。

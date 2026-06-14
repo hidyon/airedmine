@@ -4060,3 +4060,65 @@ Priority: Low
 
 - どの操作をいつ実装するか判断できる方針が文書化されたため、ISS-121 を Closed とする。
 - ISS-119〜121 が Closed になったため、Milestone 23 を Completed とする。
+
+### ISS-122: Chat session title を手動リネームできるようにする
+
+Status: Closed
+Priority: Medium
+
+要求仕様:
+
+- 最初の質問から作られた session title が相談内容とずれた場合、ユーザーが手動で分かりやすい名前に変更できるようにする。
+- 履歴や payload を消さずに、session を見つけやすくする。
+- 対象外: LLM による自動タイトル生成、アーカイブ、削除。
+
+機能仕様:
+
+- `PATCH /api/chat/sessions/{session_id}` を追加し、`title` を更新する。
+- title は空白だけを拒否し、長すぎる場合は validation error にする。
+- Chat UI は現在選択中の session を名前変更できる導線を持つ。
+- 更新後は session 一覧と現在 session 表示に新しい title を反映する。
+
+テスト仕様:
+
+- backend route test で title 更新、空 title 拒否、存在しない session の 404 を確認する。
+- frontend build で API 型と UI 変更が型エラーにならないことを確認する。
+
+実施結果:
+
+- `PATCH /api/chat/sessions/{session_id}` を追加し、`chat_sessions.title` を手動更新できるようにした。
+- title は空白だけを 400、80 文字超を 400、存在しない session を 404 にする。
+- Chat UI の現在 session ヘッダーに「名前変更」を追加し、更新後は session 一覧の title に反映するようにした。
+- `docs/spec.md` と `docs/chat-sessions.md` に endpoint、テスト、ISS-122 の実装方針を反映した。
+
+確認結果:
+
+- `docker compose exec -T backend python -m pytest tests/test_routes.py -q` で 34 件成功。
+- `test_chat_session_title_can_be_updated` を追加し、title 更新、空 title 拒否、80 文字超拒否、存在しない session の 404 を確認した。
+- `npm run build` を frontend で実行し、TypeScript build / Vite build が成功した。
+- `git diff --check` で whitespace 問題がないことを確認した。
+
+クローズ判定:
+
+- 要求仕様、機能仕様、テスト仕様を満たしたため ISS-122 を Closed とする。
+
+### ISS-123: Chat session をアーカイブして通常一覧から隠せるようにする
+
+Status: Open
+Priority: Medium
+
+要求仕様:
+
+- 完了した session を削除せず、通常一覧から隠せるようにする。
+- 履歴追跡性を保ちながら、日常的に見る session 一覧を整理する。
+- 対象外: 物理削除、Audit log 削除。
+
+機能仕様:
+
+- `chat_sessions.archived_at` を nullable で追加する。
+- 通常の session 一覧は未アーカイブのみ返す。
+- 必要なら `include_archived` query を追加してアーカイブ済みも参照できるようにする。
+
+テスト仕様:
+
+- アーカイブした session が通常一覧から消え、詳細 API では履歴を取得できることを確認する。

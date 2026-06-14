@@ -429,6 +429,37 @@ def test_chat_session_list_summarizes_payload_metadata(monkeypatch):
     assert by_id["session-with-reference"]["last_proposal_action"] is None
 
 
+def test_chat_session_title_can_be_updated(monkeypatch):
+    with get_connection() as conn:
+        conn.execute("DELETE FROM conversations")
+        conn.execute("DELETE FROM chat_sessions")
+        conn.commit()
+
+    monkeypatch.setattr(chat_router, "run_agent", _fake_run_agent)
+    created = client.post("/api/chat", json={
+        "question": "今日まず何からやればいい？",
+        "session_id": "rename-target",
+    })
+    assert created.status_code == 200
+
+    updated = client.patch("/api/chat/sessions/rename-target", json={"title": "  Sprint 3 相談  "})
+    assert updated.status_code == 200
+    assert updated.json()["session"]["title"] == "Sprint 3 相談"
+
+    sessions = client.get("/api/chat/sessions").json()["sessions"]
+    target = next(s for s in sessions if s["session_id"] == "rename-target")
+    assert target["title"] == "Sprint 3 相談"
+
+    empty = client.patch("/api/chat/sessions/rename-target", json={"title": "   "})
+    assert empty.status_code == 400
+
+    too_long = client.patch("/api/chat/sessions/rename-target", json={"title": "x" * 81})
+    assert too_long.status_code == 400
+
+    missing = client.patch("/api/chat/sessions/missing", json={"title": "missing"})
+    assert missing.status_code == 404
+
+
 def test_chat_uses_stored_session_context(monkeypatch):
     with get_connection() as conn:
         conn.execute("DELETE FROM conversations")

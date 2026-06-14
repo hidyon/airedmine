@@ -1,7 +1,7 @@
 from typing import Annotated
 from uuid import uuid4
 from fastapi import APIRouter, Depends, HTTPException, Query
-from models import ChatRequest
+from models import ChatRequest, ChatSessionUpdateRequest
 from services.redmine_connector import RedmineConnector, RedmineApiError
 from services.agent import run_agent
 from dependencies import get_connector
@@ -11,6 +11,7 @@ from db import (
     get_chat_session,
     get_conversation_messages,
     list_chat_sessions,
+    update_chat_session_title,
     upsert_chat_session,
 )
 
@@ -62,6 +63,18 @@ async def chat_session_detail(session_id: str) -> dict:
         "session": session,
         "messages": get_conversation_messages(session_id),
     }
+
+
+@router.patch("/api/chat/sessions/{session_id}")
+async def update_chat_session(session_id: str, request: ChatSessionUpdateRequest) -> dict:
+    title = " ".join(request.title.split())
+    if not title:
+        raise HTTPException(status_code=400, detail={"error": "title is required"})
+    if len(title) > 80:
+        raise HTTPException(status_code=400, detail={"error": "title must be 80 characters or fewer"})
+    if not update_chat_session_title(session_id, title):
+        raise HTTPException(status_code=404, detail={"error": "session not found"})
+    return {"session": get_chat_session(session_id)}
 
 
 def _save_chat_turn(session_id: str, role: str, question: str, result: dict) -> None:
