@@ -382,6 +382,7 @@ FastAPI バックエンド (:8000)
 
 `GET /api/chat/sessions` と `GET /api/chat/sessions/{session_id}` は、保存済み assistant payload から表示用 metadata として `related_issue_ids` と `last_proposal_action` も返す。
 アーカイブ済み session も詳細 API では取得でき、保存済み messages と assistant payload は削除しない。
+Chat UI の session sidebar は通常表示と全履歴表示を切り替えられ、全履歴表示ではアーカイブ済み session にラベルを表示する。
 
 チャットセッション体験の要件と初期スコープは [`chat-sessions.md`](chat-sessions.md) に記録する。
 初期方針では、UI に表示する履歴と AI に渡す文脈を分ける。UI は assistant message の `payload` があれば proposal / references / tool calls を復元し、AI には同一 `session_id` の直近 message の `content` のみを渡す。
@@ -472,6 +473,7 @@ npm run build
 - TypeScript 型チェック（`tsc -b`）が成功する。
 - Vite production build が成功する。
 - ProposalCard、Chat session UI、IssueDetailPanel の型変更が API 型定義と矛盾しない。
+- Chat session UI の通常 / 全履歴切替が API 型定義と矛盾しない。
 
 ### API 手動確認
 

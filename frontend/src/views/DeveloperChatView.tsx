@@ -49,6 +49,7 @@ export default function DeveloperChatView() {
   const [messages, setMessages] = useState<Message[]>([])
   const [sessions, setSessions] = useState<ChatSession[]>([])
   const [currentSessionId, setCurrentSessionId] = useState(generateSessionId())
+  const [includeArchivedSessions, setIncludeArchivedSessions] = useState(false)
   const [sessionsLoading, setSessionsLoading] = useState(false)
   const [sessionLoading, setSessionLoading] = useState(false)
   const [input, setInput] = useState('')
@@ -61,7 +62,7 @@ export default function DeveloperChatView() {
 
   useEffect(() => {
     refreshSessions()
-  }, [])
+  }, [includeArchivedSessions])
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -78,13 +79,20 @@ export default function DeveloperChatView() {
   async function refreshSessions() {
     setSessionsLoading(true)
     try {
-      const res = await fetchChatSessions()
+      const res = await fetchChatSessions(includeArchivedSessions)
       setSessions(res.sessions)
     } catch {
       setSessions([])
     } finally {
       setSessionsLoading(false)
     }
+  }
+
+  function setArchiveView(includeArchived: boolean) {
+    if (!includeArchived && currentSession?.archived_at) {
+      resetConversation()
+    }
+    setIncludeArchivedSessions(includeArchived)
   }
 
   async function selectSession(sessionId: string) {
@@ -181,8 +189,11 @@ export default function DeveloperChatView() {
     if (!currentSession || loading || sessionLoading) return
     if (!window.confirm('このセッションをアーカイブしますか？')) return
     try {
-      await archiveChatSession(currentSession.session_id)
-      setSessions(prev => prev.filter(session => session.session_id !== currentSession.session_id))
+      const res = await archiveChatSession(currentSession.session_id)
+      setSessions(prev => includeArchivedSessions
+        ? prev.map(session => session.session_id === res.session.session_id ? res.session : session)
+        : prev.filter(session => session.session_id !== currentSession.session_id),
+      )
       resetConversation()
     } catch {
       window.alert('セッションをアーカイブできませんでした。')
@@ -195,7 +206,9 @@ export default function DeveloperChatView() {
         <div className="px-3 py-3 border-b border-slate-200 flex items-center justify-between gap-2">
           <div className="min-w-0">
             <p className="text-sm font-semibold text-slate-800 m-0">Sessions</p>
-            <p className="text-xs text-slate-500 m-0 truncate">{sessions.length} sessions</p>
+            <p className="text-xs text-slate-500 m-0 truncate">
+              {sessions.length} sessions{includeArchivedSessions ? ' / 全履歴' : ''}
+            </p>
           </div>
           <button
             onClick={resetConversation}
@@ -204,6 +217,34 @@ export default function DeveloperChatView() {
           >
             新規
           </button>
+        </div>
+        <div className="px-3 py-2 border-b border-slate-200 bg-white">
+          <div className="grid grid-cols-2 rounded-md border border-slate-200 bg-slate-50 p-0.5">
+            <button
+              type="button"
+              onClick={() => setArchiveView(false)}
+              disabled={loading || sessionLoading}
+              className={`px-2 py-1 text-xs font-semibold rounded transition-colors cursor-pointer disabled:cursor-not-allowed ${
+                !includeArchivedSessions
+                  ? 'bg-white text-blue-700 shadow-sm'
+                  : 'text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              通常
+            </button>
+            <button
+              type="button"
+              onClick={() => setArchiveView(true)}
+              disabled={loading || sessionLoading}
+              className={`px-2 py-1 text-xs font-semibold rounded transition-colors cursor-pointer disabled:cursor-not-allowed ${
+                includeArchivedSessions
+                  ? 'bg-white text-blue-700 shadow-sm'
+                  : 'text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              全履歴
+            </button>
+          </div>
         </div>
         <div className="overflow-y-auto p-2 flex flex-col gap-1">
           {sessionsLoading && (
@@ -227,6 +268,11 @@ export default function DeveloperChatView() {
               <span className="block text-[11px] text-slate-500 mt-0.5">
                 {session.role} / {session.message_count} messages
               </span>
+              {session.archived_at && (
+                <span className="mt-1 inline-flex text-[10px] px-1.5 py-0.5 rounded border border-amber-200 bg-amber-50 text-amber-700">
+                  アーカイブ済み
+                </span>
+              )}
               {(session.related_issue_ids.length > 0 || session.last_proposal_action) && (
                 <span className="mt-1.5 flex flex-wrap gap-1">
                   {session.related_issue_ids.slice(0, 3).map(issueId => (
@@ -254,6 +300,7 @@ export default function DeveloperChatView() {
           <div className="flex items-center justify-between px-4 py-2 border-b border-slate-200 bg-slate-50 flex-shrink-0">
             <p className="text-xs text-slate-500 m-0 truncate">
               {currentSession ? currentSession.title : `session: ${currentSessionId}`}
+              {currentSession?.archived_at ? ' / アーカイブ済み' : ''}
             </p>
             <div className="flex items-center gap-3">
               {currentSession && (
@@ -265,13 +312,15 @@ export default function DeveloperChatView() {
                   >
                     名前変更
                   </button>
-                  <button
-                    onClick={archiveCurrentSession}
-                    disabled={loading || sessionLoading}
-                    className="text-xs text-slate-400 hover:text-rose-600 transition-colors cursor-pointer disabled:text-slate-300 disabled:cursor-not-allowed"
-                  >
-                    アーカイブ
-                  </button>
+                  {!currentSession.archived_at && (
+                    <button
+                      onClick={archiveCurrentSession}
+                      disabled={loading || sessionLoading}
+                      className="text-xs text-slate-400 hover:text-rose-600 transition-colors cursor-pointer disabled:text-slate-300 disabled:cursor-not-allowed"
+                    >
+                      アーカイブ
+                    </button>
+                  )}
                 </>
               )}
               <button

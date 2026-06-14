@@ -104,6 +104,13 @@ ISS-123:
 - `GET /api/chat/sessions/{session_id}` はアーカイブ済み session でも履歴を取得できる。
 - Chat UI は現在開いている session をアーカイブでき、実行後は新規 session に戻る。
 
+ISS-124:
+
+- Chat UI の session sidebar で通常表示と全履歴表示を切り替えられるようにする。
+- 全履歴表示では `include_archived=true` を使い、アーカイブ済み session も一覧に出す。
+- アーカイブ済み session は一覧と詳細ヘッダーでラベル表示し、通常 session と区別する。
+- アーカイブ済み session の再アーカイブ、アーカイブ解除、削除は初期スコープ外にする。
+
 ### 後続 issue 候補
 
 - 削除が必要かを、Audit log 永続化や proposal 関連付けの設計後に再評価する。

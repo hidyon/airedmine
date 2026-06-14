@@ -3904,7 +3904,7 @@ Priority: Medium
 
 ### ISS-118: スクリーンショットと手動確認チェックリストを更新する
 
-Status: In Progress
+Status: Closed
 Priority: Low
 
 要求仕様:
@@ -4140,3 +4140,44 @@ Priority: Medium
 クローズ判定:
 
 - 要求仕様、機能仕様、テスト仕様を満たしたため ISS-123 を Closed とする。
+
+### ISS-124: アーカイブ済み Chat session を UI から参照できるようにする
+
+Status: Closed
+Priority: Medium
+
+要求仕様:
+
+- アーカイブ済み session を削除せず、必要なときに UI から見返せるようにする。
+- 通常利用時の session 一覧は未アーカイブ中心のままにする。
+- アーカイブ済み session は通常 session と見分けられるようにする。
+- 対象外: アーカイブ解除、物理削除、検索。
+
+機能仕様:
+
+- Chat UI の session sidebar に通常表示と全履歴表示の切替を追加する。
+- 通常表示では `GET /api/chat/sessions`、全履歴表示では `GET /api/chat/sessions?include_archived=true` を使う。
+- アーカイブ済み session には一覧と詳細ヘッダーで `アーカイブ済み` ラベルを表示する。
+- アーカイブ済み session では再アーカイブ操作を出さない。
+
+テスト仕様:
+
+- `npm run build` で Chat UI の型と build が成功することを確認する。
+- API route test は ISS-123 の `include_archived=true` でカバー済みのため、今回は frontend build と文書整合を確認する。
+
+実装結果:
+
+- Chat UI の session sidebar に「通常 / 全履歴」の表示切替を追加した。
+- 全履歴では `fetchChatSessions(true)` を使い、アーカイブ済み session も一覧から選択できるようにした。
+- アーカイブ済み session には一覧と詳細ヘッダーで `アーカイブ済み` ラベルを表示するようにした。
+- アーカイブ済み session では再アーカイブ操作を表示しないようにした。
+- `docs/spec.md` と `docs/chat-sessions.md` に UI の参照導線を反映した。
+
+確認結果:
+
+- `npm run build` を frontend で実行し、TypeScript build / Vite build が成功した。
+- `docker compose exec -T backend python -m pytest tests/test_routes.py -q` で 35 件成功し、`include_archived=true` の API 挙動が引き続き通ることを確認した。
+
+クローズ判定:
+
+- 要求仕様、機能仕様、テスト仕様を満たしたため ISS-124 を Closed とする。

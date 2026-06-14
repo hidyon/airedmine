@@ -4,6 +4,28 @@
 
 ## 終了したマイルストーン
 
+## Milestone 25: Chat Session アーカイブ参照性の改善
+
+優先度: Medium
+状態: Completed
+
+背景: M24 で Chat session を通常一覧からアーカイブできるようにした。
+一方で、API は `include_archived=true` を持つが、UI からアーカイブ済み session を見返す導線がなかった。
+
+関連 issue:
+
+- `ISS-124` Closed: アーカイブ済み Chat session を UI から参照できるようにする。
+
+期待成果:
+
+- 日常の一覧はすっきり保ちつつ、必要なときにアーカイブ済み session の履歴を確認できる。
+- アーカイブ済み session が通常 session と見分けられる。
+
+完了条件:
+
+- Chat UI で通常 session と全履歴の表示を切り替えられる。
+- アーカイブ済み session を選択して、保存済み messages と proposal 表示を確認できる。
+
 ## Milestone 24: Chat Session 整理操作の実装
 
 優先度: Medium
