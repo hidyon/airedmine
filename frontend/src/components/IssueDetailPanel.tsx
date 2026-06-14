@@ -63,11 +63,14 @@ function DetailContent({ detail }: { detail: IssueDetail }) {
           {detail.subject}
         </p>
         <div className="grid grid-cols-2 gap-y-2 gap-x-3 text-[12px]">
+          <MetaRow label="トラッカー" value={detail.tracker?.name} />
           <MetaRow label="ステータス" value={detail.status?.name} />
           <MetaRow label="優先度" value={detail.priority?.name} color={priorityColor(detail.priority?.name)} />
           <MetaRow label="担当者" value={detail.assigned_to?.name ?? '未割り当て'} />
           <MetaRow label="プロジェクト" value={detail.project?.name} />
+          <MetaRow label="バージョン" value={detail.fixed_version?.name} />
           {detail.due_date && <MetaRow label="期日" value={detail.due_date} />}
+          {detail.updated_on && <MetaRow label="更新日時" value={formatDate(detail.updated_on)} />}
         </div>
       </div>
 

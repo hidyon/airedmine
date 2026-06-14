@@ -13,6 +13,8 @@ export interface Issue {
   status: NamedRef | null
   priority: NamedRef | null
   assigned_to: NamedRef | null
+  fixed_version?: NamedRef | null
+  due_date?: string | null
   updated_on: string | null
 }
 
@@ -25,7 +27,6 @@ export interface Journal {
 
 export interface IssueDetail extends Issue {
   description: string
-  due_date: string | null
   journals: Journal[]
 }
 
