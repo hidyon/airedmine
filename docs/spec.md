@@ -337,6 +337,9 @@ FastAPI バックエンド (:8000)
 | content | TEXT | メッセージ本文 |
 | created_at | TEXT | ISO 8601 UTC |
 
+チャットセッション体験の要件と初期スコープは [`chat-sessions.md`](chat-sessions.md) に記録する。
+初期方針では、UI に表示する履歴と AI に渡す文脈を分け、AI には同一 `session_id` の直近 message のみを渡す。
+
 #### SQLite: issue_embeddings
 
 | カラム | 型 | 説明 |
