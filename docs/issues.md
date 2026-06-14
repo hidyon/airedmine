@@ -3473,7 +3473,7 @@ Priority: High
 
 ### ISS-106: issue 更新が semantic index に与える影響を分析する
 
-Status: Open
+Status: Closed
 Priority: High
 
 要求仕様:
@@ -3500,3 +3500,33 @@ Priority: High
 - 代表 issue の件名または優先度を変更した場合に、semantic index の内容が古くなることを確認する。
 - `indexed_at` と Redmine `updated_on` から stale 判定できるかを確認する。
 - 分析結果を `docs/performance.md` または専用ドキュメントに記録し、後続実装issueを切れる粒度にする。
+
+実装結果:
+
+- `docs/semantic-index-freshness.md` を追加し、semantic index が現在埋め込んでいる内容、更新種別ごとの影響、更新経路ごとのリスクを整理した。
+- 2026-06-14 時点で、semantic index は `517` 件・issue_id `1〜1027`、現在の `kintai-next` は `510` 件・issue_id `1035〜1544` であり、seed reset 後の orphan embedding が発生していることを確認した。
+- `indexed_at < updated_on` で検出できる stale issue と、Redmine に存在しない issue_id を指す orphan embedding を分けて扱う方針を整理した。
+- 後続候補として `ISS-107` を追加した。
+
+### ISS-107: semantic index の stale / orphan 状態を検出する
+
+Status: Open
+Priority: High
+
+要求仕様:
+
+- semantic index が Redmine の現在状態とどれだけズレているかを確認できるようにする。
+- stale issue と orphan embedding を区別して検出できるようにする。
+- 対象外: この issue では自動再構築や issue 単位再構築までは行わない。
+
+機能仕様:
+
+- `issue_embeddings.indexed_at` と Redmine `updated_on` を比較し、stale issue を検出する。
+- `issue_embeddings.issue_id` が Redmine に存在しない orphan embedding を検出する。
+- indexed count、current Redmine count、stale count、orphan count、oldest indexed_at を確認できる API またはスクリプトを追加する。
+- `docs/semantic-index-freshness.md` に検出結果の読み方を追記する。
+
+テスト仕様:
+
+- 現在の seed reset 後状態で orphan embedding が検出されることを確認する。
+- index 再構築後に stale / orphan count が減ることを確認する。
