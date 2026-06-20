@@ -4312,3 +4312,41 @@ Priority: Medium
 クローズ判定:
 
 - 要求仕様、機能仕様、テスト仕様を満たしたため ISS-127 を Closed とする。
+
+### ISS-128: root npm 依存を lockfile で固定する
+
+Status: Closed
+Priority: Medium
+
+要求仕様:
+
+- root の `package.json` に追加した開発用 Node 依存を、lockfile で再現可能にする。
+- README の `npm install` 手順で同じ依存解決になるようにする。
+- 対象外: frontend の依存更新、Playwright のバージョン更新、CI 導入。
+
+機能仕様:
+
+- root に `package-lock.json` を追加する。
+- `package.json` の `playwright` devDependency と lockfile の解決内容を整合させる。
+- `node_modules` は成果物に含めない。
+
+テスト仕様:
+
+- `npm install --package-lock-only --ignore-scripts` で lockfile が生成・更新できることを確認する。
+- `npm install --package-lock-only --ignore-scripts` を再実行して差分が増えないことを確認する。
+- `git diff --check` で whitespace 問題がないことを確認する。
+
+実装結果:
+
+- root の `package-lock.json` を追加した。
+- `playwright` 1.54.2 と `playwright-core` 1.54.2 が lockfile に固定され、`package.json` の devDependency と整合する状態にした。
+
+確認結果:
+
+- `npm install --package-lock-only --ignore-scripts` で lockfile を生成した。
+- `npm install --package-lock-only --ignore-scripts` を再実行し、追加差分が出ないことを確認した。
+- `git diff --check` で whitespace 問題がないことを確認した。
+
+クローズ判定:
+
+- 要求仕様、機能仕様、テスト仕様を満たしたため ISS-128 を Closed とする。

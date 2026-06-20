@@ -4,6 +4,28 @@
 
 ## 終了したマイルストーン
 
+## Milestone 28: 開発用 Node tooling の再現性改善
+
+優先度: Medium
+状態: Completed
+
+背景: README / docs 用スクリーンショット撮影を `npm run screenshots` としてコマンド化したことで、root の Node 依存に Playwright が追加された。
+一方で root には lockfile がなく、撮影環境の再現性が npm registry の最新解決に依存する状態になっていた。
+
+関連 issue:
+
+- `ISS-128` Closed: root npm 依存を lockfile で固定する。
+
+期待成果:
+
+- スクリーンショット撮影や root scripts の Node 依存が、別環境でも同じバージョンで解決される。
+- README に書かれた `npm install` の結果が安定する。
+
+完了条件:
+
+- root の `package-lock.json` が追加され、`package.json` の devDependency と整合している。
+- lockfile 生成手順と確認結果が issue に記録されている。
+
 ## Milestone 27: デモ資産更新の再現性改善
 
 優先度: Medium
