@@ -7,12 +7,16 @@
     "compose": "node scripts/compose-run.mjs",
     "doctor": "node scripts/doctor.mjs",
     "healthcheck": "node scripts/healthcheck.mjs",
+    "screenshots": "node scripts/capture-screenshots.mjs",
     "perf:api": "node scripts/measure-api.mjs",
     "perf:frontend": "node scripts/measure-frontend.mjs",
     "eval:semantic": "docker compose exec -T backend python scripts/evaluate_semantic_search.py",
     "seed:demo": "node scripts/seed-demo.mjs",
     "seed:demo:no-index": "node scripts/seed-demo.mjs --skip-index",
     "seed:demo:reset": "node scripts/seed-demo.mjs --reset"
+  },
+  "devDependencies": {
+    "playwright": "1.54.2"
   },
   "engines": {
     "node": ">=20"

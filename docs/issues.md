@@ -4269,3 +4269,46 @@ Priority: Low
 クローズ判定:
 
 - 要求仕様、機能仕様、テスト仕様を満たしたため ISS-126 を Closed とする。
+
+### ISS-127: README 用スクリーンショット撮影をコマンド化する
+
+Status: Closed
+Priority: Medium
+
+要求仕様:
+
+- README / docs 用スクリーンショットを、毎回手作業や一時スクリプトに頼らず更新できるようにする。
+- Chat、PM Dashboard、Audit の代表状態を安定したデータで撮影する。
+- 対象外: UI デザイン変更、実 Redmine データを使った E2E テスト化。
+
+機能仕様:
+
+- `npm run screenshots` を追加する。
+- Playwright で frontend を開き、API は撮影用の固定レスポンスを返す。
+- `docs/screenshots/developer-chat.png`、`docs/screenshots/pm-dashboard.png`、`docs/screenshots/audit-view.png` を 1440x980 で保存する。
+- 必要な前提を README に追記する。
+
+テスト仕様:
+
+- `npm run screenshots` で 3 枚の PNG が更新されることを確認する。
+- `identify` または `file` で画像形式とサイズを確認する。
+- `git diff --check` で whitespace 問題がないことを確認する。
+
+実装結果:
+
+- `scripts/capture-screenshots.mjs` を追加し、Playwright で Chat / PM Dashboard / Audit の代表状態を撮影できるようにした。
+- 撮影時の API は固定レスポンスでモックし、実 Redmine / Anthropic API に依存しないようにした。
+- `package.json` に `npm run screenshots` と Playwright devDependency を追加した。
+- README に Playwright Chromium の準備、撮影コマンド、既存 frontend を使う場合の `--app-url` 指定を追記した。
+
+確認結果:
+
+- `npm install --package-lock=false` で Playwright dependency を取得した。
+- `PLAYWRIGHT_BROWSERS_PATH=/tmp/ms-playwright npx playwright install chromium` で撮影用 Chromium を用意した。
+- `PLAYWRIGHT_BROWSERS_PATH=/tmp/ms-playwright npm run screenshots` で 3 枚の PNG を再生成できることを確認した。
+- `file docs/screenshots/developer-chat.png docs/screenshots/pm-dashboard.png docs/screenshots/audit-view.png` で 3 枚とも PNG であることを確認した。
+- `identify docs/screenshots/developer-chat.png docs/screenshots/pm-dashboard.png docs/screenshots/audit-view.png` で 3 枚とも 1440x980 であることを確認した。
+
+クローズ判定:
+
+- 要求仕様、機能仕様、テスト仕様を満たしたため ISS-127 を Closed とする。

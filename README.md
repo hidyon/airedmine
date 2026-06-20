@@ -279,6 +279,29 @@ docker compose logs -f frontend backend
 docker compose exec backend python -m pytest tests/ -v
 ```
 
+### スクリーンショット更新
+
+README / docs で参照する代表画面のスクリーンショットは、固定レスポンスの撮影データで再生成できます。
+初回は Playwright のブラウザを用意します。
+
+```bash
+npm install
+npx playwright install chromium
+npm run screenshots
+```
+
+`npm run screenshots` は一時的に `http://127.0.0.1:5174` で frontend dev server を起動し、次の 3 枚を更新します。
+
+- `docs/screenshots/developer-chat.png`
+- `docs/screenshots/pm-dashboard.png`
+- `docs/screenshots/audit-view.png`
+
+既に起動している frontend を使う場合は、URL を指定できます。
+
+```bash
+npm run screenshots -- --app-url http://localhost:5173
+```
+
 ### 環境変数
 
 | 変数 | 説明 | デフォルト |
