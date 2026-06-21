@@ -4,6 +4,29 @@
 
 ## 終了したマイルストーン
 
+## Milestone 29: 開発用コマンド診断の改善
+
+優先度: Medium
+状態: Completed
+
+背景: README / docs 用スクリーンショット撮影や performance / semantic 評価など、root の npm scripts が増えてきた。
+一方で `npm run doctor` は Redmine / Docker / API 疎通が中心で、root の Node tooling が未準備な場合に次の行動が分かりにくかった。
+
+関連 issue:
+
+- `ISS-129` Closed: doctor で root Node tooling の準備状態を確認する。
+
+期待成果:
+
+- `npm run doctor` で Node.js version だけでなく、root の npm 依存が準備済みか分かる。
+- スクリーンショット撮影コマンドを試す前に、`npm install` 不足を発見できる。
+
+完了条件:
+
+- doctor に root Node tooling の診断項目が追加されている。
+- README のヘルスチェックまたは開発手順から `npm run doctor` の用途が分かる。
+- issue に検証結果が記録されている。
+
 ## Milestone 28: 開発用 Node tooling の再現性改善
 
 優先度: Medium

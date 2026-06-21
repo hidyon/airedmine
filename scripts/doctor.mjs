@@ -7,6 +7,7 @@ const env = loadEnvFile();
 const results = [];
 
 await checkNode();
+await checkNodeTooling();
 await checkCompose();
 await checkEnv();
 await checkServices();
@@ -26,6 +27,28 @@ async function checkNode() {
     level: major >= 20 ? "pass" : "fail",
     detail: `v${process.versions.node}`,
     hint: "Node.js 20 以上を使ってください。"
+  });
+}
+
+async function checkNodeTooling() {
+  const packageJson = readJsonFile("package.json");
+  const expectedPlaywright = packageJson?.devDependencies?.playwright;
+  const lockfileExists = existsSync("package-lock.json");
+  const installedPlaywright = readJsonFile("node_modules/playwright/package.json")?.version;
+  const problems = [];
+
+  if (!lockfileExists) problems.push("package-lock.json missing");
+  if (!expectedPlaywright) problems.push("playwright devDependency missing");
+  if (expectedPlaywright && !installedPlaywright) problems.push("node_modules/playwright missing");
+  if (expectedPlaywright && installedPlaywright && installedPlaywright !== expectedPlaywright) {
+    problems.push(`playwright ${installedPlaywright} installed, expected ${expectedPlaywright}`);
+  }
+
+  addResult({
+    name: "Node tooling",
+    level: problems.length ? "warn" : "pass",
+    detail: problems.length ? problems.join("; ") : `playwright=${installedPlaywright}`,
+    hint: "root で npm install を実行してください。スクリーンショット更新には npx playwright install chromium も必要です。"
   });
 }
 
@@ -146,6 +169,11 @@ function loadEnvFile() {
   }
 
   return { exists: true, values };
+}
+
+function readJsonFile(path) {
+  if (!existsSync(path)) return null;
+  return JSON.parse(readFileSync(path, "utf8"));
 }
 
 function addResult(result) {

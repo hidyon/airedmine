@@ -263,11 +263,15 @@ npm run eval:semantic
 ### ヘルスチェック
 
 ```bash
+npm run doctor
 curl http://localhost:8000/health
 curl http://localhost:8000/api/ai/health      # Anthropic API 疎通確認
 curl http://localhost:8000/api/ai/index/status  # 意味検索インデックスの状態
 curl http://localhost:8000/api/ai/index/freshness  # Redmine との鮮度差分
 ```
+
+`npm run doctor` は Node.js / root npm 依存、Docker Compose、`.env`、AIRedmine API、Redmine 接続状態をまとめて確認します。
+スクリーンショット更新など root の npm scripts を使う前に、`npm install` の不足もここで確認できます。
 
 ## 開発
 

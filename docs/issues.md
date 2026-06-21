@@ -4350,3 +4350,45 @@ Priority: Medium
 クローズ判定:
 
 - 要求仕様、機能仕様、テスト仕様を満たしたため ISS-128 を Closed とする。
+
+### ISS-129: doctor で root Node tooling の準備状態を確認する
+
+Status: Closed
+Priority: Medium
+
+要求仕様:
+
+- root の npm scripts を使う前に、開発用 Node 依存が未準備か分かるようにする。
+- 特に `npm run screenshots` が依存する Playwright の導入状態を `npm run doctor` で確認できるようにする。
+- 対象外: Playwright browser binary の自動インストール、CI 導入、runtime API の診断方針変更。
+
+機能仕様:
+
+- `scripts/doctor.mjs` に root Node tooling の診断を追加する。
+- `package-lock.json` の存在と、`node_modules/playwright/package.json` の version が `package.json` の devDependency と一致することを確認する。
+- 未準備でも Docker / Redmine runtime 診断を妨げすぎないよう、依存不足は warning として表示する。
+- README の開発手順に `npm run doctor` の用途を追記する。
+
+テスト仕様:
+
+- `npm run doctor` で Node tooling の診断項目が表示されることを確認する。
+- Playwright が準備済みの環境で pass になることを確認する。
+- `git diff --check` で whitespace 問題がないことを確認する。
+
+実装結果:
+
+- `scripts/doctor.mjs` に Node tooling 診断を追加した。
+- `package-lock.json` の存在、`package.json` の `playwright` devDependency、`node_modules/playwright/package.json` の version 整合を確認するようにした。
+- 依存不足は runtime 診断を止めない warning として表示する方針にした。
+- README のヘルスチェックに `npm run doctor` と root npm scripts 前提確認の説明を追記した。
+
+確認結果:
+
+- `npm run doctor` で `OK  Node tooling: playwright=1.54.2` が表示されることを確認した。
+- 同実行では sandbox の Docker socket 権限により Compose services / API は NG になったが、既存 runtime 診断の結果表示は継続した。
+- `node --check scripts/doctor.mjs` で構文エラーがないことを確認した。
+- `git diff --check` で whitespace 問題がないことを確認した。
+
+クローズ判定:
+
+- 要求仕様、機能仕様、テスト仕様を満たしたため ISS-129 を Closed とする。
