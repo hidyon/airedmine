@@ -283,6 +283,23 @@ docker compose logs -f frontend backend
 docker compose exec backend python -m pytest tests/ -v
 ```
 
+### デモ smoke test
+
+README で紹介している代表画面が最低限表示・操作できるかを、固定レスポンスで確認できます。
+
+```bash
+npm install
+npx playwright install chromium
+npm run smoke:demo
+```
+
+`npm run smoke:demo` は一時的に `http://127.0.0.1:5175` で frontend dev server を起動し、Chat / PM Dashboard / Audit の代表 UI を確認します。
+既に起動している frontend を使う場合は、URL を指定できます。
+
+```bash
+npm run smoke:demo -- --app-url http://localhost:5173
+```
+
 ### スクリーンショット更新
 
 README / docs で参照する代表画面のスクリーンショットは、固定レスポンスの撮影データで再生成できます。

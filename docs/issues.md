@@ -4392,3 +4392,114 @@ Priority: Medium
 クローズ判定:
 
 - 要求仕様、機能仕様、テスト仕様を満たしたため ISS-129 を Closed とする。
+
+### ISS-130: Playwright でデモ主要画面の smoke test を追加する
+
+Status: Closed
+Priority: High
+
+要求仕様:
+
+- README で説明している Chat / PM Dashboard / Audit の代表状態が、ブラウザで最低限表示・操作できることをコマンドで確認できるようにする。
+- 実 Redmine / Anthropic API に依存せず、固定レスポンスで安定して確認できるようにする。
+- 対象外: 網羅的な E2E、スクリーンショット比較、CI 導入、固定モックデータの共通化。
+
+機能仕様:
+
+- `npm run smoke:demo` を追加する。
+- Playwright で frontend を起動または既存 URL に接続し、API は smoke test 用の固定レスポンスでモックする。
+- Chat では session 切替、proposal 表示、issue 詳細パネル表示を確認する。
+- PM Dashboard では summary panels と issue 詳細パネル表示を確認する。
+- Audit では成功 / 失敗ログと validation category の表示を確認する。
+- README に smoke test の実行方法を追記する。
+
+テスト仕様:
+
+- `npm run smoke:demo` が成功することを確認する。
+- `node --check scripts/smoke-demo.mjs` で構文エラーがないことを確認する。
+- `git diff --check` で whitespace 問題がないことを確認する。
+
+実装結果:
+
+- `scripts/smoke-demo.mjs` を追加し、Playwright で Chat / PM Dashboard / Audit の代表状態を確認できるようにした。
+- `npm run smoke:demo` を追加した。
+- smoke test は固定レスポンスで `/api/chat/sessions`、issue detail、PM stats / burndown、Audit logs、config をモックし、実 Redmine / Anthropic API に依存しないようにした。
+- README に demo smoke test の実行方法と `--app-url` 指定を追記した。
+
+確認結果:
+
+- `node --check scripts/smoke-demo.mjs` で構文エラーがないことを確認した。
+- `PLAYWRIGHT_BROWSERS_PATH=/tmp/ms-playwright npm run smoke:demo` で Chat / PM Dashboard / Audit の smoke test が成功した。
+- 初回の sandbox 実行では frontend dev server 起動が制限で失敗したため、ブラウザ確認は権限を上げて実行した。
+- `git diff --check` で whitespace 問題がないことを確認した。
+
+クローズ判定:
+
+- 要求仕様、機能仕様、テスト仕様を満たしたため ISS-130 を Closed とする。
+
+### ISS-131: スクリーンショット撮影と smoke test の固定モックデータを共通化する
+
+Status: Open
+Priority: Medium
+
+要求仕様:
+
+- スクリーンショット撮影と smoke test が別々の固定レスポンスを持つことで、代表状態のずれが起きないようにする。
+- Chat / PM Dashboard / Audit のデモ状態を 1 か所で保守できるようにする。
+- 対象外: UI 表示内容の変更、実 Redmine データ利用。
+
+機能仕様:
+
+- `scripts/` 配下にデモブラウザ確認用の共通モックまたは helper を置く。
+- `capture-screenshots.mjs` と `smoke-demo.mjs` が同じ issue / session / audit data を参照する。
+- 後続の代表シナリオ追加時に、撮影と smoke test の両方へ反映しやすい構成にする。
+
+テスト仕様:
+
+- `npm run screenshots` と `npm run smoke:demo` がどちらも成功することを確認する。
+- `git diff --check` で whitespace 問題がないことを確認する。
+
+実装結果:
+
+- 未実施。
+
+確認結果:
+
+- 未実施。
+
+クローズ判定:
+
+- 未判定。
+
+### ISS-132: README の手動確認チェックリストを自動確認結果と対応づける
+
+Status: Open
+Priority: Medium
+
+要求仕様:
+
+- README の代表画面確認観点と、`npm run smoke:demo` で自動確認できる範囲を対応づける。
+- 自動確認で足りない部分を手動確認として残し、確認の重複や漏れを減らす。
+- 対象外: 新規 UI 実装、CI 導入。
+
+機能仕様:
+
+- README または `docs/spec.md` の手動確認チェックリストに、自動確認済み / 手動確認が必要な観点を明記する。
+- Chat / PM Dashboard / Audit ごとに smoke test で確認する selector / 画面状態を説明する。
+
+テスト仕様:
+
+- README または docs から `npm run smoke:demo` と手動確認観点を追えることを `rg` で確認する。
+- `git diff --check` で whitespace 問題がないことを確認する。
+
+実装結果:
+
+- 未実施。
+
+確認結果:
+
+- 未実施。
+
+クローズ判定:
+
+- 未判定。

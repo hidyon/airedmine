@@ -7,6 +7,7 @@
     "compose": "node scripts/compose-run.mjs",
     "doctor": "node scripts/doctor.mjs",
     "healthcheck": "node scripts/healthcheck.mjs",
+    "smoke:demo": "node scripts/smoke-demo.mjs",
     "screenshots": "node scripts/capture-screenshots.mjs",
     "perf:api": "node scripts/measure-api.mjs",
     "perf:frontend": "node scripts/measure-frontend.mjs",
