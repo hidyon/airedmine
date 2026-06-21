@@ -15,6 +15,7 @@ try {
 
   browser = await chromium.launch({ headless: true });
   await smokeChat(browser);
+  await smokeChatStartSuggestions(browser);
   await smokePmDashboard(browser);
   await smokeAudit(browser);
 
@@ -34,6 +35,22 @@ async function smokeChat(browserInstance) {
   await page.getByRole("button", { name: /#1327 月次勤怠/ }).last().click();
   await visible(page.getByText("#1327 詳細"), "Chat issue detail panel");
   await page.close();
+}
+
+async function smokeChatStartSuggestions(browserInstance) {
+  const developerPage = await newPage(browserInstance, developerUser);
+  await developerPage.goto(`${appUrl}/developer/chat`, { waitUntil: "networkidle" });
+  await visible(developerPage.getByText("質問候補"), "developer prompt suggestions");
+  await developerPage.getByText("今日の優先順").first().click();
+  await expectInputValue(developerPage, "私の今日の issue を優先順に教えて");
+  await developerPage.close();
+
+  const pmPage = await newPage(browserInstance, pmUser);
+  await pmPage.goto(`${appUrl}/developer/chat`, { waitUntil: "networkidle" });
+  await visible(pmPage.getByText("PM 向け"), "pm prompt suggestions");
+  await pmPage.getByText("定例アジェンダ").first().click();
+  await expectInputValue(pmPage, "期限切れ・停滞・Urgent をまとめて次の定例アジェンダにして");
+  await pmPage.close();
 }
 
 async function smokePmDashboard(browserInstance) {
@@ -61,6 +78,15 @@ async function visible(locator, label) {
   await locator.first().waitFor({ state: "visible", timeout: 10000 }).catch((error) => {
     throw new Error(`Expected visible: ${label}\n${error.message}`);
   });
+}
+
+async function expectInputValue(page, value) {
+  const input = page.getByPlaceholder(/issue の状況や更新依頼/);
+  await input.waitFor({ state: "visible", timeout: 10000 });
+  const current = await input.inputValue();
+  if (current !== value) {
+    throw new Error(`Expected prompt input value "${value}", got "${current}"`);
+  }
 }
 
 async function newPage(browserInstance, user) {

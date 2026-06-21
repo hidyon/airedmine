@@ -4513,7 +4513,7 @@ Priority: Medium
 
 ### ISS-133: Chat の開始体験と質問候補を改善する
 
-Status: Open
+Status: Closed
 Priority: High
 
 要求仕様:
@@ -4535,15 +4535,22 @@ Priority: High
 
 実装結果:
 
-- 未実施。
+- Chat の空状態に、developer / pm のロール別質問候補を表示するようにした。
+- 候補文を README のデモ質問例と seed の代表 issue に合わせた。
+- 候補クリックで入力欄に反映し、編集してから送信できるようにした。
+- README の機能説明と demo smoke test の確認範囲に質問候補を追記した。
+- `npm run smoke:demo` で developer / pm の質問候補表示と入力反映を確認するようにした。
 
 確認結果:
 
-- 未実施。
+- `npm run build` を frontend で実行し、TypeScript build / Vite build が成功した。
+- `node --check scripts/smoke-demo.mjs` で構文エラーがないことを確認した。
+- `PLAYWRIGHT_BROWSERS_PATH=/tmp/ms-playwright npm run smoke:demo` で Chat / PM Dashboard / Audit の smoke test が成功した。
+- `git diff --check` で whitespace 問題がないことを確認した。
 
 クローズ判定:
 
-- 未判定。
+- 要求仕様、機能仕様、テスト仕様を満たしたため ISS-133 を Closed とする。
 
 ### ISS-134: Proposal 実行後の次アクション表示を改善する
 

@@ -28,17 +28,43 @@ interface Message {
 
 type Role = 'developer' | 'pm'
 
-const EXAMPLES: Record<Role, string[]> = {
+interface PromptSuggestion {
+  label: string
+  prompt: string
+}
+
+const PROMPT_SUGGESTIONS: Record<Role, PromptSuggestion[]> = {
   developer: [
-    '今日の作業ダッシュボードを見せて',
-    '今日まず何からやればいい？',
-    '停滞している issue は？',
-    '#1208 の背景を教えて',
+    {
+      label: '今日の優先順',
+      prompt: '私の今日の issue を優先順に教えて',
+    },
+    {
+      label: 'ブロッカー確認',
+      prompt: '承認フローまわりでブロッカーになっている issue は？',
+    },
+    {
+      label: '背景を要約',
+      prompt: '#1327 月次勤怠カレンダーの初期描画パフォーマンスについて、これまでの議論を要約して',
+    },
+    {
+      label: '次アクション',
+      prompt: '#1358 iOS Safari の日付ピッカー表示バグの背景と次アクションを教えて',
+    },
   ],
   pm: [
-    'プロジェクト全体のリスクは？',
-    '今週リリースに影響するブロッカーは？',
-    '担当者の負荷バランスを教えて',
+    {
+      label: 'リリース判断',
+      prompt: 'Sprint 3 のリリース判断で残っているリスクは？',
+    },
+    {
+      label: 'PM 判断待ち',
+      prompt: 'PM 判断待ちの issue をまとめて',
+    },
+    {
+      label: '定例アジェンダ',
+      prompt: '期限切れ・停滞・Urgent をまとめて次の定例アジェンダにして',
+    },
   ],
 }
 
@@ -170,6 +196,10 @@ export default function DeveloperChatView() {
 
   function toggleIssue(id: number) {
     setSelectedIssueId(prev => (prev === id ? null : id))
+  }
+
+  function applyPromptSuggestion(prompt: string) {
+    setInput(prompt)
   }
 
   async function renameCurrentSession() {
@@ -362,19 +392,42 @@ export default function DeveloperChatView() {
           {messages.length === 0 && (
             <div className="flex flex-col items-center justify-center flex-1 py-16 text-center">
               <p className="text-xl font-bold text-slate-800 mb-2">AIRedmine Chat</p>
-              <p className="text-sm text-slate-500 mb-6">
+              <p className="text-sm text-slate-500 mb-5 max-w-xl leading-relaxed">
                 {role === 'developer'
                   ? '今日の優先 issue・ブロッカー・技術的な質問を聞いてください。'
                   : 'プロジェクトのリスク・進捗・PM 判断が必要な事項を聞いてください。'}
               </p>
-              <div className="flex flex-wrap gap-2 justify-center">
-                {EXAMPLES[role].map(ex => (
+              <div className="w-full max-w-3xl">
+                <div className="flex items-center justify-center gap-2 mb-3">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">質問候補</span>
+                  <span className="text-[11px] text-slate-400">
+                    {role === 'developer' ? '開発者向け' : 'PM 向け'}
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {PROMPT_SUGGESTIONS[role].map(item => (
+                    <button
+                      key={item.prompt}
+                      onClick={() => applyPromptSuggestion(item.prompt)}
+                      className="text-left px-4 py-3 text-sm bg-white hover:bg-blue-50 border border-slate-200 hover:border-blue-200 rounded-xl transition-colors cursor-pointer shadow-sm"
+                    >
+                      <span className="block text-xs font-semibold text-blue-600 mb-1">{item.label}</span>
+                      <span className="block text-slate-700 leading-relaxed">{item.prompt}</span>
+                    </button>
+                  ))}
+                </div>
+                <p className="text-xs text-slate-400 mt-3 m-0">
+                  候補を選ぶと入力欄に入ります。内容を編集してから送信できます。
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2 justify-center mt-5">
+                {PROMPT_SUGGESTIONS[role].slice(0, 2).map(item => (
                   <button
-                    key={ex}
-                    onClick={() => setInput(ex)}
-                    className="px-4 py-2 text-sm text-blue-600 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-full transition-colors cursor-pointer"
+                    key={`quick-${item.prompt}`}
+                    onClick={() => applyPromptSuggestion(item.prompt)}
+                    className="px-3 py-1.5 text-xs text-blue-600 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-full transition-colors cursor-pointer"
                   >
-                    {ex}
+                    {item.label}
                   </button>
                 ))}
               </div>
