@@ -63,6 +63,9 @@ async function smokePmDashboard(browserInstance) {
   await visible(page.getByText("期限切れ Issue"), "overdue panel");
   await page.getByText(issue1327.subject).first().click();
   await visible(page.getByText("#1327 詳細"), "PM issue detail panel");
+  await page.getByRole("button", { name: "Chat で相談" }).click();
+  await visible(page.getByText("Chat", { exact: true }), "Chat view title after issue detail action");
+  await expectInputValue(page, "#1327 月次勤怠カレンダーの初期描画パフォーマンス改善について、背景と次アクションを教えて");
   await page.close();
 }
 

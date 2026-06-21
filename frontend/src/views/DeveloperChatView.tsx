@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import {
@@ -87,6 +87,8 @@ export default function DeveloperChatView() {
   const historyRef = useRef<ChatHistoryMessage[]>([])
   const bottomRef = useRef<HTMLDivElement>(null)
   const currentSession = sessions.find(session => session.session_id === currentSessionId) ?? null
+  const [searchParams] = useSearchParams()
+  const navigate = useNavigate()
 
   useEffect(() => {
     refreshSessions()
@@ -95,6 +97,17 @@ export default function DeveloperChatView() {
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, loading])
+
+  useEffect(() => {
+    const draft = searchParams.get('draft')
+    if (!draft) return
+    setInput(draft)
+    const issueId = Number(searchParams.get('issue_id'))
+    if (Number.isFinite(issueId) && issueId > 0) {
+      setSelectedIssueId(issueId)
+    }
+    navigate('/developer/chat', { replace: true })
+  }, [navigate, searchParams])
 
   function resetConversation() {
     const nextSessionId = generateSessionId()

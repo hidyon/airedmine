@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { fetchIssueDetail } from '../api/client'
 import type { IssueDetail } from '../api/types'
 
@@ -11,6 +12,7 @@ export default function IssueDetailPanel({ issueId, onClose }: Props) {
   const [detail, setDetail] = useState<IssueDetail | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const navigate = useNavigate()
 
   useEffect(() => {
     if (issueId == null) { setDetail(null); return }
@@ -24,6 +26,14 @@ export default function IssueDetailPanel({ issueId, onClose }: Props) {
 
   if (issueId == null) return null
 
+  function openChat() {
+    if (issueId == null) return
+    const subject = detail?.subject ? ` ${detail.subject}` : ''
+    const draft = `#${issueId}${subject}について、背景と次アクションを教えて`
+    const params = new URLSearchParams({ issue_id: String(issueId), draft })
+    navigate(`/developer/chat?${params.toString()}`)
+  }
+
   return (
     <div className="w-96 flex-shrink-0 border-l border-slate-200 bg-white flex flex-col overflow-hidden">
       <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 flex-shrink-0">
@@ -36,6 +46,15 @@ export default function IssueDetailPanel({ issueId, onClose }: Props) {
           aria-label="閉じる"
         >
           ✕
+        </button>
+      </div>
+      <div className="px-4 py-3 border-b border-slate-100 bg-slate-50 flex-shrink-0">
+        <button
+          type="button"
+          onClick={openChat}
+          className="w-full px-3 py-2 text-xs font-semibold text-blue-700 bg-white border border-blue-200 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
+        >
+          Chat で相談
         </button>
       </div>
 

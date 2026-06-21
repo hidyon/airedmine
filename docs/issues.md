@@ -4594,7 +4594,7 @@ Priority: High
 
 ### ISS-135: issue 詳細パネルから関連する Chat / Dashboard 操作へ移りやすくする
 
-Status: Open
+Status: Closed
 Priority: Medium
 
 要求仕様:
@@ -4616,15 +4616,22 @@ Priority: Medium
 
 実装結果:
 
-- 未実施。
+- issue 詳細パネルに `Chat で相談` ボタンを追加した。
+- ボタン押下時に `/developer/chat` へ遷移し、`#issue_id 件名について、背景と次アクションを教えて` の draft を入力欄へ反映するようにした。
+- Chat 側は draft と issue_id を URL から読み取り、入力欄を埋めたうえで関連 issue 詳細パネルも開くようにした。
+- demo smoke の PM Dashboard シナリオで、issue 詳細から Chat 相談へ進めることを確認するようにした。
+- README の demo smoke 対応表を、issue 詳細から Chat への導線に合わせて更新した。
 
 確認結果:
 
-- 未実施。
+- `npm run build` で frontend build が成功した。
+- `node --check scripts/smoke-demo.mjs` で smoke script の構文確認が成功した。
+- `PLAYWRIGHT_BROWSERS_PATH=/tmp/ms-playwright npm run smoke:demo` で Chat / PM Dashboard / Audit の demo smoke が成功した。
+- `git diff --check` で whitespace 問題がないことを確認した。
 
 クローズ判定:
 
-- 未判定。
+- 要求仕様、機能仕様、テスト仕様を満たしたため ISS-135 を Closed とする。
 
 ### ISS-136: PM Dashboard の停滞・期限切れ issue から定例アジェンダを作りやすくする
 
