@@ -4554,7 +4554,7 @@ Priority: High
 
 ### ISS-134: Proposal 実行後の次アクション表示を改善する
 
-Status: Open
+Status: Closed
 Priority: High
 
 要求仕様:
@@ -4576,15 +4576,21 @@ Priority: High
 
 実装結果:
 
-- 未実施。
+- Chat の proposal 実行成功後に、実行結果、Audit への導線、関連 issue 詳細を開く導線をカード内に表示するようにした。
+- bulk update / 危険操作では、成功後にも対象件数や追加確認済みであることが分かる補助表示を残すようにした。
+- demo smoke の Chat シナリオで proposal 実行後の Audit 導線と `#1327` 詳細導線を確認するようにした。
+- README の demo smoke 対応表を、proposal 実行後の確認導線に合わせて更新した。
 
 確認結果:
 
-- 未実施。
+- `npm run build` で frontend build が成功した。
+- `node --check scripts/smoke-demo.mjs` で smoke script の構文確認が成功した。
+- `PLAYWRIGHT_BROWSERS_PATH=/tmp/ms-playwright npm run smoke:demo` で Chat / PM Dashboard / Audit の demo smoke が成功した。
+- `git diff --check` で whitespace 問題がないことを確認した。
 
 クローズ判定:
 
-- 未判定。
+- 要求仕様、機能仕様、テスト仕様を満たしたため ISS-134 を Closed とする。
 
 ### ISS-135: issue 詳細パネルから関連する Chat / Dashboard 操作へ移りやすくする
 

@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import {
@@ -620,12 +621,39 @@ function proposalHazard(proposal: UpdateProposal): HazardInfo {
   return { required: false, reason: '' }
 }
 
-function ProposalCard({ proposal }: { proposal: UpdateProposal }) {
+function proposalPrimaryIssueId(proposal: UpdateProposal): number | null {
+  if (proposal.action === 'comment' && proposal.target_issue?.id != null) {
+    return proposal.target_issue.id
+  }
+  if (proposal.action === 'bulk_update') {
+    return null
+  }
+  return proposal.issue_id ?? null
+}
+
+function proposalFollowUp(proposal: UpdateProposal, hazard: HazardInfo): string {
+  const parts = ['Audit で実行履歴を確認できます']
+  const primaryIssueId = proposalPrimaryIssueId(proposal)
+  if (primaryIssueId != null) parts.push(`#${primaryIssueId} の詳細を再確認できます`)
+  if (proposal.action === 'bulk_update') parts.push(`対象 ${proposal.issue_ids?.length ?? 0} 件`)
+  if (hazard.required) parts.push('追加確認済み')
+  return parts.join(' / ')
+}
+
+function ProposalCard({
+  proposal,
+  onSelectIssue,
+}: {
+  proposal: UpdateProposal
+  onSelectIssue?: (id: number) => void
+}) {
   const [sendState, setSendState] = useState<SendState>('idle')
   const [errorInfo, setErrorInfo] = useState<ProposalError | null>(null)
   const [confirmArmed, setConfirmArmed] = useState(false)
   const details = proposalDetails(proposal)
   const hazard = proposalHazard(proposal)
+  const primaryIssueId = proposalPrimaryIssueId(proposal)
+  const followUp = proposalFollowUp(proposal, hazard)
 
   const isComment = proposal.action === 'comment' && proposal.target_issue != null
   const isStatusChange = proposal.action === 'status_change' && proposal.issue_id != null && proposal.new_status_id != null
@@ -770,7 +798,37 @@ function ProposalCard({ proposal }: { proposal: UpdateProposal }) {
       <div className="mt-3">
         {canExecute ? (
           sendState === 'done' ? (
-            <span className="text-xs text-emerald-700 font-medium">{doneLabel}</span>
+            <div className="w-full border border-emerald-200 bg-white/80 rounded-lg px-3 py-2">
+              <p className="text-xs text-emerald-800 font-semibold m-0">{doneLabel}</p>
+              <p className="text-[11px] text-emerald-700 mt-1 mb-0">{followUp}</p>
+              <div className="flex flex-wrap items-center gap-2 mt-2">
+                <Link
+                  to="/audit"
+                  className="px-2.5 py-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 rounded-md transition-colors"
+                >
+                  Audit を確認
+                </Link>
+                {primaryIssueId != null && onSelectIssue && (
+                  <button
+                    type="button"
+                    onClick={() => onSelectIssue(primaryIssueId)}
+                    className="px-2.5 py-1.5 text-xs font-semibold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 rounded-md transition-colors cursor-pointer"
+                  >
+                    #{primaryIssueId} 詳細
+                  </button>
+                )}
+                {proposal.action === 'bulk_update' && (
+                  <span className="text-[11px] px-2 py-1 rounded-md border border-emerald-100 bg-emerald-50 text-emerald-700">
+                    対象 {proposal.issue_ids?.length ?? 0} 件
+                  </span>
+                )}
+                {hazard.required && (
+                  <span className="text-[11px] px-2 py-1 rounded-md border border-amber-200 bg-amber-50 text-amber-700">
+                    追加確認済み
+                  </span>
+                )}
+              </div>
+            </div>
           ) : (
             <div className="flex items-center gap-2">
               <button
@@ -1004,7 +1062,7 @@ function AssistantBubble({
         </div>
       )}
 
-      {res.proposal && <ProposalCard proposal={res.proposal} />}
+      {res.proposal && <ProposalCard proposal={res.proposal} onSelectIssue={onSelectIssue} />}
 
       {res.references && res.references.length > 0 && (
         <div className="flex flex-wrap gap-1.5">

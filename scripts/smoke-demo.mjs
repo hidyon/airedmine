@@ -32,7 +32,9 @@ async function smokeChat(browserInstance) {
   await page.getByRole("button", { name: "全履歴" }).click();
   await page.getByText("Sprint 3 リリース判断").click();
   await visible(page.getByText("ステータス変更提案"), "proposal card");
-  await page.getByRole("button", { name: /#1327 月次勤怠/ }).last().click();
+  await page.getByRole("button", { name: "実行" }).click();
+  await visible(page.getByText("Audit を確認"), "proposal audit follow-up");
+  await page.getByRole("button", { name: "#1327 詳細" }).click();
   await visible(page.getByText("#1327 詳細"), "Chat issue detail panel");
   await page.close();
 }

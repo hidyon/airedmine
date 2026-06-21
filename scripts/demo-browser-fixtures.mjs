@@ -235,6 +235,9 @@ export async function demoApiRoute(route) {
   if (path === "/api/pm/burndown") return fulfill(route, burndown);
   if (path === "/api/pm/stats") return fulfill(route, pmStats);
   if (path === "/api/proposals/logs") return fulfill(route, auditLogs);
+  if (path === "/api/proposals/update") {
+    return fulfill(route, { ok: true, issue_id: 1327, action: "status_change" });
+  }
   if (path === "/api/config") {
     return fulfill(route, {
       connected: true,
