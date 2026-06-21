@@ -4,6 +4,30 @@
 
 ## 終了したマイルストーン
 
+## Milestone 30: デモ体験の自動確認
+
+優先度: High
+状態: Completed
+
+背景: README 用スクリーンショット撮影をコマンド化し、root Node tooling の再現性と doctor 診断を整えた。
+README で説明している Chat / PM Dashboard / Audit の代表体験が壊れていないことを、ブラウザ操作で素早く確認できるようにした。
+
+関連 issue:
+
+- `ISS-130` Closed: Playwright でデモ主要画面の smoke test を追加する。
+- `ISS-131` Closed: スクリーンショット撮影と smoke test の固定モックデータを共通化する。
+- `ISS-132` Closed: README の手動確認チェックリストを自動確認結果と対応づける。
+
+期待成果:
+
+- README の代表画面が表示できるかを `npm run smoke:demo` で確認できる。
+- Chat / PM Dashboard / Audit の主要 UI が、固定データで最低限操作できる。
+- 今後 UI を変更したとき、スクリーンショット更新前に基本的な破損を見つけられる。
+
+完了条件:
+
+- ISS-130〜132 が完了し、デモ体験の表示確認、モックデータ、手動確認チェックリストがつながっている。
+
 ## Milestone 29: 開発用コマンド診断の改善
 
 優先度: Medium

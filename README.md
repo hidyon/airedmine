@@ -300,6 +300,14 @@ npm run smoke:demo
 npm run smoke:demo -- --app-url http://localhost:5173
 ```
 
+自動確認と手動確認の対応は次の通りです。
+
+| View | `npm run smoke:demo` で確認すること | 手動で見ること |
+| --- | --- | --- |
+| Chat | session 一覧、全履歴切替、保存済み session 表示、proposal card、`#1327` 詳細パネル | 新規質問、アーカイブ解除、実 Anthropic API の回答品質 |
+| PM Dashboard | バーンダウン表示、停滞 issue、期限切れ issue、担当者別 Open Issue 数、`#1327` 詳細パネル | 実 Redmine seed 投入後の件数、担当者負荷の妥当性 |
+| Audit | 成功 / 失敗ログ、validation category | 操作種別・結果・issue_id フィルタ、実更新後のログ反映 |
+
 ### スクリーンショット更新
 
 README / docs で参照する代表画面のスクリーンショットは、固定レスポンスの撮影データで再生成できます。

@@ -4478,7 +4478,7 @@ Priority: Medium
 
 ### ISS-132: README の手動確認チェックリストを自動確認結果と対応づける
 
-Status: Open
+Status: Closed
 Priority: Medium
 
 要求仕様:
@@ -4499,12 +4499,14 @@ Priority: Medium
 
 実装結果:
 
-- 未実施。
+- README の demo smoke test セクションに、自動確認と手動確認の対応表を追加した。
+- Chat / PM Dashboard / Audit ごとに、`npm run smoke:demo` で確認する代表状態と、手動で見るべき観点を分けて記録した。
 
 確認結果:
 
-- 未実施。
+- `rg -n "smoke:demo|自動確認|手動確認|session 一覧|担当者別 Open Issue 数|validation category" README.md docs/issues.md docs/roadmap.md` で README と docs から確認観点を追えることを確認した。
+- `git diff --check` で whitespace 問題がないことを確認した。
 
 クローズ判定:
 
-- 未判定。
+- 要求仕様、機能仕様、テスト仕様を満たしたため ISS-132 を Closed とする。
