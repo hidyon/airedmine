@@ -4439,7 +4439,7 @@ Priority: High
 
 ### ISS-131: スクリーンショット撮影と smoke test の固定モックデータを共通化する
 
-Status: Open
+Status: Closed
 Priority: Medium
 
 要求仕様:
@@ -4461,15 +4461,20 @@ Priority: Medium
 
 実装結果:
 
-- 未実施。
+- `scripts/demo-browser-fixtures.mjs` を追加し、デモブラウザ確認用の user / session / issue / PM stats / burndown / audit logs / API route mock を共通化した。
+- `scripts/capture-screenshots.mjs` と `scripts/smoke-demo.mjs` から重複していた固定レスポンス定義を削除し、共通 fixture を参照するようにした。
+- session id を `demo-main` / `demo-archived` / `demo-pm` に揃え、撮影と smoke test が同じ代表状態を使うようにした。
 
 確認結果:
 
-- 未実施。
+- `node --check scripts/demo-browser-fixtures.mjs scripts/capture-screenshots.mjs scripts/smoke-demo.mjs` 相当で各ファイルの構文エラーがないことを確認した。
+- `PLAYWRIGHT_BROWSERS_PATH=/tmp/ms-playwright npm run smoke:demo` で Chat / PM Dashboard / Audit の smoke test が成功した。
+- `PLAYWRIGHT_BROWSERS_PATH=/tmp/ms-playwright npm run screenshots` で 3 枚のスクリーンショットを再生成できることを確認した。
+- `git diff --check` で whitespace 問題がないことを確認した。
 
 クローズ判定:
 
-- 未判定。
+- 要求仕様、機能仕様、テスト仕様を満たしたため ISS-131 を Closed とする。
 
 ### ISS-132: README の手動確認チェックリストを自動確認結果と対応づける
 
