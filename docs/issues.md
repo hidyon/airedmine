@@ -4787,3 +4787,47 @@ Priority: High
 クローズ判定:
 
 - 要求仕様・機能仕様・テスト仕様を満たすため Closed とする。
+
+### ISS-140: seed の issue に期日を設定し期限切れを観測できるようにする
+
+Status: Closed
+Priority: Medium
+
+背景:
+
+- PM Dashboard の「期限切れ Issue」が常に 0 件で、現在日から見たリスクが観測できなかった。
+- 原因は seed スクリプトが `start_date` は設定するが `due_date` を一切設定していなかったこと。overdue 判定は「open issue かつ `due_date < 今日`」のため、期日が無いと常に 0 件になる。
+
+要求仕様:
+
+- デモデータで、現在日から見て期限切れの open issue が観測できる。
+- 日付は seed 実行時の現在日基準（相対）で、いつ seed しても鮮度が保たれる。
+- 見せ方は「現実的」方針とする（進行中スプリントの作業は期日前なので、期限切れは過去スプリントのやり残しに限る）。対象外: 期限切れを意図的に大量発生させる演出。
+
+機能仕様:
+
+- `scripts/redmine/seed-demo.rb` で各 issue の `due_date` を所属 sprint（version）の `effective_date` を基準に設定する。
+- `idx` 由来の -3〜+3 日のばらつきを足し、期日が一様にならないようにする。
+- issue 側で `due_days_from_now`（現在日からの相対日数）を指定した場合はそれを優先する。
+- version 未設定の issue は期日なしのままにする。
+
+テスト仕様:
+
+- 再 seed 後、`GET /api/pm/stats` の overdue が 0 件でなくなることを確認する。
+- 期限切れが過去スプリント（Sprint 2 等）の open issue で構成されることを確認する。
+- PM Dashboard の期限切れパネルに issue が表示されることを確認する。
+
+実装結果:
+
+- `seed-demo.rb` に `due_date_for(version, idx, override)` を追加し、`create_issue` で `issue.due_date` を設定するようにした。
+- `npm run seed:demo` で 510 issue を reconcile し、既存 issue にも期日を backfill した。
+
+確認結果:
+
+- 再 seed 前は overdue 0 件、再 seed 後は `GET /api/pm/stats` の overdue が 10 件（パネル上限 20 の範囲内）になった。
+- 期限切れは Sprint 2（-30 日）の open issue で構成され、期日は 2026-06-28〜29 に分布することを確認した。
+- PM Dashboard の期限切れパネルに #1296 / #1317 / #1294 などが表示され、アジェンダバナーが「停滞 20 件・期限切れ 10 件」に更新されることをブラウザ操作で確認した。
+
+クローズ判定:
+
+- 要求仕様・機能仕様・テスト仕様を満たすため Closed とする。

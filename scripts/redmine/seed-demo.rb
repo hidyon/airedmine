@@ -148,6 +148,20 @@ def done_ratio_for(status)
   end
 end
 
+# issue の期日を決める。
+# - due_days_from_now が指定されていれば現在日からの相対で使う。
+# - なければ所属 sprint（version）の期日を基準に、idx 由来の -3..+3 日のばらつきを足す。
+#   これにより過去 sprint の未完了 issue は期限切れとして観測できる。
+def due_date_for(version, idx, override = nil)
+  return Date.current + override.to_i.days unless override.nil?
+
+  base = version&.effective_date
+  return nil if base.nil?
+
+  jitter = (idx % 7) - 3
+  base + jitter.days
+end
+
 def create_issue(project:, attrs:, idx:, assigned_to:, users:, statuses:, priorities:, trackers:, versions:)
   subject = attrs["subject"].to_s.strip
   return if subject.empty?
@@ -169,6 +183,9 @@ def create_issue(project:, attrs:, idx:, assigned_to:, users:, statuses:, priori
   issue.description   = attrs["description"].to_s.strip
   issue.fixed_version = version
   issue.start_date    = [Date.current - days.days - 5.days, Date.current - 90.days].max
+  # 期日は所属 sprint の期日を基準にする（過去 sprint の未完了 issue は期限切れになる）。
+  # attrs["due_days_from_now"] で個別に上書きできる。
+  issue.due_date      = due_date_for(version, idx, attrs["due_days_from_now"])
   issue.done_ratio    = done_ratio_for(status)
   issue.save!(validate: false)
 
