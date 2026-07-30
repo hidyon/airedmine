@@ -275,6 +275,7 @@ FastAPI バックエンド (:8000)
    - Anthropic API に `TOOL_SCHEMAS`（20 ツール）と `messages` を渡す。
    - `stop_reason == "end_turn"` になったら最終回答を返す。
    - `tool_use` ブロックがある場合は `execute_tool()` を実行し、結果を `tool_result` として履歴に追加して再度 API を呼ぶ。
+   - `tool_use` ブロックが 1 つも無い応答（`max_tokens` 到達などで途中終了し `end_turn` にならない場合）は、空の `tool_result` を user メッセージとして積むと次リクエストが `400 (user messages must have non-empty content)` になるため、そのラウンドで得られたテキストを最終回答として返す。
    - `add_comment` / `create_issue` / `change_status` / `change_assignee` / `bulk_update` / `update_due_date` / `update_priority` / `update_done_ratio` / `assign_version` / `add_relation` ツールは Redmine を直接更新せず、`confirmation_required` フラグ付きの proposal を返す。
    - project/status/priority/user/version の ID が必要な場合は参照ツールで確認し、推測した ID では proposal を作らない。
 5. **レスポンス**: `{"answer", "proposal", "tool_calls"}` を返す。
@@ -548,6 +549,7 @@ npm run build
 - [ ] 「#1327 を Sprint 3 に割り当てて」→ バージョン割当 proposal カードが表示される
 - [ ] 「#1327 と #1358 を関連付けて」→ 関連付け proposal カードが表示される
 - [ ] 「#1327 と #1358 を Feedback にして」→ 一括更新 proposal カードに対象件数・対象 issue・追加確認が表示される
+- [ ] 「担当 issue を全件、背景・現状・次アクションまで詳しく説明して」のように長い回答を誘発する質問でも 400 にならず、途中終了時は得られた範囲の回答が返る（`max_tokens` 到達時の空 user メッセージ回避）
 
 #### Developer Chat — マルチターン会話
 
@@ -591,3 +593,4 @@ npm run build
 - 2026-06-07: 初版作成（ISS-062）。Milestone 8 時点の仕様を記録。
 - 2026-06-07: Milestone 9・11 の仕様を追加。AI Agent (Anthropic API + tool_use)、マルチターン会話、ロール別プロンプト、意味検索インデックス（sentence-transformers）を反映した。
 - 2026-06-07: Milestone 12 の仕様を追加。JWT 認証、マークダウンレンダリング、issue リンク、ロール固定ナビ、change_status / change_assignee ツール、チームメンバーリストのシステムプロンプト注入を反映した。
+- 2026-07-30: tool_use ループの途中終了ハンドリングを追記。`max_tokens` 到達などで `tool_use` ブロックが無い応答のとき、空の user メッセージを積まず得られた回答を返す（Anthropic 400 回避）バグ修正を反映した。

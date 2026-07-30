@@ -862,3 +862,62 @@ def test_experience_notes_create():
 def test_experience_notes_create_missing_note():
     resp = client.post("/api/experience/notes", json={"role": "developer", "note": ""})
     assert resp.status_code == 400
+
+
+@pytest.mark.asyncio
+async def test_run_agent_returns_partial_answer_on_max_tokens(monkeypatch):
+    """tool_use 後に max_tokens で途中終了しても、空 user メッセージを積まず回答を返す。
+
+    回帰前は 3 回目の API 呼び出しで Anthropic が
+    `messages.N: user messages must have non-empty content` (400) を返していた。
+    """
+    from services import agent
+
+    class Block:
+        def __init__(self, type=None, name=None, id=None, input=None, text=None):
+            self.type = type
+            self.name = name
+            self.id = id
+            self.input = input or {}
+            if text is not None:
+                self.text = text
+
+    class Response:
+        def __init__(self, stop_reason, content):
+            self.stop_reason = stop_reason
+            self.content = content
+
+    responses = [
+        Response("tool_use", [Block(type="tool_use", name="list_issues", id="t1", input={})]),
+        # 途中終了: tool_use なし・end_turn でもない
+        Response("max_tokens", [Block(type="text", text="担当 issue は 49 件です。まず")]),
+    ]
+    calls = {"n": 0}
+
+    class FakeMessages:
+        def create(self, **kwargs):
+            i = calls["n"]
+            calls["n"] += 1
+            return responses[i]
+
+    class FakeClient:
+        messages = FakeMessages()
+
+    monkeypatch.setattr(agent, "_client", lambda: FakeClient())
+
+    async def fake_execute_tool(name, inp, connector, kb, timings=None):
+        return "[]"
+
+    monkeypatch.setattr(agent, "execute_tool", fake_execute_tool)
+
+    result = await agent.run_agent(
+        question="担当 issue を全件詳しく説明して",
+        messages=[],
+        role="developer",
+        connector=None,
+    )
+
+    # 3 回目の create は呼ばれない（呼ばれると IndexError で回帰を検知）
+    assert calls["n"] == 2
+    assert result["answer"].startswith("担当 issue は 49 件です")
+    assert result["tool_calls"] == ["list_issues"]

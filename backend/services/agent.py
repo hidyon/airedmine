@@ -315,6 +315,12 @@ async def run_agent(
                 "content": result_str,
             })
 
+        # tool_use ブロックが無い場合（max_tokens 等で途中終了）は、空の user
+        # メッセージを積むと次リクエストが 400 になるため、現時点の回答を返す。
+        if not tool_results:
+            answer = _extract_text(response)
+            return {"answer": answer, "proposal": proposal, "tool_calls": tool_calls, "timings": _finalize_timings(timings, total_started)}
+
         # assistant メッセージとツール結果を履歴に追加
         api_messages.append({"role": "assistant", "content": response.content})
         api_messages.append({"role": "user", "content": tool_results})
