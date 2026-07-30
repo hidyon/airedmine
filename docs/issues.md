@@ -4700,3 +4700,84 @@ Priority: Low
 クローズ判定:
 
 - 未判定。
+
+### ISS-138: AI Agent の tool_use ループが max_tokens 途中終了で 400 になる不具合を修正する
+
+Status: Closed
+Priority: High
+
+背景:
+
+- 実アプリ操作中に Chat が失敗し、backend が Anthropic から `400 messages.N: user messages must have non-empty content` を受け取った。
+- セッションを作り直すと回避できたため見逃されやすいが、ツール呼び出しを含む長い回答のたびに再発する。
+
+要求仕様:
+
+- ツール呼び出しを伴う長い回答（`max_tokens` 到達などで途中終了）でも Chat が 400 で失敗せず、得られた範囲の回答を返す。
+- 対象外: `max_tokens` 自体の引き上げ（回答の途中切れ低減は別途）。
+
+機能仕様:
+
+- `backend/services/agent.py` の tool_use ループで、応答に `tool_use` ブロックが 1 つも無い場合（`stop_reason` が `end_turn` でも `tool_use` でもない `max_tokens` 等）は、空の `tool_result` を user メッセージとして積まず、その時点のテキストを最終回答として返す。
+- 既存の `end_turn` 分岐・proposal 生成・timings には影響を与えない。
+
+テスト仕様:
+
+- 回帰テスト: tool_use 応答の次に `max_tokens` 応答が来ても、3 回目の API 呼び出しが発生せず、途中回答が返ることを確認する。
+- 実 Chat: ツール呼び出し + 長文を誘発する質問で HTTP 200 と回答が返ることを確認する。
+
+実装結果:
+
+- tool_results が空のとき現時点の回答を返すガードを追加した（commit `b91c654`）。
+- 回帰テスト `test_run_agent_returns_partial_answer_on_max_tokens` を追加した。
+- `docs/spec.md` の tool_use ループ仕様・テスト仕様・変更履歴に反映した。
+
+確認結果:
+
+- backend 全 37 テストが pass。
+- 実 Chat で `list_issues` + `get_issue`×14 のマルチラウンド + 長文回答が HTTP 200 で返ることを確認した（修正前は同パターンで 400）。
+
+クローズ判定:
+
+- 要求仕様・機能仕様・テスト仕様を満たすため Closed とする。
+
+### ISS-139: クイックスタートの順序を修正し意味検索を初回から使えるようにする
+
+Status: Closed
+Priority: High
+
+背景:
+
+- 旧クイックスタートは `npm run seed:demo`（step 4）が `REDMINE_API_KEY` 設定前に意味検索インデックスを構築していた。
+- backend は base_url と api_key が両方非空なら実モード扱いだが、初回は無効キーのため index 構築が失敗し、意味検索がデモ issue に効かなかった。
+
+要求仕様:
+
+- README のクイックスタート手順どおりに進めれば、意味検索がデモ issue に対して動く。
+- `.env.example` をコピーした初期状態が、破綻せずモードで開始できる。
+
+機能仕様:
+
+- クイックスタートの順序を修正する: issue 投入は `npm run seed:demo:no-index`（キー発行のみ）→ `REDMINE_API_KEY` 設定 + `docker compose restart backend` → `curl -X POST /api/ai/index/build` でインデックス構築、という並びにする。
+- インデックス構築はキー設定・再起動の後に行う旨を注記する。
+- `.env.example` の `REDMINE_API_KEY` を空にし、未設定時はモックで動くことを明示する。
+
+テスト仕様:
+
+- 誤順序（mock のまま構築）ではインデックスが mock issue のみになり、意味検索がデモ issue を返さないことを再現する。
+- 修正順序（キー設定 → 再起動 → 構築）ではデモ issue が意味検索で返ることを確認する。
+
+実装結果:
+
+- README のクイックスタートを step 4/5 に再構成し、`seed:demo:no-index` と index build を分離した（commit `a21b4db`）。
+- `.env.example` の `REDMINE_API_KEY` を空にした。
+
+確認結果:
+
+- 実インスタンスで再現テスト: mock 構築時はインデックス 8 件で意味検索が #1205/#1207/#1208（mock）を返す。
+- 修正順序では 517 件で意味検索が #1531/#1424/#1179（デモ issue）を返す。
+- `curl -X POST /api/ai/index/build` が README 記載どおり `{"indexed_issues": 517, "ready": true}` を返すことを確認した。
+
+クローズ判定:
+
+- 要求仕様・機能仕様・テスト仕様を満たすため Closed とする。
