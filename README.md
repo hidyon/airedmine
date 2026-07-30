@@ -162,7 +162,7 @@ cd airedmine
 ```bash
 cp .env.example .env
 # .env に ANTHROPIC_API_KEY を設定する（Chat に必要）
-# Redmine 未接続でもモックデータで動くため、まずは ANTHROPIC_API_KEY だけで開始できる
+# REDMINE_API_KEY は空のままでよい（この後 step 4 で発行されるキーを step 5 で設定する）
 ```
 
 ### 3. Docker を起動する
@@ -183,12 +183,26 @@ docker compose up
 
 ```bash
 docker compose exec backend python scripts/seed_users.py   # ログインユーザー
-npm run seed:demo                                          # Redmine デモ issue
+npm run seed:demo:no-index                                 # Redmine デモ issue（意味検索インデックスは step 5 で作る）
 ```
 
-`npm run seed:demo` は投入後に出力する Redmine API キーを `.env` の `REDMINE_API_KEY` に設定し、`docker compose restart backend` で再起動すると実 Redmine に接続できます（未設定のままならモックデータで動作）。
+`seed:demo:no-index` の出力に Redmine API キーが表示されます。step 5 で使います。
 
-### 5. ログインする
+### 5. 実 Redmine に接続して意味検索を有効にする
+
+step 4 で出力された API キーを `.env` の `REDMINE_API_KEY` に設定し、バックエンドを再起動してから意味検索インデックスを構築します。
+
+```bash
+# .env の REDMINE_API_KEY=＜step 4 で出力されたキー＞ を設定してから：
+docker compose restart backend
+curl -X POST http://localhost:8000/api/ai/index/build
+# → {"indexed_issues": 517, "ready": true}
+```
+
+> ⚠️ 意味検索インデックスは **REDMINE_API_KEY を設定してバックエンドを再起動した後**に構築します。順序を逆にすると空のインデックスになり、意味検索がデモ issue に対して効きません。
+> `REDMINE_API_KEY` を空のままにするとモックデータで動作します（Chat は動きますが、意味検索はデモ issue には効きません）。
+
+### 6. ログインする
 
 `http://localhost:5173` を開き、以下でログインします（パスワードは全員 `.env` の `DEMO_PASSWORD`、デフォルト `demo`）。
 
@@ -197,12 +211,13 @@ npm run seed:demo                                          # Redmine デモ issu
 | tanaka | 開発者 |
 | nakamura | PM |
 
-### 6. 試してみる
+### 7. 試してみる
 
 Chat で次のように聞いてみます。
 
 - 開発者（tanaka）: 「私の今日の issue を優先順に教えて」
 - PM（nakamura）: 「Sprint 3 のリリース判断で残っているリスクは？」
+- 意味検索: 「パフォーマンスが遅いという相談に関係する issue を探して」
 
 回答内の `#1327` などをクリックすると issue 詳細パネルが開きます。
 「#1327 の期日を 2026-07-01 にする提案を作って」のように依頼すると更新 proposal が作られ、確認後の実行結果は `/audit` で確認できます。
