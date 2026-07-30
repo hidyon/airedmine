@@ -136,6 +136,9 @@ STATUS_CYCLE   = %w[new in_progress in_progress feedback resolved closed closed 
 PRIORITY_CYCLE = %w[low normal normal normal high high urgent]
 DAYS_CYCLE     = [1, 2, 3, 5, 7, 10, 14, 20, 30, 45, 60, 90]
 VERSION_CYCLE  = %w[sprint1 sprint2 sprint2 sprint3 sprint3 sprint4]
+# Closed issue の一部を直近クローズ扱いにして「今週のクローズ数」が出るようにする。
+# nil は「直近扱いにしない（通常の updated_days_ago を使う）」。
+CLOSED_RECENT_CYCLE = [1, nil, nil, 4, nil, nil, nil, 6, nil, nil, nil, nil]
 
 def done_ratio_for(status)
   case status.name
@@ -190,6 +193,11 @@ def create_issue(project:, attrs:, idx:, assigned_to:, users:, statuses:, priori
   issue.save!(validate: false)
 
   ts = days.days.ago
+  # Closed issue の一部は直近にクローズされたことにする（今週のクローズ数を観測できるように）。
+  if status.is_closed?
+    recent = CLOSED_RECENT_CYCLE[idx % CLOSED_RECENT_CYCLE.length]
+    ts = recent.days.ago if recent
+  end
   Issue.where(id: issue.id).update_all(
     updated_on: ts,
     closed_on:  status.is_closed? ? ts : nil

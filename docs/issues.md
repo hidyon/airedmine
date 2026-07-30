@@ -4831,3 +4831,40 @@ Priority: Medium
 クローズ判定:
 
 - 要求仕様・機能仕様・テスト仕様を満たすため Closed とする。
+
+### ISS-141: seed の Closed issue に直近クローズを含め「今週のクローズ数」を観測できるようにする
+
+Status: Closed
+Priority: Low
+
+背景:
+
+- PM Dashboard の「今週のクローズ数」が常に 0 件だった。ISS-140 の調査中に判明した派生課題。
+- Closed issue の `updated_on`（クローズ日代用）が全て 9 日以上前で、直近 7 日に 1 件も入っていなかった。
+
+要求仕様:
+
+- デモデータで、現在日から見て直近 7 日以内にクローズされた issue が観測できる。
+- burndown・停滞 issue の見え方を大きく崩さない（全 Closed を直近にしない）。
+
+機能仕様:
+
+- `scripts/redmine/seed-demo.rb` に `CLOSED_RECENT_CYCLE` を追加し、Closed issue の一部（idx 由来で約 1/4）の `updated_on` / `closed_on` を直近 1〜6 日前にする。
+- それ以外の Closed issue は従来どおり `updated_days_ago` を使う。
+
+テスト仕様:
+
+- 再 seed 後、`GET /api/pm/stats` の `closed_this_week` が 0 件でなくなることを確認する。
+- overdue / stalled の件数が維持されることを確認する。
+
+実装結果:
+
+- `CLOSED_RECENT_CYCLE = [1, nil, nil, 4, nil, nil, nil, 6, nil, nil, nil, nil]` を追加し、`create_issue` の close/更新タイムスタンプ設定で Closed issue に適用した。
+
+確認結果:
+
+- 再 seed 後、`closed_this_week` が 0 → 34 件になった。overdue 10 件・stalled 20 件は維持されることを確認した。
+
+クローズ判定:
+
+- 要求仕様・機能仕様・テスト仕様を満たすため Closed とする。

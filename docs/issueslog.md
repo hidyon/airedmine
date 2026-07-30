@@ -1232,6 +1232,19 @@ PM Dashboard の期限切れが常に 0 件だった原因は、seed が `due_da
 
 - 再 seed 後、overdue 0 → 10 件。Sprint 2（-30 日）の open issue で構成。PM パネルとアジェンダ導線の件数も更新を確認。
 
-派生メモ（未対応）:
+派生メモ:
 
-- 「今週のクローズ数」も 0 件のまま。Closed issue の `updated_on` が直近 7 日に入らないため。overdue と同様の鮮度課題だが、今回の範囲外。必要になれば別 issue 化する。
+- 「今週のクローズ数」も 0 件だった。Closed issue の `updated_on`（クローズ日代用）が直近 7 日に入らないため。overdue と同様の鮮度課題として `ISS-141` で対応した。
+
+## 2026-07-30: ISS-141 クローズ — 今週のクローズ数を観測できるように
+
+PM Dashboard の「今週のクローズ数」が常に 0 件だった。Closed issue の `updated_on` が全て 9 日以上前だったため。
+
+判断:
+
+- ISS-140（期日）と同じ鮮度課題。Closed issue の一部を直近クローズ扱いにして、健全なスループットが見えるようにした。
+- 全 Closed を直近にすると burndown / stalled が崩れるため、`CLOSED_RECENT_CYCLE` で一部（idx 由来で約 1/4）のみを直近 1〜6 日クローズにした。
+
+確認:
+
+- 再 seed 後、closed_this_week 0 → 34 件（overdue 10・stalled 20 は維持）。
