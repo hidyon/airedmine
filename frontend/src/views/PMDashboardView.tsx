@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, Legend, ResponsiveContainer,
@@ -28,6 +29,7 @@ export default function PMDashboardView() {
   const [statsError, setStatsError] = useState<string | null>(null)
 
   const [selectedId, setSelectedId] = useState<number | null>(null)
+  const navigate = useNavigate()
 
   useEffect(() => {
     setBurndownLoading(true)
@@ -50,6 +52,14 @@ export default function PMDashboardView() {
   function selectIssue(id: number) {
     setSelectedId(prev => (prev === id ? null : id))
   }
+
+  function openAgendaChat() {
+    if (!stats) return
+    const draft = buildAgendaDraft(stats)
+    navigate(`/developer/chat?${new URLSearchParams({ draft }).toString()}`)
+  }
+
+  const agendaRiskCount = stats ? stats.stalled.length + stats.overdue.length : 0
 
   return (
     <div className="flex h-full overflow-hidden">
@@ -130,6 +140,24 @@ export default function PMDashboardView() {
           )}
           {!statsLoading && !statsError && stats && (
             <>
+              {/* 定例アジェンダ導線 */}
+              <div className="flex items-center justify-between gap-3 bg-white border border-slate-200 rounded-2xl px-5 py-3">
+                <div className="min-w-0">
+                  <p className="text-[13.5px] font-semibold text-slate-700 m-0">定例アジェンダのたたき台を作る</p>
+                  <p className="text-[11px] text-slate-400 mt-0.5 m-0">
+                    停滞 {stats.stalled.length} 件・期限切れ {stats.overdue.length} 件を Chat に渡して整理します
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={openAgendaChat}
+                  disabled={agendaRiskCount === 0}
+                  className="flex-shrink-0 px-3 py-2 text-xs font-semibold text-blue-700 bg-white border border-blue-200 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer disabled:text-slate-300 disabled:border-slate-200 disabled:cursor-not-allowed"
+                >
+                  Chat でアジェンダを作る
+                </button>
+              </div>
+
               {/* Row 1: 停滞 + 期限切れ */}
               <div className="grid grid-cols-2 gap-4">
                 <IssueListPanel
@@ -225,6 +253,17 @@ export default function PMDashboardView() {
       <IssueDetailPanel issueId={selectedId} onClose={() => setSelectedId(null)} />
     </div>
   )
+}
+
+function buildAgendaDraft(stats: PmStatsResponse): string {
+  const ids = (items: { id: number }[]) => items.slice(0, 5).map(i => `#${i.id}`).join(', ')
+  const urgent = stats.priority_summary.find(p => p.name.toLowerCase() === 'urgent')?.count ?? 0
+
+  const lines = ['次の定例で話す内容を、以下のリスクからアジェンダとして整理して。各項目に状況・論点・PM の判断ポイントを箇条書きで含めて。']
+  if (stats.stalled.length) lines.push(`- 停滞 issue ${stats.stalled.length} 件: ${ids(stats.stalled)}`)
+  if (stats.overdue.length) lines.push(`- 期限切れ issue ${stats.overdue.length} 件: ${ids(stats.overdue)}`)
+  if (urgent > 0) lines.push(`- Urgent 優先度 ${urgent} 件`)
+  return lines.join('\n')
 }
 
 interface ListItem {

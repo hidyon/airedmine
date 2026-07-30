@@ -4635,7 +4635,7 @@ Priority: Medium
 
 ### ISS-136: PM Dashboard の停滞・期限切れ issue から定例アジェンダを作りやすくする
 
-Status: Open
+Status: Closed
 Priority: Medium
 
 要求仕様:
@@ -4657,15 +4657,21 @@ Priority: Medium
 
 実装結果:
 
-- 未実施。
+- PM Dashboard の統計部に「定例アジェンダのたたき台を作る」バナーと「Chat でアジェンダを作る」ボタンを追加した（`frontend/src/views/PMDashboardView.tsx`）。
+- ボタンは表示中の停滞・期限切れ・Urgent 件数と代表 issue ID（各最大 5 件）から固定文面の draft を組み立て、ISS-135 と同じ `/developer/chat?draft=...` 導線で Chat へ遷移する。
+- 停滞・期限切れがいずれも 0 件のときはボタンを無効化する。
+- `scripts/smoke-demo.mjs` の PM Dashboard フローに、アジェンダ導線で Chat 入力欄へ相談文（件数・代表 issue ID 入り）が渡ることの確認を追加した（`expectInputContains`）。
+- README の PM 体験の確認観点にアジェンダ導線を追記した。
 
 確認結果:
 
-- 未実施。
+- `npm run build`（frontend）が成功し、TypeScript / Vite build が通ることを確認した。
+- `npm run smoke:demo` が成功し、停滞 2 件 / 期限切れ 2 件の固定データからアジェンダ相談文が Chat 入力欄に渡ることを確認した。
+- 実 Redmine（nakamura）でも、停滞 20 件・Urgent 16 件の実データから draft が生成され Chat 入力欄に反映されることをブラウザ操作で確認した（期限切れ 0 件は行を省略）。
 
 クローズ判定:
 
-- 未判定。
+- 要求仕様・機能仕様・テスト仕様を満たすため Closed とする。
 
 ### ISS-137: Chat session の検索・絞り込み候補を検討する
 

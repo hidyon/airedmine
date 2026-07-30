@@ -61,6 +61,14 @@ async function smokePmDashboard(browserInstance) {
   await visible(page.getByText("PM Dashboard", { exact: true }), "PM Dashboard title");
   await visible(page.getByText("担当者別 Open Issue 数"), "assignee load panel");
   await visible(page.getByText("期限切れ Issue"), "overdue panel");
+
+  // 定例アジェンダ導線: 停滞 / 期限切れ issue を Chat に渡す
+  await page.getByRole("button", { name: "Chat でアジェンダを作る" }).click();
+  await visible(page.getByText("AIRedmine Chat"), "chat empty state after agenda handoff");
+  await expectInputContains(page, ["アジェンダ", "停滞 issue 2 件", "#1327", "期限切れ issue 2 件"]);
+
+  // issue 詳細からの相談導線
+  await page.goto(`${appUrl}/pm/dashboard`, { waitUntil: "networkidle" });
   await page.getByText(issue1327.subject).first().click();
   await visible(page.getByText("#1327 詳細"), "PM issue detail panel");
   await page.getByRole("button", { name: "Chat で相談" }).click();
@@ -91,6 +99,17 @@ async function expectInputValue(page, value) {
   const current = await input.inputValue();
   if (current !== value) {
     throw new Error(`Expected prompt input value "${value}", got "${current}"`);
+  }
+}
+
+async function expectInputContains(page, parts) {
+  const input = page.getByPlaceholder(/issue の状況や更新依頼/);
+  await input.waitFor({ state: "visible", timeout: 10000 });
+  const current = await input.inputValue();
+  for (const part of parts) {
+    if (!current.includes(part)) {
+      throw new Error(`Expected prompt input to contain "${part}", got "${current}"`);
+    }
   }
 }
 

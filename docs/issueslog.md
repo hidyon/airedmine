@@ -1195,3 +1195,25 @@ issue 番号と詳細仕様は Milestone 7 着手時に確定する。
 
 - 併せて実施したデモスクリーンショット拡充（開発者 3・PM 3、commit `8c5b64f`）は UX 資料の更新であり、独立 issue は立てず本ログに記録のみ残す。
 - フォローアップ候補: `MAX_TOKENS` 1024→2048 への引き上げ（回答の途中切れ低減）。必要になった時点で別 issue 化する。
+
+## 2026-07-30: ISS-136 クローズ
+
+PM Dashboard の停滞・期限切れ issue から定例アジェンダを作りやすくする導線を実装した。
+
+判断:
+
+- 新規の API やデータは追加せず、ISS-135 で用意した `/developer/chat?draft=...` 導線を再利用する方針にした。実装コストを抑え、issue 詳細からの「Chat で相談」と体験を揃えるため。
+- draft は AI 生成ではなく固定文面の組み立てとし、対象件数と代表 issue ID（各最大 5 件）を含めて「何を相談しているか」が分かる形にした（機能仕様どおり）。
+- 停滞・期限切れが 0 件のときはボタンを無効化し、空の相談文を渡さないようにした。
+
+実装:
+
+- `PMDashboardView.tsx` に「定例アジェンダのたたき台を作る」バナー＋「Chat でアジェンダを作る」ボタンと `buildAgendaDraft(stats)` を追加。
+- `smoke-demo.mjs` に導線確認（`expectInputContains`）を追加。README の PM 確認観点を更新。
+
+確認:
+
+- `npm run build` / `npm run smoke:demo` が成功。
+- 実 Redmine（nakamura）でも実データから draft 生成 → Chat 入力欄反映をブラウザ操作で確認。
+
+残: M31 の Open は `ISS-137`（Chat session 検索方針・Low）のみ。

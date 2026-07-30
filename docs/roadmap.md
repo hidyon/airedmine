@@ -35,7 +35,7 @@ Redmine を活用したプロジェクトにおいて、開発者や PM が AI �
 - `ISS-133` Closed: Chat の開始体験と質問候補を改善する。
 - `ISS-134` Closed: Proposal 実行後の次アクション表示を改善する。
 - `ISS-135` Closed: issue 詳細パネルから関連する Chat / Dashboard 操作へ移りやすくする。
-- `ISS-136` Open: PM Dashboard の停滞・期限切れ issue から定例アジェンダを作りやすくする。
+- `ISS-136` Closed: PM Dashboard の停滞・期限切れ issue から定例アジェンダを作りやすくする。
 - `ISS-137` Open: Chat session の検索・絞り込み候補を検討する。
 
 期待成果:
