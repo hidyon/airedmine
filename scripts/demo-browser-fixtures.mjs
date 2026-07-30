@@ -50,6 +50,17 @@ export const sessions = [
     related_issue_ids: [1420, 1424],
     last_proposal_action: null,
   },
+  {
+    session_id: "demo-semantic",
+    title: "パフォーマンス相談の関連 issue",
+    role: "developer",
+    created_at: "2026-06-11T00:00:00+00:00",
+    updated_at: "2026-06-11T14:05:00+00:00",
+    archived_at: null,
+    message_count: 2,
+    related_issue_ids: [1327, 1424],
+    last_proposal_action: null,
+  },
 ];
 
 export const issue1327 = issue({
@@ -97,13 +108,44 @@ export const issue1424 = issue({
   description: "月末締めバッチ失敗時のリトライ方針を決める。",
 });
 
+export const issue1462 = issue({
+  id: 1462,
+  subject: "勤怠 CSV エクスポートの文字コード対応",
+  status: "In Progress",
+  priority: "Normal",
+  assignee: "田中 健太",
+  description: "エクスポートした CSV が Excel で文字化けする。UTF-8 BOM 付与を検討する。",
+});
+
+export const issue1475 = issue({
+  id: 1475,
+  subject: "ログイン画面の注意文言の見直し",
+  status: "New",
+  priority: "Normal",
+  assignee: "田中 健太",
+  description: "初回ログイン時の注意文言が古い。現行の運用に合わせて更新する。",
+});
+
 export const issuesById = {
   1327: issue1327,
   1358: issue1358,
   1401: issue1401,
   1420: issue1420,
   1424: issue1424,
+  1462: issue1462,
+  1475: issue1475,
 };
+
+// 開発者 Dashboard 用の担当 issue 一覧。ブロッカー（5 日以上更新なし）・優先度 High 以上・
+// その他の 3 セクションが埋まるよう、updated_on は撮影時刻からの相対で生成する。
+export const developerIssues = [
+  listIssue({ id: 1424, subject: "月末締めバッチのリトライ設計", priority: "High", status: "In Progress", updatedDaysAgo: 8 }),
+  listIssue({ id: 1358, subject: "iOS Safari の日付ピッカー表示バグ", priority: "High", status: "Feedback", updatedDaysAgo: 6 }),
+  listIssue({ id: 1327, subject: "月次勤怠カレンダーの初期描画パフォーマンス改善", priority: "High", status: "In Progress", updatedDaysAgo: 1 }),
+  listIssue({ id: 1420, subject: "承認フロー差し戻し通知の文言確認", priority: "Urgent", status: "New", updatedDaysAgo: 2 }),
+  listIssue({ id: 1462, subject: "勤怠 CSV エクスポートの文字コード対応", priority: "Normal", status: "In Progress", updatedDaysAgo: 1 }),
+  listIssue({ id: 1475, subject: "ログイン画面の注意文言の見直し", priority: "Normal", status: "New", updatedDaysAgo: 3 }),
+];
 
 export const chatDetail = {
   session: sessions[0],
@@ -142,6 +184,41 @@ export const chatDetail = {
       },
     },
   ],
+};
+
+export const semanticDetail = {
+  session: sessions[3],
+  messages: [
+    {
+      id: 1,
+      role: "user",
+      content: "パフォーマンスが遅いという相談に関係する issue を意味検索で探して",
+      payload: null,
+      created_at: "2026-06-11T14:00:00+00:00",
+    },
+    {
+      id: 2,
+      role: "assistant",
+      content: "初期描画遅延と月末締めバッチの再試行が関連します。",
+      created_at: "2026-06-11T14:01:00+00:00",
+      payload: {
+        session_id: "demo-semantic",
+        answer: "「パフォーマンスが遅い」というキーワードが直接含まれていなくても、**意味的に近い** issue を検索しました。\n\n- **#1327** 月次勤怠カレンダーの初期描画遅延（3 秒超）\n- **#1424** 月末締めバッチのリトライ設計（失敗時の待ち時間）\n\nどちらも体感速度に関わるため、リリース前に計測結果の確認をおすすめします。",
+        clarification: null,
+        tool_calls: ["search_issues_semantic", "get_issue"],
+        references: [
+          ref(issue1327, "初期描画が 3 秒を超える性能課題"),
+          ref(issue1424, "バッチ再試行による処理遅延"),
+        ],
+        proposal: null,
+      },
+    },
+  ],
+};
+
+export const sessionDetailsById = {
+  "demo-main": chatDetail,
+  "demo-semantic": semanticDetail,
 };
 
 export const pmStats = {
@@ -227,7 +304,12 @@ export async function demoApiRoute(route) {
     const includeArchived = url.searchParams.get("include_archived") === "true";
     return fulfill(route, { sessions: includeArchived ? sessions : sessions.filter((s) => !s.archived_at) });
   }
-  if (path === "/api/chat/sessions/demo-main") return fulfill(route, chatDetail);
+  const sessionDetailMatch = path.match(/^\/api\/chat\/sessions\/(.+)$/);
+  if (sessionDetailMatch) {
+    return fulfill(route, sessionDetailsById[sessionDetailMatch[1]] ?? { messages: [] });
+  }
+
+  if (path === "/api/issues") return fulfill(route, { issues: developerIssues });
 
   const issueMatch = path.match(/^\/api\/issues\/(\d+)$/);
   if (issueMatch) return fulfill(route, issuesById[issueMatch[1]] ?? {});
@@ -286,6 +368,25 @@ function issue({ id, subject, status, priority, assignee, description }) {
         created_on: "2026-06-14T03:30:00Z",
       },
     ],
+  };
+}
+
+function daysAgoIso(days) {
+  return new Date(Date.now() - days * 86_400_000).toISOString();
+}
+
+function listIssue({ id, subject, priority, status, updatedDaysAgo }) {
+  return {
+    id,
+    subject,
+    project: { id: 1, name: "kintai-next" },
+    tracker: { id: 1, name: "Feature" },
+    status: { id: 3, name: status },
+    priority: { id: 4, name: priority },
+    assigned_to: { id: 5, name: "田中 健太" },
+    fixed_version: { id: 3, name: "Sprint 3" },
+    due_date: "2026-08-21",
+    updated_on: daysAgoIso(updatedDaysAgo),
   };
 }
 

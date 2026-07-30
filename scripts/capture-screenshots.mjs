@@ -15,7 +15,11 @@ try {
 
   const browser = await chromium.launch({ headless: true });
   await captureChat(browser);
+  await captureDeveloperDashboard(browser);
+  await captureDeveloperSemantic(browser);
   await capturePmDashboard(browser);
+  await capturePmDashboardStats(browser);
+  await capturePmChatEmpty(browser);
   await captureAudit(browser);
   await browser.close();
 
@@ -36,12 +40,57 @@ async function captureChat(browser) {
   await page.close();
 }
 
+async function captureDeveloperDashboard(browser) {
+  const page = await newPage(browser, developerUser);
+  await page.goto(`${appUrl}/developer/dashboard`, { waitUntil: "networkidle" });
+  await page.getByText("ブロッカー").waitFor();
+  await page.getByRole("button", { name: /#1327/ }).click();
+  await page.getByText("#1327 詳細").waitFor();
+  await page.screenshot({ path: `${outDir}/developer-dashboard.png` });
+  await page.close();
+}
+
+async function captureDeveloperSemantic(browser) {
+  const page = await newPage(browser, developerUser);
+  await page.goto(`${appUrl}/developer/chat`, { waitUntil: "networkidle" });
+  await page.getByText("パフォーマンス相談の関連 issue").click();
+  await page.getByText("意味的に近い").waitFor();
+  await page.screenshot({ path: `${outDir}/developer-semantic.png` });
+  await page.close();
+}
+
 async function capturePmDashboard(browser) {
   const page = await newPage(browser, pmUser);
   await page.goto(`${appUrl}/pm/dashboard`, { waitUntil: "networkidle" });
   await page.getByText(issue1327.subject).first().click();
   await page.getByText("#1327 詳細").waitFor();
   await page.screenshot({ path: `${outDir}/pm-dashboard.png` });
+  await page.close();
+}
+
+async function capturePmDashboardStats(browser) {
+  const page = await newPage(browser, pmUser);
+  await page.goto(`${appUrl}/pm/dashboard`, { waitUntil: "networkidle" });
+  await page.getByText("優先度サマリー").waitFor();
+  // 統計部にフォーカスするため、メインのスクロールコンテナを最下部まで送る。
+  await page.evaluate(() => {
+    for (const el of document.querySelectorAll(".overflow-y-auto")) {
+      if (el.clientHeight > 400 && el.scrollHeight > el.clientHeight) {
+        el.scrollTop = el.scrollHeight;
+      }
+    }
+  });
+  await page.waitForTimeout(300);
+  await page.screenshot({ path: `${outDir}/pm-dashboard-stats.png` });
+  await page.close();
+}
+
+async function capturePmChatEmpty(browser) {
+  const page = await newPage(browser, pmUser);
+  await page.goto(`${appUrl}/developer/chat`, { waitUntil: "networkidle" });
+  await page.getByText("質問候補").waitFor();
+  await page.getByText("PM 向け").waitFor();
+  await page.screenshot({ path: `${outDir}/pm-chat-empty.png` });
   await page.close();
 }
 

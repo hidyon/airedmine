@@ -1,20 +1,21 @@
 # AIRedmine
 
-AIRedmine は、AI エージェントを通じて Redmine を利用する開発体験を試すためのプロトタイプです。
+AIRedmine は、AI エージェントを通じて Redmine を利用する開発体験ができるプロトタイプです。
 
-Redmine を活用したプロジェクトでは、issue、進捗、担当、判断履歴、リリース計画などが Redmine に集約されます。
 今後の AI 駆動開発では、開発者や PM が Redmine を直接操作するだけでなく、AI エージェントを通じて Redmine の情報を読み、整理し、更新し、次の作業を決めることが増えると考えます。
 
 このアプリの目的は、そのとき開発者や PM の体験がどう変化するか、どこが改善されるか、どんな不安や摩擦が残るかを体験できる形で明らかにすることです。
 
+尚、Redmineの代わりに同様なプロジェクト管理ツール（backlog, jira等）＋AIエージェントでも同様の体験が可能になる想定です。
+
+
 ## ユーザー体験
 
-AIRedmine が目指す体験は、Redmine を便利に見ることだけではありません。
-Redmine に集約された issue、進捗、担当、判断履歴に加えて、設計ドキュメント、議事録、仕様書、PR、CI 結果、過去の意思決定などの知識ベースを AI エージェントが横断し、開発者や PM が次に判断・行動すべきことを分かるようにすることです。
+AIRedmine が目指す体験は、Redmine を便利に見ることだけではありません。Redmine に集約された issue、進捗、担当、判断履歴に加えて、設計ドキュメント、議事録、仕様書、PR、CI 結果、過去の意思決定などの知識ベースを AI エージェントが横断し、開発者や PM が次に判断・行動すべきことを分かるようにすることです。
 
 ### 開発者の体験
 
-開発者は、朝に AIRedmine を開くと、Redmine の未完了チケット一覧を自分で読み解く代わりに、AI エージェントから今日の作業候補、優先理由、ブロッカー、確認すべき仕様を受け取ります。
+開発者は、朝に AIRedmine を開くと、AI エージェントから今日の作業候補、優先理由、ブロッカー、確認すべき仕様を受け取ります。AIエージェントとの対話（チャット）を通じて、必要な情報取得したり更新指示を出すことができます。
 
 - 今日取り組むべき issue を優先度・依存関係・更新状況から並べ替える。
 - 長いコメント履歴や関連ドキュメントを要約する。
@@ -28,9 +29,17 @@ Redmine に集約された issue、進捗、担当、判断履歴に加えて、
 
 確認観点: Chat ではセッション切替、通常 / 全履歴の切替、アーカイブ済み session の復帰、`#NNN` からの issue 詳細パネル、更新 proposal の確認カードを代表状態として確認します。
 
+![開発者 Dashboard](docs/screenshots/developer-dashboard.png)
+
+確認観点: 開発者 Dashboard では担当 issue をブロッカー（5 日以上更新なし）・優先度 High 以上・その他に分類し、行クリックで issue 詳細パネルを開けることを確認します。
+
+![意味検索](docs/screenshots/developer-semantic.png)
+
+確認観点: 意味検索では「パフォーマンスが遅い」のようにキーワードが直接一致しなくても、意味的に近い issue を発見できることを確認します。
+
 ### PM の体験
 
-PM は、Redmine の一覧やガントチャートを細かく巡回する代わりに、AI エージェントからプロジェクトの兆候を受け取ります。
+PM は、Redmine の一覧やガントチャートをPM自ら細かく巡回する代わりに、AI エージェントからプロジェクトの兆候をダッシュボードから受け取ります。
 
 - 停滞している issue を検出する。
 - PM の判断待ちになっている issue を集約する。
@@ -41,10 +50,18 @@ PM は、Redmine の一覧やガントチャートを細かく巡回する代わ
 
 確認観点: PM Dashboard ではバーンダウン、停滞 issue、担当者別負荷、優先度サマリー、issue 詳細パネルを確認します。
 
+![PM Dashboard 統計](docs/screenshots/pm-dashboard-stats.png)
+
+確認観点: 統計部では停滞 issue、期限切れ issue、担当者別 Open Issue 数、優先度サマリー、今週のクローズ数を確認します。
+
+![PM Chat](docs/screenshots/pm-chat-empty.png)
+
+確認観点: PM の Chat 空状態では PM 向けの質問候補（リリース判断・PM 判断待ち・定例アジェンダ）から相談を始められることを確認します。
+
 ### 人間が確認する境界
 
 AIRedmine では、AI が勝手に Redmine を操作する体験を目指しません。
-AI は情報収集・要約・更新案の作成を支援し、人間は判断・承認・クローズ・Redmine への反映を確認します。
+AI は情報収集・要約・更新案の作成を支援し、人間は判断・承認・クローズ・Redmine への反映を確認します。Redmineを更新した操作の証跡は記録され確認が可能です。
 
 ![Audit View](docs/screenshots/audit-view.png)
 
@@ -129,11 +146,28 @@ OSS 版 Redmine (:3000)
 - **Redmine**: `REDMINE_BASE_URL` / `REDMINE_API_KEY` が未設定の場合、モックデータで動作する。
 - **AI**: `ANTHROPIC_API_KEY` が未設定の場合、Chat はエラーを返す。
 
-## 起動
+## クイックスタート
+
+以下の手順で、AIエージェントとRedmine（架空プロジェクトのチケットが登録されたもの）による開発体験を試すことができます。
+
+### 1. リポジトリを取得する
+
+```bash
+git clone git@github.com:hidyon/airedmine.git
+cd airedmine
+```
+
+### 2. 設定ファイルを記入する
 
 ```bash
 cp .env.example .env
-# .env に REDMINE_API_KEY と ANTHROPIC_API_KEY を設定する
+# .env に ANTHROPIC_API_KEY を設定する（Chat に必要）
+# Redmine 未接続でもモックデータで動くため、まずは ANTHROPIC_API_KEY だけで開始できる
+```
+
+### 3. Docker を起動する
+
+```bash
 docker compose up
 ```
 
@@ -143,226 +177,34 @@ docker compose up
 | AIRedmine バックエンド API | `http://localhost:8000` |
 | Redmine | `http://localhost:3000` |
 
-### 初期ユーザーの作成
+### 4. 初期データを投入する
 
-初回起動後、以下のコマンドで初期ユーザーを投入します。
-
-```bash
-docker compose exec backend python scripts/seed_users.py
-```
-
-| ユーザー名 | 表示名 | ロール |
-| --- | --- | --- |
-| tanaka | 田中 健太 | 開発者 |
-| sato | 佐藤 誠 | 開発者 |
-| ito | 伊藤 大輔 | 開発者 |
-| yamada | 山田 真由美 | 開発者 |
-| nakamura | 中村 雄二 | PM |
-| admin | Redmine Admin | 開発者 |
-
-パスワードは `.env` の `DEMO_PASSWORD`（デフォルト: `demo`）で全員共通です。
-
-### モックモードで試す（Redmine 未接続）
-
-`.env` の `REDMINE_BASE_URL` / `REDMINE_API_KEY` を未設定にすると、モックデータで issue 一覧・詳細を返します。
-ただし Chat は Anthropic API を呼ぶため、`ANTHROPIC_API_KEY` は必要です。
-
-### 実 Redmine に接続する
-
-1. Redmine の管理画面で REST API を有効にする。
-2. 個人設定から API キーを取得する。
-3. `.env` に設定する。
-
-```env
-REDMINE_BASE_URL=http://localhost:3000
-REDMINE_API_KEY=your-redmine-api-key
-ANTHROPIC_API_KEY=sk-ant-your-api-key
-```
-
-1. バックエンドを再起動する。
+初期ユーザーと、実 Redmine 体験用のデモ issue（`kintai-next` project）を投入します。
 
 ```bash
-docker compose restart backend
+docker compose exec backend python scripts/seed_users.py   # ログインユーザー
+npm run seed:demo                                          # Redmine デモ issue
 ```
 
-トップバーのバッジが「Redmine」になれば接続成功です。
+`npm run seed:demo` は投入後に出力する Redmine API キーを `.env` の `REDMINE_API_KEY` に設定し、`docker compose restart backend` で再起動すると実 Redmine に接続できます（未設定のままならモックデータで動作）。
 
-### Redmine デモデータを投入する
+### 5. ログインする
 
-ローカル Redmine に体験確認用の project と 510 件の issue を投入できます。
+`http://localhost:5173` を開き、以下でログインします（パスワードは全員 `.env` の `DEMO_PASSWORD`、デフォルト `demo`）。
 
-```bash
-npm run seed:demo
-```
+| ユーザー名 | ロール |
+| --- | --- |
+| tanaka | 開発者 |
+| nakamura | PM |
 
-同じコマンドを再実行すると、既存の `kintai-next` project / issue / user を再利用し、seed 定義に合わせて issue の説明、状態、優先度、コメント履歴を更新します。同じ本文のコメントは重複投入しません。
+### 6. 試してみる
 
-デモ中の操作で状態が大きく崩れた場合は、seed 用 project を作り直せます。
+Chat で次のように聞いてみます。
 
-```bash
-npm run seed:demo:reset
-```
+- 開発者（tanaka）: 「私の今日の issue を優先順に教えて」
+- PM（nakamura）: 「Sprint 3 のリリース判断で残っているリスクは？」
 
-`seed:demo:reset` は Redmine 上の `kintai-next` project と配下の issue を削除してから再投入します。seed 用 project 以外をリセットする用途には使わないでください。
+回答内の `#1327` などをクリックすると issue 詳細パネルが開きます。
+「#1327 の期日を 2026-07-01 にする提案を作って」のように依頼すると更新 proposal が作られ、確認後の実行結果は `/audit` で確認できます。
 
-`seed:demo` / `seed:demo:reset` は投入後に semantic index も再構築します。seed だけ実行したい場合は `npm run seed:demo:no-index` を使えます。
-
-初回投入後、出力された API キーを `.env` の `REDMINE_API_KEY` に設定してバックエンドを再起動します。
-
-### デモで試す質問例
-
-デモデータ投入後は、`kintai-next` project の Sprint 3 リリース判断、承認フロー、レポート性能、PM 判断待ちを材料に AIRedmine を試せます。
-
-Chat では、次のような質問から始められます。
-
-- 開発者: 「私の今日の issue を優先順に教えて」
-- 開発者: 「承認フローまわりでブロッカーになっている issue は？」
-- 開発者: 「#1327 月次勤怠カレンダーの初期描画パフォーマンスについて、これまでの議論を要約して」
-- 開発者: 「#1358 iOS Safari の日付ピッカー表示バグの背景と次アクションを教えて」
-- PM: 「Sprint 3 のリリース判断で残っているリスクは？」
-- PM: 「PM 判断待ちの issue をまとめて」
-- PM: 「期限切れ・停滞・Urgent をまとめて次の定例アジェンダにして」
-- 意味検索: 「パフォーマンスが遅いという相談に関係する issue を探して」
-
-セッションを試す場合は、1 つの相談トピックで続けて質問します。
-
-- 「#1327 の背景を教えて」
-- 続けて「その改善内容をレビュー観点で整理して」
-- 別セッションを作り「Sprint 3 のリリース判断で残っているリスクは？」と聞き、セッションを切り替えて履歴が分かれることを確認する
-
-更新提案と Audit を試す場合は、対象 issue を指定してから変更を依頼します。
-
-- 「一括承認で一部が承認されないバグを報告する issue に、PM 確認待ちとコメントする提案を作って」
-- 「#1327 の期日を 2026-07-01 にする提案を作って」
-- 「#1327 の優先度を Urgent にする提案を作って」
-- 「#1327 と #1358 を Feedback にする一括更新の提案を作って」
-
-Proposal カードでは変更対象、変更後、理由、対象件数を確認できます。
-Urgent、Closed、過去日期日、一括更新など影響が大きい操作は追加確認が必要です。
-実行後は `/audit` で成功 / 失敗、category、retryable、HTTP status を確認できます。
-
-Dashboard では、開発者として担当 issue の優先度とブロッカーを確認し、PM として担当者負荷、停滞 issue、期限切れ、優先度の偏りを確認します。
-issue 行または Chat 回答内の `#NNN` をクリックすると、右側の詳細パネルで description、journals、tracker、version、updated_on を確認できます。
-
-### 意味検索インデックスを構築する
-
-seed を使わずに Redmine 側の issue を大きく変更した場合は、手動でインデックスを再構築します。
-
-```bash
-curl -X POST http://localhost:8000/api/ai/index/build
-# → {"indexed_issues": 517, "ready": true}
-```
-
-再構築が必要なとき（チケットが大幅に増えた場合など）も同じコマンドを実行します。
-
-意味検索の代表質問セットを評価する場合は、次のコマンドで top 5 を Markdown 出力できます。
-
-```bash
-npm run eval:semantic
-```
-
-### ヘルスチェック
-
-```bash
-npm run doctor
-curl http://localhost:8000/health
-curl http://localhost:8000/api/ai/health      # Anthropic API 疎通確認
-curl http://localhost:8000/api/ai/index/status  # 意味検索インデックスの状態
-curl http://localhost:8000/api/ai/index/freshness  # Redmine との鮮度差分
-```
-
-`npm run doctor` は Node.js / root npm 依存、Docker Compose、`.env`、AIRedmine API、Redmine 接続状態をまとめて確認します。
-スクリーンショット更新など root の npm scripts を使う前に、`npm install` の不足もここで確認できます。
-
-## 開発
-
-ソースを変更すると Vite（フロントエンド）と uvicorn（バックエンド）が自動でリロードします。
-
-```bash
-docker compose up
-docker compose logs -f frontend backend
-docker compose exec backend python -m pytest tests/ -v
-```
-
-### デモ smoke test
-
-README で紹介している代表画面が最低限表示・操作できるかを、固定レスポンスで確認できます。
-
-```bash
-npm install
-npx playwright install chromium
-npm run smoke:demo
-```
-
-`npm run smoke:demo` は一時的に `http://127.0.0.1:5175` で frontend dev server を起動し、Chat / PM Dashboard / Audit の代表 UI を確認します。
-既に起動している frontend を使う場合は、URL を指定できます。
-
-```bash
-npm run smoke:demo -- --app-url http://localhost:5173
-```
-
-自動確認と手動確認の対応は次の通りです。
-
-| View | `npm run smoke:demo` で確認すること | 手動で見ること |
-| --- | --- | --- |
-| Chat | ロール別質問候補、session 一覧、全履歴切替、保存済み session 表示、proposal 実行後の Audit / `#1327` 詳細導線 | 質問候補の文言調整、アーカイブ解除、実 Anthropic API の回答品質 |
-| PM Dashboard | バーンダウン表示、停滞 issue、期限切れ issue、担当者別 Open Issue 数、`#1327` 詳細パネル、issue 詳細から Chat 相談への導線 | 実 Redmine seed 投入後の件数、担当者負荷の妥当性 |
-| Audit | 成功 / 失敗ログ、validation category | 操作種別・結果・issue_id フィルタ、実更新後のログ反映 |
-
-### スクリーンショット更新
-
-README / docs で参照する代表画面のスクリーンショットは、固定レスポンスの撮影データで再生成できます。
-初回は Playwright のブラウザを用意します。
-
-```bash
-npm install
-npx playwright install chromium
-npm run screenshots
-```
-
-`npm run screenshots` は一時的に `http://127.0.0.1:5174` で frontend dev server を起動し、次の 3 枚を更新します。
-
-- `docs/screenshots/developer-chat.png`
-- `docs/screenshots/pm-dashboard.png`
-- `docs/screenshots/audit-view.png`
-
-既に起動している frontend を使う場合は、URL を指定できます。
-
-```bash
-npm run screenshots -- --app-url http://localhost:5173
-```
-
-### 環境変数
-
-| 変数 | 説明 | デフォルト |
-| --- | --- | --- |
-| `REDMINE_BASE_URL` | 接続先 Redmine の URL | （未設定 → モック） |
-| `REDMINE_API_KEY` | Redmine API キー | （未設定 → モック） |
-| `ANTHROPIC_API_KEY` | Anthropic API キー（Chat に必要） | （未設定 → Chat エラー） |
-| `DEMO_PASSWORD` | 全ユーザー共通パスワード | `demo` |
-| `JWT_SECRET` | JWT 署名シークレット | `change-me-in-production` |
-| `DOCS_ROOT` | ナレッジベースの読み込み先 | `/project` |
-| `DB_PATH` | SQLite DB のパス | `/app/data/airedmaine.db` |
-| `BACKEND_URL` | フロントエンドからバックエンドへのプロキシ先 | `http://backend:8000` |
-
-## 開発ドキュメント
-
-- `CLAUDE.md`: 共同開発ルール
-- `docs/roadmap.md`: 現在進行中のロードマップ
-- `docs/roadmaplog.md`: 終了したマイルストーンと変更履歴
-- `docs/issues.md`: issue 管理
-- `docs/issueslog.md`: issue の検討ログ
-- `docs/spec.md`: 要求・機能・テスト仕様
-- `docs/architecture.md`: 現在の構成・責務・主要データフロー
-- `docs/chat-sessions.md`: チャットセッションの体験要件と実装方針
-- `docs/semantic-embedding-scope.md`: 意味検索の embedding 対象と freshness 方針
-- `docs/performance.md`: API / frontend の計測結果とボトルネック分析
-- `docs/mcp.md`: Redmine MCP サーバーの接続手順
-
-## 参考
-
-- [Redmine REST API](https://www.redmine.org/projects/redmine/wiki/Rest_api)
-- [Anthropic API](https://docs.anthropic.com)
-- [FastAPI](https://fastapi.tiangolo.com)
-- [React + Vite](https://vite.dev)
-- [sentence-transformers](https://www.sbert.net)
+その他の質問例やモックモード・実 Redmine 接続・意味検索インデックス・ヘルスチェックの詳細は [`docs/`](docs/) を参照してください。
