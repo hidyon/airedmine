@@ -5063,3 +5063,100 @@ Priority: Medium
 クローズ判定:
 
 - 要求仕様・機能仕様・テスト仕様を満たすため Closed とする。低レベル Redmine クライアントは backend（モック用）と mcp-server（実接続）に残るが、MCP モードの実行時経路は単一化された。
+
+### ISS-146: Chat 回答の根拠 references をライブでも表示する
+
+Status: Open
+Priority: High
+
+要求仕様:
+
+- ユーザーが Chat の回答を見たとき、AI が参照した issue を回答直下で確認・移動できる。
+- 実 Chat（ライブ）でも参照チップが表示される（現状は fixture のみで、`run_agent` は references を返さない）。
+
+機能仕様:
+
+- `run_agent` が tool_use ループで参照した issue（get_issue / list_issues の結果）から references を組み立てて返す。
+- Chat UI の AssistantBubble は references を issue チップとして表示し、クリックで詳細パネルを開く。
+- 参照が無い回答ではチップを出さない。
+
+テスト仕様:
+
+- 実 Chat で issue に言及する質問をしたとき references が返り、UI にチップが出ることを確認する。
+- 参照なしの回答でチップが出ないことを確認する。
+
+### ISS-147: Audit ログから元 issue / Chat セッションへ戻る導線を作る
+
+Status: Open
+Priority: Medium
+
+要求仕様:
+
+- Audit の実行ログから、対象 issue の詳細や、その更新を作成した Chat セッションへ戻れる。
+- 「実行 → 監査 → 文脈へ戻る」のループを閉じる。
+
+機能仕様:
+
+- Audit ログ行に issue 詳細を開くリンク（`#NNN`）を出す。
+- 可能なら proposal 実行時に session_id を記録し、Audit 行から該当セッションを開けるようにする。
+
+テスト仕様:
+
+- Audit 行から issue 詳細パネルを開けることを確認する。
+- `npm run smoke:demo` の Audit 確認観点を更新する。
+
+### ISS-148: proposal カードに現在値→変更後の差分を表示する
+
+Status: Open
+Priority: Medium
+
+要求仕様:
+
+- 更新提案を実行する前に、対象 issue の「現在値 → 変更後」を対比して確認できる。
+- 「実行してよいか」の判断材料を増やす。
+
+機能仕様:
+
+- proposal カードで、ステータス/担当/優先度/期日等について現在値と変更後を並べて表示する。
+- 現在値は対象 issue の取得結果から補う。危険操作（Closed/Urgent/過去日）の二段階確認は不変。
+
+テスト仕様:
+
+- 代表的な更新提案で現在値→変更後が表示されることを確認する。
+
+### ISS-149: issue 詳細 / Dashboard 行からのクイック更新提案導線
+
+Status: Open
+Priority: Medium
+
+要求仕様:
+
+- issue 詳細パネルや Dashboard の行から、よくある更新（コメント・ステータス変更等）の提案を素早く作れる。
+- ISS-135 の「Chat で相談」を、具体アクションの下書きに拡張する。
+
+機能仕様:
+
+- 詳細パネル / 行に「コメント」「ステータス変更」などの導線を追加し、`/developer/chat?draft=...&issue_id=...` に対象と意図を渡す。
+- 下書きは編集してから送信でき、実行は従来の proposal → 承認フローに乗る。
+
+テスト仕様:
+
+- 詳細パネルからクイック導線で Chat に下書きが渡ることを確認する。
+
+### ISS-150: 動的な質問候補（実データ連動）
+
+Status: Open
+Priority: Low
+
+要求仕様:
+
+- Chat の質問候補を、ログインユーザーの実データ（筆頭ブロッカー等）に連動させ、初手を具体的にする。
+
+機能仕様:
+
+- 空状態の質問候補の一部を、担当 issue の代表 `#NNN` を含む文面に差し替える（静的候補も残す）。
+- ロール別（開発者/PM）に連動元を変える。
+
+テスト仕様:
+
+- 実データがある状態で、候補に代表 issue ID を含む候補が出ることを確認する。

@@ -38,7 +38,17 @@ Redmine を活用したプロジェクトにおいて、開発者や PM が AI �
 - `ISS-136` Closed: PM Dashboard の停滞・期限切れ issue から定例アジェンダを作りやすくする。
 - `ISS-137` Closed: Chat session の検索・絞り込み（title / issue ID の軽量フィルタ）を実装する。
 
-関連 issue はすべて Closed。M31 の完了条件（2 件以上の実装・体験の docs 反映・smoke 更新）を満たした。次のマイルストーン策定時に本 M31 を roadmaplog へ移す。
+第一弾（ISS-133〜137）はすべて Closed。M31 の完了条件（2 件以上の実装・体験の docs 反映・smoke 更新）を満たした。同テーマの摩擦がまだ残るため、追加候補を検討した（比較は `docs/issueslog.md`）。
+
+追加 issue 候補:
+
+- `ISS-146` Open (High): Chat 回答の根拠 references をライブでも表示する（現状 fixture のみ）。
+- `ISS-147` Open (Medium): Audit ログから元 issue / Chat セッションへ戻る導線。
+- `ISS-148` Open (Medium): proposal カードに現在値→変更後の差分を表示する。
+- `ISS-149` Open (Medium): issue 詳細 / Dashboard 行からのクイック更新提案導線（ISS-135 の拡張）。
+- `ISS-150` Open (Low): 動的な質問候補（実データ連動）。
+
+次に取り組む推奨順: ISS-146 → ISS-148 → ISS-147。
 
 期待成果:
 
