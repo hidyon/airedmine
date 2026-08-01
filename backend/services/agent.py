@@ -1,6 +1,7 @@
 """AI Agent core: Anthropic tool_use loop with conversation context."""
 import json
 import os
+import re
 import time
 from typing import Any
 
@@ -72,6 +73,7 @@ async def run_agent(
 
     tool_calls: list[str] = []
     proposal: dict | None = None
+    seen_issues: dict[int, str] = {}  # ツールで参照した issue（id -> subject）
 
     for _round in range(MAX_TOOL_ROUNDS):
         timings["rounds"] += 1
@@ -88,7 +90,13 @@ async def run_agent(
         # ツール呼び出しがない → 最終回答
         if response.stop_reason == "end_turn":
             answer = _extract_text(response)
-            return {"answer": answer, "proposal": proposal, "tool_calls": tool_calls, "timings": _finalize_timings(timings, total_started)}
+            return {
+                "answer": answer,
+                "proposal": proposal,
+                "references": _build_references(answer, seen_issues),
+                "tool_calls": tool_calls,
+                "timings": _finalize_timings(timings, total_started),
+            }
 
         # tool_use ブロックを処理
         tool_results = []
@@ -104,6 +112,7 @@ async def run_agent(
                 knowledge_base,
                 timings=timings["semantic"],
             )
+            _collect_issues(result_str, seen_issues)
             tool_elapsed = _elapsed_ms(tool_started)
             timings["tool_total_ms"] += tool_elapsed
             timings["tools"].append({
@@ -319,7 +328,13 @@ async def run_agent(
         # メッセージを積むと次リクエストが 400 になるため、現時点の回答を返す。
         if not tool_results:
             answer = _extract_text(response)
-            return {"answer": answer, "proposal": proposal, "tool_calls": tool_calls, "timings": _finalize_timings(timings, total_started)}
+            return {
+                "answer": answer,
+                "proposal": proposal,
+                "references": _build_references(answer, seen_issues),
+                "tool_calls": tool_calls,
+                "timings": _finalize_timings(timings, total_started),
+            }
 
         # assistant メッセージとツール結果を履歴に追加
         api_messages.append({"role": "assistant", "content": response.content})
@@ -329,9 +344,52 @@ async def run_agent(
     return {
         "answer": "処理が複雑すぎました。質問を分割して再度お試しください。",
         "proposal": proposal,
+        "references": [],
         "tool_calls": tool_calls,
         "timings": _finalize_timings(timings, total_started),
     }
+
+
+def _collect_issues(result_str: str, seen: dict[int, str]) -> None:
+    """ツール結果 JSON から issue の id -> subject を集める。"""
+    try:
+        data = json.loads(result_str)
+    except (ValueError, TypeError):
+        return
+    if isinstance(data, dict) and isinstance(data.get("issues"), list):
+        items = data["issues"]
+    elif isinstance(data, dict) and data.get("id") is not None:
+        items = [data]
+    else:
+        return
+    for item in items:
+        if not isinstance(item, dict):
+            continue
+        raw_id = item.get("id")
+        if raw_id is None:
+            continue
+        try:
+            issue_id = int(raw_id)
+        except (ValueError, TypeError):
+            continue
+        seen[issue_id] = item.get("subject") or item.get("title") or seen.get(issue_id, "")
+
+
+def _build_references(answer: str | None, seen: dict[int, str]) -> list[dict]:
+    """回答本文が言及する #NNN を、参照 issue チップ用の references にする。"""
+    if not answer:
+        return []
+    references: list[dict] = []
+    added: set[int] = set()
+    for match in re.finditer(r"#(\d+)", answer):
+        issue_id = int(match.group(1))
+        if issue_id in added:
+            continue
+        added.add(issue_id)
+        references.append({"type": "issue", "id": issue_id, "title": seen.get(issue_id, "")})
+        if len(references) >= 8:
+            break
+    return references
 
 
 def _extract_text(response: Any) -> str:

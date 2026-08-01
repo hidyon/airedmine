@@ -5066,7 +5066,7 @@ Priority: Medium
 
 ### ISS-146: Chat 回答の根拠 references をライブでも表示する
 
-Status: Open
+Status: Closed
 Priority: High
 
 要求仕様:
@@ -5084,6 +5084,21 @@ Priority: High
 
 - 実 Chat で issue に言及する質問をしたとき references が返り、UI にチップが出ることを確認する。
 - 参照なしの回答でチップが出ないことを確認する。
+
+実装結果:
+
+- `agent.py`: tool_use ループ中に `_collect_issues` でツール結果の issue（id→subject）を蓄積し、`_build_references` で回答本文の `#NNN` を references（`{type,id,title}`、最大 8・重複排除・出現順）に変換。全ての return（end_turn / max_tokens 途中終了 / ループ上限）で `references` を返す。
+- frontend の AssistantBubble は既に references を issue チップとして描画するため UI 変更は不要（従来は fixture のみだった）。
+- 単体テスト `test_agent_builds_references_from_answer_and_tools` を追加。
+
+確認結果:
+
+- backend 41 テスト pass。
+- 実 Chat（MCP 経由）: 「担当 issue を2件、#付きで挙げて」→ 回答に `#1441`/`#1414`、`references` に title 付きで返ることを API で確認。ブラウザでも回答直下に参照チップ（クリックで詳細）が表示されることを確認。
+
+クローズ判定:
+
+- 要求仕様・機能仕様・テスト仕様を満たすため Closed とする。
 
 ### ISS-147: Audit ログから元 issue / Chat セッションへ戻る導線を作る
 

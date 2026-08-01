@@ -1364,3 +1364,19 @@ M31 第一弾（ISS-133〜137）は完了。同テーマ「日常利用の迷い
 優先順位: ISS-146 → ISS-148 → ISS-147 →（ISS-149）→（ISS-150）。まず ISS-146 が実ギャップかつ M31 の中心に直結。
 
 対象外の再確認: session 削除、全文検索エンジン、外部連携は引き続き M31 の対象外。
+
+## 2026-08-01: ISS-146 クローズ — Chat 回答の references をライブ表示
+
+参照チップは fixture のみで、`run_agent` が references を返していなかった（実装調査で判明した実ギャップ）。
+
+判断・実装:
+
+- references の作り方は「回答本文が言及する `#NNN`」を正とした。ツール結果（get_issue / list_issues）から id→subject を蓄積し、回答の #NNN に title を紐づける。list_issues 全件を references にすると冗長なため、回答が実際に触れた issue に絞る。
+- タイトルが取れない #NNN（例: 履歴からの言及）も id のみで残す。最大 8・重複排除・出現順。
+- frontend は既に references を issue チップとして描画するため UI 変更なし。
+
+確認:
+
+- backend 41 テスト pass。実 Chat（MCP 経由）で #1441/#1414 が title 付き references として返り、ブラウザで参照チップが出ることを確認。
+
+次: M31 追加候補の推奨順は ISS-148（proposal 差分）→ ISS-147（Audit 導線）。

@@ -42,13 +42,13 @@ Redmine を活用したプロジェクトにおいて、開発者や PM が AI �
 
 追加 issue 候補:
 
-- `ISS-146` Open (High): Chat 回答の根拠 references をライブでも表示する（現状 fixture のみ）。
+- `ISS-146` Closed (High): Chat 回答の根拠 references をライブでも表示する。
 - `ISS-147` Open (Medium): Audit ログから元 issue / Chat セッションへ戻る導線。
 - `ISS-148` Open (Medium): proposal カードに現在値→変更後の差分を表示する。
 - `ISS-149` Open (Medium): issue 詳細 / Dashboard 行からのクイック更新提案導線（ISS-135 の拡張）。
 - `ISS-150` Open (Low): 動的な質問候補（実データ連動）。
 
-次に取り組む推奨順: ISS-146 → ISS-148 → ISS-147。
+次に取り組む推奨順: ISS-148 → ISS-147 →（ISS-149）→（ISS-150）。
 
 期待成果:
 

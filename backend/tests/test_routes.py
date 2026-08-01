@@ -1020,3 +1020,18 @@ async def test_mcp_connector_routes_reads_and_writes(monkeypatch):
     names = [c[0] for c in calls]
     assert names == ["list_issues", "add_comment", "change_status"]
     assert conn.mode == "redmine" and conn.is_connected is True
+
+
+def test_agent_builds_references_from_answer_and_tools():
+    from services import agent
+    seen: dict[int, str] = {}
+    agent._collect_issues('{"issues":[{"id":1441,"subject":"A"},{"id":1414,"subject":"B"}]}', seen)
+    agent._collect_issues('{"id":1327,"subject":"C"}', seen)
+    refs = agent._build_references("要確認: #1441 と #1327、それと #999 も。#1441 は再掲。", seen)
+    assert refs == [
+        {"type": "issue", "id": 1441, "title": "A"},
+        {"type": "issue", "id": 1327, "title": "C"},
+        {"type": "issue", "id": 999, "title": ""},
+    ]
+    # 参照なしの回答は空
+    assert agent._build_references("特に該当はありません。", seen) == []
