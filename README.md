@@ -92,7 +92,10 @@ AI は情報収集・要約・更新案の作成を支援し、人間は判断�
 - **Redmine への書き込み確認・実行**: issue 作成、コメント追加、ステータス変更、担当変更、期日・優先度・進捗率・バージョン・関連付け、一括更新を AI が提案し、人間が確認してから Redmine に反映
 - **担当 issue 一覧と詳細確認**: Dashboard や Chat の `#NNN` リンクから issue 詳細パネルを開き、説明・コメント履歴・トラッカー・バージョン・更新日時を確認
 - **更新監査**: Redmine への実行ログ、失敗時の category / retryable / HTTP status を Audit で確認
-- **モックモード**: Redmine 未接続でも issue 一覧・詳細・更新確認フローを体験可能（Chat には `ANTHROPIC_API_KEY` が必要）
+- **スプリントバーンダウン**: PM Dashboard のバーンダウンを進行中スプリント（期日が最も近い open version）に絞り、残作業の消化ペースを可視化
+- **定例アジェンダ導線**: PM Dashboard の停滞・期限切れ issue から、対象件数・代表 issue ID 入りのアジェンダ文を Chat に渡して整理できる
+- **Redmine MCP サーバー**: Claude Code などの MCP クライアントから Redmine を操作できる（web アプリとは独立）。stdio と、ステートレス HTTP + JWT 認証の共有エンドポイント（`X-Redmine-Switch-User` で本人操作）を選べる。`MCP_SERVER_URL` を設定すると backend の Redmine 参照・操作も MCP に一本化できる。詳細は [`docs/mcp.md`](docs/mcp.md)
+- **モックモード**: Redmine 未接続でも issue 一覧・詳細・更新確認フローを体験可能（Chat には `ANTHROPIC_API_KEY` が必要。`MCP_SERVER_URL` 未設定時のみ）
 
 ## アーキテクチャ
 
