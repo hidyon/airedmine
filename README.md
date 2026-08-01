@@ -115,7 +115,6 @@ Redmine への入口は独立した 2 経路。どちらも最終的に同じ Re
 - **frontend/**: React + TypeScript + Vite（Tailwind CSS v4）。
 - **backend/**: Python + FastAPI。AI Agent は Anthropic の tool_use ループで動く。書き込みは proposal として提示し、人間が承認してから実行する（Closed / Urgent / 過去日期日は二段階確認）。PM バーンダウンは進行中スプリントに絞って表示する。
 - **mcp-server/**: Redmine MCP サーバー（独立）。stdio と、JWT 認証つきステートレス HTTP の共有エンドポイント（`X-Redmine-Switch-User` で本人操作）。詳細は [`docs/mcp.md`](docs/mcp.md)。
-- **MCP 一本化（任意）**: backend に `MCP_SERVER_URL` を設定すると、Redmine の参照・操作をすべて経路B の MCP サーバー経由にできる（本人操作、承認フローは不変）。未設定なら backend 内 Connector（`REDMINE_*` 未設定でモック）。
 - **AI**: `ANTHROPIC_API_KEY` が未設定なら Chat はエラー。
 
 ## クイックスタート
