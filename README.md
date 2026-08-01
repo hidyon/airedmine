@@ -96,53 +96,49 @@ AI は情報収集・要約・更新案の作成を支援し、人間は判断�
 
 ## アーキテクチャ
 
+2 つの入口が同じ Redmine を操作する。web アプリ（ブラウザ体験）と MCP サーバー（Claude Code などの MCP クライアント）は独立している。
+
 ```text
+[ web アプリ ]
 ブラウザ (React + TypeScript + Vite, :5173)
         | /api/* proxy
         v
 FastAPI バックエンド (:8000)
-        |
-        +--> Auth Layer (JWT / SQLite users テーブル)
-        |
-        +--> AI Agent (Anthropic API / Claude Haiku)
-        |       +--> tool: list_issues
-        |       +--> tool: get_issue
-        |       +--> tool: search_issues          (キーワード検索)
-        |       +--> tool: search_issues_semantic  (意味検索)
-        |       +--> tool: list_projects          (project_id 参照)
-        |       +--> tool: list_issue_statuses    (status_id 参照)
-        |       +--> tool: list_priorities        (priority_id 参照)
-        |       +--> tool: list_users             (user_id 参照)
-        |       +--> tool: list_versions          (version_id 参照)
-        |       +--> tool: add_comment            (確認待ちとして返す)
-        |       +--> tool: change_status          (確認待ちとして返す)
-        |       +--> tool: change_assignee        (確認待ちとして返す)
-        |       +--> tool: bulk_update            (複数 issue の確認待ちとして返す)
-        |       +--> tool: create_issue           (確認待ちとして返す)
-        |       +--> tool: update_due_date        (確認待ちとして返す)
-        |       +--> tool: update_priority        (確認待ちとして返す)
-        |       +--> tool: update_done_ratio      (確認待ちとして返す)
-        |       +--> tool: assign_version         (確認待ちとして返す)
-        |       +--> tool: add_relation           (確認待ちとして返す)
-        |       +--> tool: search_knowledge       (docs 検索)
-        |
-        +--> Redmine Connector (httpx)
-        +--> Knowledge Base (docs/ 読み込み)
-        +--> Semantic Index (SQLite + sentence-transformers)
-        +--> Proposal & Audit Layer (差分表示 / 二段階確認 / 実行ログ / 再試行判断)
-        +--> Chat Sessions (SQLite chat_sessions / conversations)
-        +--> Experience Notes (SQLite)
+        +--> Auth Layer            (JWT / SQLite users テーブル)
+        +--> AI Agent              (Anthropic API / Claude Haiku, tool_use ループ・20 ツール)
+        |       参照系: list_issues / get_issue / search_issues / search_issues_semantic /
+        |               list_projects / list_issue_statuses / list_priorities / list_users /
+        |               list_versions / search_knowledge
+        |       更新系(確認待ち proposal): add_comment / change_status / change_assignee /
+        |               bulk_update / create_issue / update_due_date / update_priority /
+        |               update_done_ratio / assign_version / add_relation
+        +--> Redmine Connector     (httpx)
+        +--> Knowledge Base        (docs/ 読み込み)
+        +--> Semantic Index        (SQLite + sentence-transformers)
+        +--> PM Analytics          (バーンダウン=進行中スプリントに絞る / 停滞・期限切れ・担当者負荷)
+        +--> Proposal & Audit Layer(差分表示 / 二段階確認 / 実行ログ / 再試行判断)
+        +--> Chat Sessions         (SQLite) / Experience Notes (SQLite)
         |
         v
-OSS 版 Redmine (:3000)
+   OSS 版 Redmine (:3000)  <--- REST API (http モードは X-Redmine-Switch-User で本人操作)
+        ^
+        |
+[ MCP サーバー (mcp-server/) ]  ※web アプリとは独立
+   stdio モード : ローカル単一ユーザー / 単一 API キー（従来）
+   http  モード : ステートレス Streamable HTTP + JWT(Bearer) 認証の共有エンドポイント (:8848)
+        ^
+        | MCP (stdio / HTTP)
+        |
+   MCP クライアント (Claude Code / Claude / 自作エージェント)
 ```
 
 - **frontend/**: React + TypeScript + Vite。Tailwind CSS v4 でスタイリング。
 - **backend/**: Python + FastAPI。AI Agent は Anthropic API の tool_use ループで動作する。
+- **PM Analytics**: PM Dashboard のバーンダウンは進行中スプリント（status open で期日が最も近い version）に絞って表示する。停滞・期限切れ・担当者別負荷・優先度サマリー・今週のクローズ数も集計する。
 - **Proposal & Audit Layer**: Redmine への書き込みは proposal として表示し、人間が確認してから実行する。Closed / Urgent / 過去日期日などの危険操作は二段階確認にする。
 - **Chat Sessions**: 会話は相談トピック単位で保存する。同じ `session_id` の直近 10 messages / 6000 文字を AI 文脈に渡し、別セッションの履歴は混ぜない。`chat_sessions.archived_at` で通常一覧から隠し、全履歴表示や通常一覧への復帰で履歴を消さずに整理できる。
 - **参照ツール**: Chat は project/status/priority/user/version の ID を推測せず、Redmine から取得した一覧に基づいて更新案を作る。
-- **mcp-server/**: Redmine MCP サーバー。Claude Code から Redmine を直接操作できる（web アプリとは独立）。詳細は [`docs/mcp.md`](docs/mcp.md)。
+- **mcp-server/**: Redmine MCP サーバー（web アプリとは独立）。2 モード — **stdio**（ローカル単一ユーザー・単一 API キー）と、**ステートレス Streamable HTTP + JWT 認証**の共有エンドポイント（`docker compose --profile mcp`、admin キー時は `X-Redmine-Switch-User` で認証ユーザー本人として操作）。詳細は [`docs/mcp.md`](docs/mcp.md)。
 - **Redmine**: `REDMINE_BASE_URL` / `REDMINE_API_KEY` が未設定の場合、モックデータで動作する。
 - **AI**: `ANTHROPIC_API_KEY` が未設定の場合、Chat はエラーを返す。
 
