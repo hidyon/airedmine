@@ -61,6 +61,17 @@ export const sessions = [
     related_issue_ids: [1327, 1424],
     last_proposal_action: null,
   },
+  {
+    session_id: "demo-agenda",
+    title: "定例アジェンダ: 今週のリスク整理",
+    role: "pm",
+    created_at: "2026-06-14T00:00:00+00:00",
+    updated_at: "2026-06-14T11:00:00+00:00",
+    archived_at: null,
+    message_count: 2,
+    related_issue_ids: [1420, 1424, 1327, 1358],
+    last_proposal_action: null,
+  },
 ];
 
 export const issue1327 = issue({
@@ -216,9 +227,72 @@ export const semanticDetail = {
   ],
 };
 
+export const agendaDetail = {
+  session: sessions[4],
+  messages: [
+    {
+      id: 1,
+      role: "user",
+      content:
+        "次の定例で話す内容を、以下のリスクからアジェンダとして整理して。各項目に状況・論点・PM の判断ポイントを箇条書きで含めて。\n- 停滞 issue 2 件: #1327, #1358\n- 期限切れ issue 2 件: #1420, #1424\n- Urgent 優先度 3 件",
+      payload: null,
+      created_at: "2026-06-14T11:00:00+00:00",
+    },
+    {
+      id: 2,
+      role: "assistant",
+      content: "今週のリスクから定例アジェンダを整理しました。",
+      created_at: "2026-06-14T11:01:00+00:00",
+      payload: {
+        session_id: "demo-agenda",
+        answer: [
+          "# 次の定例アジェンダ（今週のリスク整理）",
+          "",
+          "停滞・期限切れ・Urgent の issue から、判断が必要な論点を整理しました。",
+          "",
+          "## 1. 期限切れ・要判断",
+          "**#1420 承認フロー差し戻し通知の文言確認**（Urgent / 期限切れ 06-10）",
+          "- 状況: PM 判断待ちのまま期日を超過。担当: 中村 雄二",
+          "- 論点: 通知文言が未確定で、承認フロー全体の設計に影響",
+          "- PM の判断: 今週中に文言を確定するか、次スプリントへ送るか",
+          "",
+          "**#1424 月末締めバッチのリトライ設計**（High / 期限切れ 06-11）",
+          "- 状況: 期日を超過。担当: 伊藤 大輔",
+          "- 論点: 失敗時のリトライ方針が未決で本番リリースのリスク",
+          "- PM の判断: リトライ回数・間隔の決定を優先タスクにするか",
+          "",
+          "## 2. 停滞",
+          "**#1327 月次勤怠カレンダーの初期描画パフォーマンス**（High / 5 日以上停滞）",
+          "- 状況: 計測結果の追記待ちで停滞。担当: 田中 健太",
+          "- 論点: リリース判定に性能の根拠が必要",
+          "- PM の判断: 計測を今スプリントの完了条件に含めるか",
+          "",
+          "**#1358 iOS Safari の日付ピッカー表示バグ**（High / 停滞）",
+          "- 状況: Feedback のまま停滞。担当: 佐藤 誠",
+          "- 論点: モバイル承認フローへの影響が大きい",
+          "- PM の判断: 対応優先度と担当の再割り当て",
+          "",
+          "## 3. 全体",
+          "- Urgent 3 件はいずれも承認フロー関連 → まとめて方針決定するのが効率的",
+        ].join("\n"),
+        clarification: null,
+        tool_calls: ["list_issues", "get_issue"],
+        references: [
+          ref(issue1420, "期限切れ・PM 判断待ち"),
+          ref(issue1424, "期限切れ・リトライ方針未決"),
+          ref(issue1327, "停滞・性能計測待ち"),
+          ref(issue1358, "停滞・モバイル影響大"),
+        ],
+        proposal: null,
+      },
+    },
+  ],
+};
+
 export const sessionDetailsById = {
   "demo-main": chatDetail,
   "demo-semantic": semanticDetail,
+  "demo-agenda": agendaDetail,
 };
 
 export const pmStats = {

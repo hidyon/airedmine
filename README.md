@@ -44,7 +44,7 @@ PM は、Redmine の一覧やガントチャートをPM自ら細かく巡回す�
 - 停滞している issue を検出する。
 - PM の判断待ちになっている issue を集約する。
 - 担当者ごとの負荷や優先度の偏りを要約する。
-- 次の定例で話すべき議題を作る。
+- 次の定例で話すべき議題を作る。ダッシュボードの停滞・期限切れ・Urgent のリスクを Chat に渡すと、issue ごとに状況・論点・PM の判断ポイントを整理した定例アジェンダが生成される。
 
 ![PM Dashboard](docs/screenshots/pm-dashboard.png)
 
@@ -57,6 +57,10 @@ PM は、Redmine の一覧やガントチャートをPM自ら細かく巡回す�
 ![PM Chat](docs/screenshots/pm-chat-empty.png)
 
 確認観点: PM の Chat 空状態では PM 向けの質問候補（リリース判断・PM 判断待ち・定例アジェンダ）から相談を始められることを確認します。
+
+![定例アジェンダ生成](docs/screenshots/pm-agenda.png)
+
+確認観点: PM Dashboard の「Chat でアジェンダを作る」で停滞・期限切れ・Urgent のリスクを Chat に渡すと、issue ごとに状況・論点・PM の判断ポイントを整理した定例アジェンダが生成されることを確認します。回答内の `#NNN` はクリックで issue 詳細に飛べます。
 
 ### 人間が確認する境界
 

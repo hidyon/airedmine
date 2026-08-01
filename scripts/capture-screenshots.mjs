@@ -20,6 +20,7 @@ try {
   await capturePmDashboard(browser);
   await capturePmDashboardStats(browser);
   await capturePmChatEmpty(browser);
+  await captureAgendaResult(browser);
   await captureAudit(browser);
   await browser.close();
 
@@ -83,6 +84,15 @@ async function capturePmDashboardStats(browser) {
   });
   await page.waitForTimeout(300);
   await page.screenshot({ path: `${outDir}/pm-dashboard-stats.png` });
+  await page.close();
+}
+
+async function captureAgendaResult(browser) {
+  const page = await newPage(browser, pmUser);
+  await page.goto(`${appUrl}/developer/chat`, { waitUntil: "networkidle" });
+  await page.getByText("定例アジェンダ: 今週のリスク整理").click();
+  await page.getByText("次の定例アジェンダ（今週のリスク整理）").waitFor();
+  await page.screenshot({ path: `${outDir}/pm-agenda.png` });
   await page.close();
 }
 

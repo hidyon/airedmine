@@ -50,7 +50,8 @@ async function smokeChatStartSuggestions(browserInstance) {
   const pmPage = await newPage(browserInstance, pmUser);
   await pmPage.goto(`${appUrl}/developer/chat`, { waitUntil: "networkidle" });
   await visible(pmPage.getByText("PM 向け"), "pm prompt suggestions");
-  await pmPage.getByText("定例アジェンダ").first().click();
+  // 質問候補カードを文面で特定（サイドバーの同名セッションと衝突しないように）
+  await pmPage.getByText("期限切れ・停滞・Urgent をまとめて次の定例アジェンダにして").click();
   await expectInputValue(pmPage, "期限切れ・停滞・Urgent をまとめて次の定例アジェンダにして");
   await pmPage.close();
 }
