@@ -4675,7 +4675,7 @@ Priority: Medium
 
 ### ISS-137: Chat session の検索・絞り込み候補を検討する
 
-Status: Open
+Status: Closed
 Priority: Low
 
 要求仕様:
@@ -4697,15 +4697,21 @@ Priority: Low
 
 実装結果:
 
-- 未実施。
+- 検討結果を `docs/chat-sessions.md` の「検索・絞り込み（ISS-137）」に記録（検索対象候補の比較・初期スコープ・後続 issue 候補）。
+- 検討だけでなく軽量フィルタも実装: `frontend/src/views/DeveloperChatView.tsx` の session サイドバーに絞り込み入力を追加。**title 部分一致**または**関連 issue ID 一致**でクライアント側フィルタする（`filterSessions`）。
+- 対象は現在表示中の一覧（通常 / 全履歴の切替に従う）。アーカイブ済みの検索対象化は既存トグルで制御し、別トグルは増やさない。
+- 一致 0 件時は「一致するセッションはありません。」を表示。件数表示は絞り込み時に `一致数 / 総数` を出す。
+- `scripts/smoke-demo.mjs` に `smokeSessionFilter`（名前・issue ID での絞り込み）を追加。
 
 確認結果:
 
-- 未実施。
+- `npm run build`（frontend）成功。
+- `npm run smoke:demo` 成功（`smokeSessionFilter` 含む。「Sprint」で名前一致、「#1420」で issue ID 一致、非一致セッションが隠れることを確認）。
+- 後続実装 issue に分けられる粒度で整理済み（message text 全文検索＝サーバー側 FTS、ファセット絞り込み等）。
 
 クローズ判定:
 
-- 未判定。
+- 要求仕様・機能仕様・テスト仕様を満たすため Closed とする。全文検索は後続 issue 候補として docs に記録。
 
 ### ISS-138: AI Agent の tool_use ループが max_tokens 途中終了で 400 になる不具合を修正する
 

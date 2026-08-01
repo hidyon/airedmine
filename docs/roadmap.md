@@ -36,7 +36,9 @@ Redmine を活用したプロジェクトにおいて、開発者や PM が AI �
 - `ISS-134` Closed: Proposal 実行後の次アクション表示を改善する。
 - `ISS-135` Closed: issue 詳細パネルから関連する Chat / Dashboard 操作へ移りやすくする。
 - `ISS-136` Closed: PM Dashboard の停滞・期限切れ issue から定例アジェンダを作りやすくする。
-- `ISS-137` Open: Chat session の検索・絞り込み候補を検討する。
+- `ISS-137` Closed: Chat session の検索・絞り込み（title / issue ID の軽量フィルタ）を実装する。
+
+関連 issue はすべて Closed。M31 の完了条件（2 件以上の実装・体験の docs 反映・smoke 更新）を満たした。次のマイルストーン策定時に本 M31 を roadmaplog へ移す。
 
 期待成果:
 

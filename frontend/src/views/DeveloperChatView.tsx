@@ -73,11 +73,25 @@ function generateSessionId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
 }
 
+// セッションの軽量な絞り込み: タイトル部分一致、または関連 issue ID 一致。
+// 対象は現在表示中の一覧（通常 / 全履歴の切替に従う）。
+function filterSessions(sessions: ChatSession[], query: string): ChatSession[] {
+  const q = query.trim().toLowerCase()
+  if (!q) return sessions
+  const idQuery = q.replace(/[#\s]/g, '')
+  const idIsNum = /^\d+$/.test(idQuery)
+  return sessions.filter(session =>
+    session.title.toLowerCase().includes(q) ||
+    (idIsNum && session.related_issue_ids.some(id => String(id).includes(idQuery))),
+  )
+}
+
 export default function DeveloperChatView() {
   const [messages, setMessages] = useState<Message[]>([])
   const [sessions, setSessions] = useState<ChatSession[]>([])
   const [currentSessionId, setCurrentSessionId] = useState(generateSessionId())
   const [includeArchivedSessions, setIncludeArchivedSessions] = useState(false)
+  const [sessionQuery, setSessionQuery] = useState('')
   const [sessionsLoading, setSessionsLoading] = useState(false)
   const [sessionLoading, setSessionLoading] = useState(false)
   const [input, setInput] = useState('')
@@ -87,6 +101,7 @@ export default function DeveloperChatView() {
   const historyRef = useRef<ChatHistoryMessage[]>([])
   const bottomRef = useRef<HTMLDivElement>(null)
   const currentSession = sessions.find(session => session.session_id === currentSessionId) ?? null
+  const filteredSessions = filterSessions(sessions, sessionQuery)
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
 
@@ -264,7 +279,7 @@ export default function DeveloperChatView() {
           <div className="min-w-0">
             <p className="text-sm font-semibold text-slate-800 m-0">Sessions</p>
             <p className="text-xs text-slate-500 m-0 truncate">
-              {sessions.length} sessions{includeArchivedSessions ? ' / 全履歴' : ''}
+              {sessionQuery.trim() ? `${filteredSessions.length} / ${sessions.length}` : sessions.length} sessions{includeArchivedSessions ? ' / 全履歴' : ''}
             </p>
           </div>
           <button
@@ -303,6 +318,15 @@ export default function DeveloperChatView() {
             </button>
           </div>
         </div>
+        <div className="px-3 py-2 border-b border-slate-200 bg-white">
+          <input
+            type="search"
+            value={sessionQuery}
+            onChange={e => setSessionQuery(e.target.value)}
+            placeholder="セッションを絞り込み（名前 / #issue）"
+            className="w-full px-2.5 py-1.5 text-xs border border-slate-200 rounded-md text-slate-700 placeholder-slate-400 focus:outline-none focus:border-blue-400 transition-colors"
+          />
+        </div>
         <div className="overflow-y-auto p-2 flex flex-col gap-1">
           {sessionsLoading && (
             <p className="text-xs text-slate-400 px-2 py-2 m-0">読み込み中…</p>
@@ -310,7 +334,10 @@ export default function DeveloperChatView() {
           {!sessionsLoading && sessions.length === 0 && (
             <p className="text-xs text-slate-400 px-2 py-2 m-0">まだセッションはありません。</p>
           )}
-          {sessions.map(session => (
+          {!sessionsLoading && sessions.length > 0 && filteredSessions.length === 0 && (
+            <p className="text-xs text-slate-400 px-2 py-2 m-0">一致するセッションはありません。</p>
+          )}
+          {filteredSessions.map(session => (
             <button
               key={session.session_id}
               onClick={() => selectSession(session.session_id)}

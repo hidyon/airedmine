@@ -16,6 +16,7 @@ try {
   browser = await chromium.launch({ headless: true });
   await smokeChat(browser);
   await smokeChatStartSuggestions(browser);
+  await smokeSessionFilter(browser);
   await smokePmDashboard(browser);
   await smokeAudit(browser);
 
@@ -36,6 +37,23 @@ async function smokeChat(browserInstance) {
   await visible(page.getByText("Audit を確認"), "proposal audit follow-up");
   await page.getByRole("button", { name: "#1327 詳細" }).click();
   await visible(page.getByText("#1327 詳細"), "Chat issue detail panel");
+  await page.close();
+}
+
+async function smokeSessionFilter(browserInstance) {
+  const page = await newPage(browserInstance, developerUser);
+  await page.goto(`${appUrl}/developer/chat`, { waitUntil: "networkidle" });
+  await visible(page.getByText("Sprint 3 リリース判断"), "session before filter");
+
+  const filter = page.getByPlaceholder("セッションを絞り込み（名前 / #issue）");
+  // 名前で絞り込み
+  await filter.fill("Sprint");
+  await visible(page.getByText("Sprint 3 リリース判断"), "session matches name filter");
+  await page.getByText("PM 判断待ちの整理").waitFor({ state: "hidden", timeout: 5000 });
+  // issue ID で絞り込み
+  await filter.fill("#1420");
+  await visible(page.getByText("定例アジェンダ: 今週のリスク整理"), "session matches issue-id filter");
+  await page.getByText("Sprint 3 リリース判断").waitFor({ state: "hidden", timeout: 5000 });
   await page.close();
 }
 

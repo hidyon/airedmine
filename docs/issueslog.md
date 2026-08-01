@@ -1331,3 +1331,20 @@ ISS-144 の残り（PM 集計/バーンダウン・issue 詳細が Connector の
 - 非破壊維持: `MCP_SERVER_URL` 未設定なら従来 Connector（モック）。テストは MCP off 固定＋ McpConnector 単体テストで担保。
 
 残: 低レベル Redmine クライアントは 2 実装（backend=モック対応 / mcp-server=実接続）残る。完全な単一化には backend のモックを別レイヤに切り出す必要があり、今回はスコープ外。
+
+## 2026-08-01: ISS-137 クローズ — Chat session の検索・絞り込み
+
+M31 の最後の Open issue。検討だけでなく軽量フィルタを実装して解決。
+
+判断:
+
+- 検索対象は title / related issue IDs を初期採用（最も探しやすく、metadata に既存）。message text の全文検索はサーバー側 FTS が要るため後続 issue 候補に分割。
+- 対象範囲は「現在表示中の一覧（通常 / 全履歴）」に限定し、アーカイブ済みの検索対象化は既存トグルで制御。別トグルを増やさず既存 UX と矛盾させない。
+- 読み込み済み session へのクライアント側フィルタとし、サーバー検索は session 数が増えたときに別 issue で評価。
+
+実装・確認:
+
+- `DeveloperChatView` に絞り込み入力＋`filterSessions`（title 部分一致 / issue ID 一致）。件数は絞り込み時 `一致/総数`、0 件時はメッセージ。
+- 方針を `docs/chat-sessions.md`「検索・絞り込み（ISS-137）」に記録。`smoke-demo.mjs` に `smokeSessionFilter` を追加。build / smoke 成功。
+
+M31（日常利用の迷いを減らす UX 改善）は関連 issue が全て Closed。次のマイルストーン策定時に roadmaplog へ移す。
