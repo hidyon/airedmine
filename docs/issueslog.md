@@ -1247,4 +1247,25 @@ PM Dashboard の「今週のクローズ数」が常に 0 件だった。Closed 
 
 確認:
 
-- 再 seed 後、closed_this_week 0 → 34 件（overdue 10・stalled 20 は維持）。
+- 再 seed 後、closed_this_week 0 → 34 件（overdue 10・stalled 20 は維持）。のちに ISS-142 のスプリント消化分と合わせて `CLOSED_RECENT_CYCLE` を縮小し 39 件へ調整。
+
+## 2026-08-01: ISS-142 クローズ — バーンダウンをスプリントバーンダウンにする
+
+バーンダウンがプロジェクト全体の open 件数（≈420）を出していて水平のままだった。当初「seed だけで直る」と想定したが、調査で次が判明:
+
+- バーンダウンがプロジェクト全体対象（1スプリントに絞っていない）。
+- seed の全 issue が version/status を明示指定しており、現在スプリント（Sprint 3）に 253 件集中・消化済み 0 件。
+
+判断（ユーザー選択: スプリントに絞る backend+seed / 現実的サイズに縮める）:
+
+- backend を「進行中スプリント（期日が最も近い未来の open version）に絞る」方式に変更。縮小後も確実に Sprint 3 を選ぶため、当初検討の「open 最多 version」ヒューリスティックから**期日ベース**へ切り替え（`list_versions` に due_date 追加）。
+- seed で Sprint 3 を現実的サイズ(≈82)に整形: 設計 issue（journals あり）は open 維持、filler は先頭 45 件を直近 0..13 日に段階クローズ、あふれは Sprint 4 へ退避。これで実績線が 82→37 と理想線に沿って降下する。
+- 時間軸のスプリント整合（今日を sprint 途中に置く）は今回見送り（トレーリング14日窓のまま）。実績線が理想線をやや上回る「消化ペース遅れ」の表示で実プロジェクト風には十分。
+
+確認:
+
+- backend 38 テスト pass（`test_burndown_scopes_to_current_sprint` 追加）。実 / fixture 双方でスプリントバーンダウンの右肩下がりを確認。
+
+派生メモ:
+
+- burndown は Redmine issue の open/closed を全ページ取得して Python 側でスプリント絞り込みしている。将来 issue 数が大幅に増えたら `fixed_version_id` での API 側フィルタを検討。

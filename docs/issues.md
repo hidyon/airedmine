@@ -4868,3 +4868,51 @@ Priority: Low
 クローズ判定:
 
 - 要求仕様・機能仕様・テスト仕様を満たすため Closed とする。
+
+### ISS-142: バーンダウンを進行中スプリントに絞り実プロジェクト風にする
+
+Status: Closed
+Priority: Medium
+
+背景:
+
+- PM Dashboard のバーンダウンがプロジェクト全体の open 件数（約420）を出しており、実績線がバックログ全体の近くで水平のまま、理想線だけ 0 に向かって大きく乖離していた（実プロジェクトのスプリントバーンダウンに見えない）。
+- 原因は 2 点: (1) バーンダウンがプロジェクト全体を対象にしていた、(2) seed の現在スプリント（Sprint 3）に 253 件が集中し、かつ消化済み（Closed）が 0 件だった。
+
+要求仕様:
+
+- バーンダウンが、進行中スプリントの残作業がゼロへ向かう右肩下がりの形で表示される。
+- 日付は現在日基準で鮮度が保たれる。
+- 設計済みの demo issue（コメント履歴あり）の状態は変えない。
+
+機能仕様:
+
+- backend `GET /api/pm/burndown`: 対象を進行中スプリントに絞る。進行中スプリント = status open で due_date が最も近い未来の version。判定不可時は open issue 最多の version にフォールバック。レスポンスに `sprint`（スプリント名）を追加。
+- `list_versions` の出力に `due_date` を追加。
+- frontend: バーンダウンのヘッダーにスプリント名を表示。
+- seed `seed-demo.rb`: 進行中スプリントを現実的サイズに整える。設計 issue（journals あり）は open のまま残し、filler は先頭 `SPRINT_FILLER_CAP`(=45) 件を直近 0..13 日に段階クローズ（消化分）、あふれた filler は次スプリントへ退避。
+
+テスト仕様:
+
+- backend: `/api/pm/burndown` が最も近い未来の open sprint に絞られ、baseline がそのスプリント規模、系列が期間内 close で右肩下がりになることを確認する。
+- 再 seed 後、実データのバーンダウン系列が水平でなく降下することを確認する。
+- `npm run smoke:demo` が通ることを確認する。
+
+実装結果:
+
+- `backend/routers/pm.py` に `_current_sprint`（期日ベース）と `_first_project_id` を追加し、burndown を進行中スプリントに絞り `sprint` を返すようにした。
+- `backend/services/redmine_connector.py` の `list_versions` に `due_date` を追加。
+- `frontend`（PMDashboardView / client.ts）でスプリント名を表示。
+- `scripts/redmine/seed-demo.rb` に現在スプリントの縮小＋段階クローズ（`SPRINT_FILLER_CAP` / OVERFLOW 退避）を実装。
+- スクリーンショット fixture のバーンダウンを実プロジェクト風（82→37、理想線 0 へ）に更新し、撮影時に描画アニメーション完了を待つようにした。
+
+確認結果:
+
+- backend 全 38 テスト pass（新規 `test_burndown_scopes_to_current_sprint` 含む）。
+- 再 seed 後の実バーンダウン: sprint「Sprint 3: 申請・集計」、baseline 82、実績 82→37 が理想線（82→0）にほぼ沿って降下することを確認。
+- closed_this_week 39・overdue 10・stalled 20 を維持。
+- ライブ / fixture スクショの双方でスプリントバーンダウンの右肩下がりを確認。`npm run smoke:demo` 成功。
+
+クローズ判定:
+
+- 要求仕様・機能仕様・テスト仕様を満たすため Closed とする。

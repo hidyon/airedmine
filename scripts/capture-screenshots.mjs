@@ -64,6 +64,7 @@ async function capturePmDashboard(browser) {
   await page.goto(`${appUrl}/pm/dashboard`, { waitUntil: "networkidle" });
   await page.getByText(issue1327.subject).first().click();
   await page.getByText("#1327 詳細").waitFor();
+  await page.waitForTimeout(1800); // recharts のバーンダウン描画アニメーション完了を待つ
   await page.screenshot({ path: `${outDir}/pm-dashboard.png` });
   await page.close();
 }

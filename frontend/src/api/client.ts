@@ -155,6 +155,7 @@ export interface BurndownResponse {
   days: number
   baseline: number
   series: BurndownPoint[]
+  sprint?: string | null
 }
 
 export function fetchBurndown(days: number): Promise<BurndownResponse> {

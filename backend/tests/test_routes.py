@@ -250,6 +250,69 @@ def test_pm_stats_reports_timings_and_cache():
     assert second_data["timings"][0]["name"] == "pm.stats.cache_hit"
 
 
+def test_burndown_scopes_to_current_sprint():
+    from datetime import date, timedelta
+    today = date.today()
+    proj = {"id": 1, "name": "demo"}
+
+    class BurndownConnector:
+        async def list_issues(self, query):
+            status = query.get("status_id")
+            if status == "open":
+                issues = [
+                    {"id": 100 + i, "subject": f"A-open {i}", "project": proj,
+                     "fixed_version": {"id": 10, "name": "Sprint A"},
+                     "priority": {"name": "Normal"}, "status": {"name": "In Progress"},
+                     "updated_on": today.isoformat()}
+                    for i in range(5)
+                ] + [
+                    {"id": 200 + i, "subject": f"B-open {i}", "project": proj,
+                     "fixed_version": {"id": 20, "name": "Sprint B"},
+                     "priority": {"name": "Normal"}, "status": {"name": "New"},
+                     "updated_on": today.isoformat()}
+                    for i in range(8)
+                ]
+            elif status == "closed":
+                issues = [
+                    {"id": 300 + i, "subject": f"A-closed {i}", "project": proj,
+                     "fixed_version": {"id": 10, "name": "Sprint A"},
+                     "priority": {"name": "Normal"}, "status": {"name": "Closed"},
+                     "updated_on": (today - timedelta(days=i + 1)).isoformat()}
+                    for i in range(3)
+                ] + [
+                    {"id": 400, "subject": "B-closed", "project": proj,
+                     "fixed_version": {"id": 20, "name": "Sprint B"},
+                     "priority": {"name": "Normal"}, "status": {"name": "Closed"},
+                     "updated_on": (today - timedelta(days=2)).isoformat()}
+                ]
+            else:
+                issues = []
+            return {"issues": issues, "total_count": len(issues)}
+
+        async def list_versions(self, project_id):
+            return {"versions": [
+                {"id": 10, "name": "Sprint A", "status": "open",
+                 "due_date": (today + timedelta(days=7)).isoformat()},
+                {"id": 20, "name": "Sprint B", "status": "open",
+                 "due_date": (today + timedelta(days=40)).isoformat()},
+            ]}
+
+    app.dependency_overrides[get_connector] = lambda: BurndownConnector()
+    try:
+        resp = client.get("/api/pm/burndown?days=14")
+    finally:
+        app.dependency_overrides.clear()
+
+    assert resp.status_code == 200
+    data = resp.json()
+    # 期日が最も近い未来の open sprint に絞られる
+    assert data["sprint"] == "Sprint A"
+    # baseline = Sprint A の open(5) + 期間内 close(3) = 8。Sprint B は除外。
+    assert data["baseline"] == 8
+    assert data["series"][0]["open"] == 8
+    assert data["series"][-1]["open"] == 5
+
+
 @pytest.mark.asyncio
 async def test_build_index_stores_description_and_recent_comments(monkeypatch):
     with get_connection() as conn:

@@ -70,7 +70,10 @@ export default function PMDashboardView() {
           <section className="bg-white border border-slate-200 rounded-2xl p-5">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h2 className="text-[15px] font-bold text-slate-800 m-0">バーンダウンチャート</h2>
+                <h2 className="text-[15px] font-bold text-slate-800 m-0">
+                  バーンダウンチャート
+                  {burndown?.sprint && <span className="text-slate-400 font-semibold"> — {burndown.sprint}</span>}
+                </h2>
                 {burndown && (
                   <p className="text-xs text-slate-500 mt-0.5 m-0">起点 issue 数: {burndown.baseline} 件</p>
                 )}

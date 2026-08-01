@@ -222,7 +222,12 @@ class RedmineConnector:
             raise RedmineApiError(f"Redmine API error: {resp.status_code}", resp.status_code, resp.text)
         return {
             "versions": [
-                {"id": v.get("id"), "name": v.get("name"), "status": v.get("status")}
+                {
+                    "id": v.get("id"),
+                    "name": v.get("name"),
+                    "status": v.get("status"),
+                    "due_date": v.get("due_date"),
+                }
                 for v in resp.json().get("versions", [])
             ]
         }

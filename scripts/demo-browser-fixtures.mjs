@@ -248,10 +248,12 @@ export const pmStats = {
 export const burndown = {
   days: 14,
   baseline: 82,
-  series: Array.from({ length: 14 }, (_, i) => ({
+  sprint: "Sprint 3: 申請・集計",
+  // 実プロジェクト風: 実績は理想線をやや上回りながら 82 -> 37 へ消化、理想線は 82 -> 0。
+  series: Array.from({ length: 15 }, (_, i) => ({
     date: `2026-06-${String(i + 1).padStart(2, "0")}`,
-    open: 82 - i * 3 + (i > 8 ? 4 : 0),
-    ideal: 82 - i * 4,
+    open: Math.round(82 - (82 - 37) * (i / 14)),
+    ideal: Math.round(82 * (1 - i / 14)),
   })),
 };
 

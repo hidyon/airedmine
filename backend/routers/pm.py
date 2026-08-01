@@ -1,3 +1,4 @@
+from collections import Counter
 from datetime import date, timedelta
 from time import perf_counter
 from typing import Annotated
@@ -28,6 +29,25 @@ async def burndown(connector: ConnectorDep, days: int = Query(default=14, ge=7, 
     except RedmineApiError as exc:
         raise HTTPException(status_code=exc.status, detail={"error": str(exc)}) from exc
 
+    # プロジェクト全体ではなく進行中スプリントに絞る（実プロジェクトのスプリントバーンダウンに近づける）。
+    # 進行中スプリント = status open で due_date が最も近い未来の version。
+    # 判定できなければ open issue が最も多い version にフォールバックする。
+    project_id = _first_project_id(open_issues, closed_issues)
+    versions: list[dict] = []
+    if project_id is not None:
+        try:
+            versions = (await connector.list_versions(str(project_id))).get("versions", [])
+        except RedmineApiError:
+            versions = []
+
+    sprint = _current_sprint(versions, open_issues)
+    if sprint is not None:
+        sprint_id, sprint_name = sprint
+        open_issues = [i for i in open_issues if _version_id(i) == sprint_id]
+        closed_issues = [i for i in closed_issues if _version_id(i) == sprint_id]
+    else:
+        sprint_name = None
+
     # close 日を updated_on で代用（期間内のもののみ）
     closed_in_range: list[tuple[date, dict]] = []
     for issue in closed_issues:
@@ -51,7 +71,55 @@ async def burndown(connector: ConnectorDep, days: int = Query(default=14, ge=7, 
             "ideal": max(ideal, 0),
         })
 
-    return {"days": days, "baseline": baseline, "series": series}
+    return {"days": days, "baseline": baseline, "series": series, "sprint": sprint_name}
+
+
+def _version_id(issue: dict) -> int | None:
+    return (issue.get("fixed_version") or {}).get("id")
+
+
+def _first_project_id(*issue_lists: list[dict]) -> int | None:
+    for issues in issue_lists:
+        for issue in issues:
+            pid = (issue.get("project") or {}).get("id")
+            if pid is not None:
+                return pid
+    return None
+
+
+def _current_sprint(versions: list[dict], open_issues: list[dict]) -> tuple[int, str | None] | None:
+    """進行中スプリントを返す。
+
+    1. status open で due_date を持つ version のうち、今日以降で最も近い締切のもの。
+       未来が無ければ最も新しい過去の open sprint。
+    2. version 情報が無ければ open issue が最も多い version にフォールバック。
+    """
+    today = date.today()
+    dated = [
+        (due, v)
+        for v in versions
+        if v.get("status") == "open" and (due := _parse_date(v.get("due_date"))) is not None
+    ]
+    upcoming = [t for t in dated if t[0] >= today]
+    if upcoming:
+        v = min(upcoming, key=lambda t: t[0])[1]
+        return v.get("id"), v.get("name")
+    if dated:
+        v = max(dated, key=lambda t: t[0])[1]
+        return v.get("id"), v.get("name")
+
+    counts: Counter[int] = Counter(
+        vid for i in open_issues if (vid := _version_id(i)) is not None
+    )
+    if not counts:
+        return None
+    sprint_id = counts.most_common(1)[0][0]
+    name = next(
+        ((i.get("fixed_version") or {}).get("name")
+         for i in open_issues if _version_id(i) == sprint_id),
+        None,
+    )
+    return sprint_id, name
 
 
 @router.get("/api/pm/stats")

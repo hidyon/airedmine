@@ -131,14 +131,29 @@ cfg["versions"].each do |v|
   versions[v["key"]] = vr
 end
 
+# 進行中スプリント = status open かつ days_from_now が最小の正値の version（次に締める sprint）。
+current_sprint_cfg = cfg["versions"]
+  .select { |v| v["status"] == "open" && v["days_from_now"].to_i > 0 }
+  .min_by { |v| v["days_from_now"].to_i }
+CURRENT_SPRINT = current_sprint_cfg ? versions[current_sprint_cfg["key"]] : nil
+# 進行中スプリントからあふれた filler の退避先 = より先の open sprint（次スプリント）。
+overflow_cfg = current_sprint_cfg && cfg["versions"]
+  .select { |v| v["status"] == "open" && v["days_from_now"].to_i > current_sprint_cfg["days_from_now"].to_i }
+  .max_by { |v| v["days_from_now"].to_i }
+OVERFLOW_SPRINT = overflow_cfg ? versions[overflow_cfg["key"]] : nil
+# 進行中スプリントに残す filler の上限（設計 issue はこれとは別に全て残す）。
+SPRINT_FILLER_CAP = 45
+$sprint_filler_kept = 0
+puts "  Current sprint: #{CURRENT_SPRINT&.name || '(none)'} (overflow -> #{OVERFLOW_SPRINT&.name || '(none)'})"
+
 # ===== ヘルパー =====
 STATUS_CYCLE   = %w[new in_progress in_progress feedback resolved closed closed closed]
 PRIORITY_CYCLE = %w[low normal normal normal high high urgent]
 DAYS_CYCLE     = [1, 2, 3, 5, 7, 10, 14, 20, 30, 45, 60, 90]
 VERSION_CYCLE  = %w[sprint1 sprint2 sprint2 sprint3 sprint3 sprint4]
-# Closed issue の一部を直近クローズ扱いにして「今週のクローズ数」が出るようにする。
-# nil は「直近扱いにしない（通常の updated_days_ago を使う）」。
-CLOSED_RECENT_CYCLE = [1, nil, nil, 4, nil, nil, nil, 6, nil, nil, nil, nil]
+# 進行中スプリント外の Closed issue の一部を直近クローズ扱いにして「今週のクローズ数」に厚みを持たせる。
+# 進行中スプリントの消化分（バーンダウン）が主で、ここは少数に留める。nil は通常の updated_days_ago を使う。
+CLOSED_RECENT_CYCLE = [3, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil]
 
 def done_ratio_for(status)
   case status.name
@@ -176,6 +191,24 @@ def create_issue(project:, attrs:, idx:, assigned_to:, users:, statuses:, priori
   days     = (attrs["updated_days_ago"] || DAYS_CYCLE[idx % DAYS_CYCLE.length]).to_i
   author   = users[attrs["author"] || "suzuki"] || assigned_to
 
+  # 進行中スプリントを現実的なサイズに整え、バーンダウンが右肩下がりになるようにする。
+  #   - 設計 issue（コメント履歴あり）は変更せず open のまま Sprint に残す
+  #   - filler は先頭 SPRINT_FILLER_CAP 件だけ Sprint に残し、直近 0..13 日に段階クローズ（消化分）
+  #   - あふれた filler は次スプリントへ退避してスプリント規模を抑える
+  burn_close_days = nil
+  if defined?(CURRENT_SPRINT) && CURRENT_SPRINT && version == CURRENT_SPRINT
+    designed = !(attrs["journals"].nil? || attrs["journals"].empty?)
+    unless designed
+      if $sprint_filler_kept < SPRINT_FILLER_CAP
+        $sprint_filler_kept += 1
+        status = statuses["closed"]
+        burn_close_days = $sprint_filler_kept % 14
+      elsif OVERFLOW_SPRINT
+        version = OVERFLOW_SPRINT
+      end
+    end
+  end
+
   issue = Issue.find_or_initialize_by(project: project, subject: subject)
   was_new = issue.new_record?
   issue.tracker       = tracker
@@ -193,8 +226,11 @@ def create_issue(project:, attrs:, idx:, assigned_to:, users:, statuses:, priori
   issue.save!(validate: false)
 
   ts = days.days.ago
-  # Closed issue の一部は直近にクローズされたことにする（今週のクローズ数を観測できるように）。
-  if status.is_closed?
+  if burn_close_days
+    # 進行中スプリントの消化分は直近 0..13 日にクローズ日を分散する。
+    ts = burn_close_days.days.ago
+  elsif status.is_closed?
+    # それ以外の Closed issue も一部は直近クローズ扱いにする（今週のクローズ数を観測できるように）。
     recent = CLOSED_RECENT_CYCLE[idx % CLOSED_RECENT_CYCLE.length]
     ts = recent.days.ago if recent
   end
