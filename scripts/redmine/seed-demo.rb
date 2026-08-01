@@ -101,10 +101,29 @@ members_cfg["members"].each do |m|
   users[m["key"]] = u
 end
 
-role = Role.where(builtin: 0).first
-if role.nil?
-  role = Role.new(name: "Developer", position: 1)
-  role.save!(validate: false)
+# メンバーロールに issue 書き込み権限を付与する。
+# これが無いと switch-user で本人として操作したとき、書き込みが 403 になる
+# （読み取りは public プロジェクトのため権限なしでも通る）。
+MEMBER_ROLE_PERMISSIONS = %i[
+  view_issues add_issues edit_issues add_issue_notes manage_issue_relations
+]
+role = Role.where(builtin: 0).first || Role.new(name: "Developer", position: 1)
+role.permissions = (Array(role.permissions) | MEMBER_ROLE_PERMISSIONS)
+role.issues_visibility = "all"
+role.save!(validate: false)
+
+# ステータス変更（change_status）も本人ロールで通るよう、全トラッカー×全ステータス間の
+# ワークフロー遷移をこのロールに許可する（admin は workflow を無視するが一般ユーザーは必要）。
+statuses.values.each do |from|
+  statuses.values.each do |to|
+    next if from.id == to.id
+    trackers.values.each do |tr|
+      WorkflowTransition.find_or_create_by!(
+        role_id: role.id, tracker_id: tr.id,
+        old_status_id: from.id, new_status_id: to.id
+      )
+    end
+  end
 end
 
 users.values.each do |user|

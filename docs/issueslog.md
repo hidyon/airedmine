@@ -1289,3 +1289,18 @@ PM Dashboard の「今週のクローズ数」が常に 0 件だった。Closed 
 残（将来 issue 候補）:
 
 - OAuth 2.1 正式対応（Client ID Metadata Documents）。SDK v2(2026-07-28) 移行。共有ロールの Redmine 権限設計（書き込み 403 対策）。
+
+## 2026-08-01: MCP 共有サーバーの書き込み 403 を解消（ISS-143 追補）
+
+ISS-143 の検証で、switch-user 本人操作の書き込みが 403 になった。原因は seed が作る
+「Developer」ロールが権限ゼロだったこと（読み取りは public プロジェクトのため通っていた）。
+
+対応:
+
+- seed でメンバーロールに issue 書き込み権限（view_issues / add_issues / edit_issues /
+  add_issue_notes / manage_issue_relations）と、全トラッカー×全ステータス間のワークフロー
+  遷移を付与。admin は workflow を無視するが一般ユーザー（switch-user）は必要なため。
+- 再検証: MCP 経由で本人（tanaka）として add_comment 成功・著者=本人、change_status も成功。
+
+補足: switch-user 併用時の `assigned_to_id=me` は本人解決されない Redmine の癖があり、identity 検証には
+不向き（`/my/account.json` や書き込み著者で確認するのが確実）。

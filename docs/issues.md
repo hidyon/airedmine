@@ -4959,8 +4959,13 @@ Priority: Medium
 - `docker compose --profile mcp up` で `http://0.0.0.0:8848/mcp` 起動を確認。
 - 認証ゲート: トークン無し・無効いずれも HTTP 401。
 - 有効 JWT(tanaka): tools/list が tool 一覧を返し、tools/call(list_issues) が Redmine データを返す。
-- switch-user 確定: MCP 経由 tanaka の add_comment が 403。Redmine 直叩きで `admin`→204 / `admin+switch-user tanaka`→403 と一致（＝ admin ではなく tanaka として実行されている）。`/my/account.json` の switch-user 切替も確認済み。
-- 403 は seed の Redmine ロールにコメント権限が無いためで、MCP の不具合ではない（読み取りは本人として成功）。共有運用では対象ロールに権限付与が必要。
+- switch-user 確定: 検証当初、MCP 経由 tanaka の add_comment が 403。Redmine 直叩きで `admin`→204 / `admin+switch-user tanaka`→403 と一致（＝ admin ではなく tanaka として実行されている）ことで identity 適用を確認。
+- 原因: seed が作る「Developer」ロールが**権限ゼロ**だった（読み取りは public プロジェクトのため通る）。→ 後述の書き込み権限付与で解消。
+
+追加対応（書き込み権限）:
+
+- `scripts/redmine/seed-demo.rb` でメンバーロールに issue 書き込み権限（`view_issues` / `add_issues` / `edit_issues` / `add_issue_notes` / `manage_issue_relations`）と、全トラッカー×全ステータス間のワークフロー遷移を付与するようにした。
+- 再検証: MCP 経由 tanaka の add_comment が成功（`updated: true`）し、コメント著者が「田中 健太」＝本人として記録。change_status（ワークフロー要）も本人ロールで成功。読み書きとも本人として動作することを確認。
 
 クローズ判定:
 
