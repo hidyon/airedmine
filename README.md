@@ -144,6 +144,7 @@ OSS 版 Redmine (:3000)
 - **Chat Sessions**: 会話は相談トピック単位で保存する。同じ `session_id` の直近 10 messages / 6000 文字を AI 文脈に渡し、別セッションの履歴は混ぜない。`chat_sessions.archived_at` で通常一覧から隠し、全履歴表示や通常一覧への復帰で履歴を消さずに整理できる。
 - **参照ツール**: Chat は project/status/priority/user/version の ID を推測せず、Redmine から取得した一覧に基づいて更新案を作る。
 - **mcp-server/**: Redmine MCP サーバー（web アプリとは独立）。2 モード — **stdio**（ローカル単一ユーザー・単一 API キー）と、**ステートレス Streamable HTTP + JWT 認証**の共有エンドポイント（`docker compose --profile mcp`、admin キー時は `X-Redmine-Switch-User` で認証ユーザー本人として操作）。詳細は [`docs/mcp.md`](docs/mcp.md)。
+- **MCP への一本化（任意）**: backend に `MCP_SERVER_URL` を設定すると、経路A の AI Agent の Redmine 参照と**承認された更新の実行**を経路B の MCP サーバー経由に一本化できる（本人の JWT を転送し switch-user で操作）。未設定なら backend 内 Connector を直接使う（モックも動く）。承認フロー（proposal → 人間が承認 → 実行）は不変。
 - **Redmine**: `REDMINE_BASE_URL` / `REDMINE_API_KEY` が未設定の場合、モックデータで動作する。
 - **AI**: `ANTHROPIC_API_KEY` が未設定の場合、Chat はエラーを返す。
 

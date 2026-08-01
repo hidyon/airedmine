@@ -4970,3 +4970,50 @@ Priority: Medium
 クローズ判定:
 
 - 要求仕様・機能仕様・テスト仕様を満たすため Closed とする。OAuth 2.1 正式対応と SDK v2 移行は将来 issue とする。
+
+### ISS-144: AI Agent の Redmine アクセスを共有 MCP サーバー経由に一本化する
+
+Status: Closed
+Priority: Medium
+
+背景:
+
+- backend の AI Agent は自前の `services/tools.py` + `redmine_connector.py` で Redmine を操作し、MCP サーバー（`mcp-server/`）とは別実装だった（`list_issues` 等が二重実装）。
+- 共有 MCP サーバー（ISS-143）が整ったので、Redmine 操作を MCP 側に集約したい。ただし「承認された更新だけが反映される」確認フローとモックモードは維持する。
+
+要求仕様:
+
+- `MCP_SERVER_URL` 設定時、AI Agent の Redmine 参照と、承認された proposal の実行を MCP サーバー経由にする。
+- 更新は従来どおり proposal → 人間が承認 → 実行の順で、承認されたものだけが反映される。
+- MCP には本人の JWT を転送し、switch-user で本人として操作する。
+- `MCP_SERVER_URL` 未設定時は従来の Connector（モックも動く）。非破壊。
+- 対象外: PM 集計/バーンダウン・issue 詳細 API（豊富なフィールド・モックが必要なため Connector のまま）。search_issues_semantic / search_knowledge / bulk（backend 固有）。
+
+機能仕様:
+
+- `backend/services/mcp_client.py`（新規）: MCP へ `tools/call`（Bearer=ユーザー JWT の contextvar）。失敗は `RedmineApiError` にマップし audit 分類を流用。SSE レスポンスをパース。
+- `execute_tool`: `MCP_SERVER_URL` 設定時、Redmine 参照 8 ツールを MCP 経由に。失敗はツール結果として返す。書き込みは従来どおり proposal を返す（実行しない）。
+- `routers/proposals.py`: 承認後の実行（comment/update/create/relation/bulk）を MCP 経由に（`update_issue` はフィールド→MCP ツールにマップ、bulk はループ）。
+- `dependencies.bind_jwt`: chat / proposals のリクエストの Bearer JWT を contextvar に載せる。frontend `request()` が Authorization を送るように。
+- `mcp-server`: DNS リバインディング保護を既定オフ（`MCP_ALLOWED_HOSTS` で有効化）にし、Docker サービス名でも到達可能に。
+- `MCP_SERVER_URL` を docker-compose backend / `.env.example` に追加。
+
+テスト仕様:
+
+- `MCP_SERVER_URL` 未設定時に既存テストが通ること（テストは MCP off に固定）。
+- MCP 有効時に execute_tool の参照が MCP 経由になること、proposal 実行が MCP 経由になること（monkeypatch）。
+- 実機で Chat 参照・proposal 実行が MCP 経由・本人操作で動くこと。
+
+実装結果:
+
+- 上記を実装。`test_execute_tool_reads_route_through_mcp` / `test_proposal_comment_routes_through_mcp` を追加。テスト冒頭で `MCP_SERVER_URL=""` に固定。
+
+確認結果:
+
+- 既定（MCP off）: backend 40 テスト pass、`npm run smoke:demo` 成功、frontend build 成功、モックモード維持。
+- MCP 有効（`MCP_SERVER_URL=http://mcp:8848/mcp`）: Chat の参照が MCP 経由で動作（`list_issues` → 本人の担当 issue）。`/api/proposals/comment` が MCP 経由で成功し、コメント著者が本人（田中 健太）。未認証の proposal は 401。
+- 当初 421 Misdirected Request（DNS リバインディング保護）→ `transport_security` を既定オフにして解消。
+
+クローズ判定:
+
+- 要求仕様・機能仕様・テスト仕様を満たすため Closed とする。既定は opt-in（MCP_SERVER_URL）で非破壊。

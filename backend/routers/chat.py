@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from models import ChatRequest, ChatSessionUpdateRequest
 from services.redmine_connector import RedmineConnector, RedmineApiError
 from services.agent import run_agent
-from dependencies import get_connector
+from dependencies import bind_jwt, get_connector
 from db import (
     add_conversation_message,
     archive_chat_session,
@@ -23,7 +23,7 @@ MAX_CONTEXT_MESSAGES = 10
 MAX_CONTEXT_CHARS = 6000
 
 
-@router.post("/api/chat")
+@router.post("/api/chat", dependencies=[Depends(bind_jwt)])
 async def chat(request: ChatRequest, connector: ConnectorDep) -> dict:
     question = request.question.strip()
     if not question:

@@ -20,10 +20,20 @@ import os
 from typing import Any
 
 from mcp.server.fastmcp import FastMCP
+from mcp.server.transport_security import TransportSecuritySettings
 
 from redmine import RedmineClient, RedmineError
 
-mcp = FastMCP("redmine", stateless_http=True)
+# DNS リバインディング保護。既定はオフ（JWT 認証が実質のゲート、Docker 内の任意ホスト名で到達可）。
+# MCP_ALLOWED_HOSTS（カンマ区切り）を設定するとその host/origin のみ許可する。
+_allowed_hosts = [h.strip() for h in os.getenv("MCP_ALLOWED_HOSTS", "").split(",") if h.strip()]
+_transport_security = TransportSecuritySettings(
+    enable_dns_rebinding_protection=bool(_allowed_hosts),
+    allowed_hosts=_allowed_hosts or ["*"],
+    allowed_origins=_allowed_hosts or ["*"],
+)
+
+mcp = FastMCP("redmine", stateless_http=True, transport_security=_transport_security)
 client = RedmineClient()
 
 

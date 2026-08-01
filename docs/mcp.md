@@ -166,6 +166,24 @@ docker compose --profile mcp up -d --build mcp
 > セキュリティ: 認証を有効にする HTTP モードは、公開時は必ず TLS（リバースプロキシ）越しにする。
 > `REDMINE_API_KEY` に admin キーを使うため、エンドポイントとキーの保護が前提。
 
+## backend の AI Agent を MCP 経由に一本化する（任意）
+
+web アプリの backend は既定では自前の Redmine Connector で Redmine を操作するが、
+`MCP_SERVER_URL` を設定すると **AI Agent の Redmine 参照ツールと、承認された更新の実行**を
+この共有 MCP サーバー経由に一本化できる（「Redmine と話す実装」を MCP 側に集約）。
+
+```yaml
+# docker-compose の backend に設定（未設定なら従来の Connector・モックも動く）
+environment:
+  MCP_SERVER_URL: http://mcp:8848/mcp
+```
+
+- 有効化には共有 MCP サーバー（http モード）を起動しておく: `docker compose --profile mcp up -d mcp`
+- backend はログインユーザーの JWT を MCP に転送し、MCP 側が `X-Redmine-Switch-User` で**本人として**操作する。
+- **更新は従来どおり proposal → 人間が承認 → 実行**の順で、承認されたものだけが MCP 経由で反映される（AI 呼び出し時点では実行しない）。
+- PM のバーンダウン/統計や issue 詳細 API は、豊富なフィールドとモックが必要なため backend の Connector のまま。
+- 注意: `MCP_SERVER_URL` を設定したまま MCP サーバーを起動しないと、Chat / 更新実行が失敗する。無効化するには `MCP_SERVER_URL` を空にする。
+
 ## 動作確認
 
 接続後、Claude Code で次のように依頼すると Redmine を操作できます。

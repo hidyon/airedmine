@@ -31,6 +31,9 @@ services:
       DEMO_PASSWORD: ${DEMO_PASSWORD:-demo}
       JWT_SECRET: ${JWT_SECRET}
       DOCS_ROOT: /project
+      # 設定すると AI Agent の Redmine 参照と承認後の更新実行を共有 MCP サーバー経由に一本化する。
+      # 空なら従来どおり backend 内の Redmine Connector を直接使う（モックも動く）。
+      MCP_SERVER_URL: ${MCP_SERVER_URL:-}
     depends_on:
       - redmine
 

@@ -1304,3 +1304,17 @@ ISS-143 の検証で、switch-user 本人操作の書き込みが 403 になっ�
 
 補足: switch-user 併用時の `assigned_to_id=me` は本人解決されない Redmine の癖があり、identity 検証には
 不向き（`/my/account.json` や書き込み著者で確認するのが確実）。
+
+## 2026-08-01: ISS-144 — AI Agent の Redmine アクセスを MCP に一本化
+
+ユーザー選択: A案（実アクセスを MCP に集約）＋「承認された更新だけ反映」。
+
+判断・要点:
+
+- データ形状の都合で完全一本化は不可（MCP ツールは LLM 向けの要約、PM 集計は豊富なフィールドが必要）。そこで「AI Agent の参照ツール＋承認後の proposal 実行」を MCP 経由に、PM 集計/詳細/意味検索/knowledge は backend のままに切り分けた。
+- 承認フローは維持: AI 呼び出し時は proposal を返すだけ（実行しない）。人間が承認した `/api/proposals/*` の実行だけを MCP 経由にした。
+- identity: backend が本人 JWT を MCP に転送 → switch-user で本人操作。frontend `request()` が Authorization を送るよう変更、`bind_jwt` 依存で contextvar に載せる。
+- 非破壊のため `MCP_SERVER_URL` で opt-in（未設定なら従来 Connector・モック維持）。テストは `MCP_SERVER_URL=""` に固定。
+- 実装中の落とし穴: Docker サービス名で MCP に到達すると FastMCP の DNS リバインディング保護が 421 を返す → `TransportSecuritySettings` を既定オフ（`MCP_ALLOWED_HOSTS` で有効化）に。
+
+残（将来 issue 候補）: 二重実装の残り（redmine_connector と mcp-server/redmine の低レベル共通化）、OAuth 2.1、SDK v2 移行。

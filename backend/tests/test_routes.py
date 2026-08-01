@@ -10,6 +10,7 @@ os.environ["REDMINE_BASE_URL"] = ""
 os.environ["REDMINE_API_KEY"] = ""
 os.environ["JWT_SECRET"] = "test-secret"
 os.environ["AIREDMINE_DISABLE_WARMUP"] = "1"
+os.environ["MCP_SERVER_URL"] = ""  # テストは connector モードに固定（MCP 経由は monkeypatch で個別に検証）
 
 from db import get_connection, init_db  # noqa: E402
 from main import app  # noqa: E402
@@ -984,3 +985,47 @@ async def test_run_agent_returns_partial_answer_on_max_tokens(monkeypatch):
     assert calls["n"] == 2
     assert result["answer"].startswith("担当 issue は 49 件です")
     assert result["tool_calls"] == ["list_issues"]
+
+
+@pytest.mark.asyncio
+async def test_execute_tool_reads_route_through_mcp(monkeypatch):
+    from services import mcp_client, tools
+
+    monkeypatch.setattr(mcp_client, "mcp_enabled", lambda: True)
+    calls = {}
+
+    async def fake_call_tool(name, args):
+        calls["name"] = name
+        calls["args"] = args
+        return {"total_count": 1, "issues": [{"id": 7, "subject": "via mcp"}]}
+
+    monkeypatch.setattr(mcp_client, "call_tool", fake_call_tool)
+
+    out = await tools.execute_tool(
+        "list_issues", {"status_id": "open", "limit": 5}, connector=None, knowledge_base=None
+    )
+    assert calls["name"] == "list_issues"
+    assert calls["args"]["status_id"] == "open"
+    assert json.loads(out)["issues"][0]["id"] == 7
+
+
+def test_proposal_comment_routes_through_mcp(monkeypatch):
+    from services import mcp_client
+
+    monkeypatch.setattr(mcp_client, "mcp_enabled", lambda: True)
+    calls = {}
+
+    async def fake_call_tool(name, args):
+        calls["name"] = name
+        calls["args"] = args
+        return {"updated": True, "issue_id": args["issue_id"]}
+
+    monkeypatch.setattr(mcp_client, "call_tool", fake_call_tool)
+
+    resp = client.post(
+        "/api/proposals/comment",
+        json={"issue_id": 5, "notes": "hi", "target_issue": {"id": 5, "title": "t"}},
+    )
+    assert resp.status_code == 200
+    assert calls["name"] == "add_comment"
+    assert calls["args"] == {"issue_id": 5, "notes": "hi"}

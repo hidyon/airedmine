@@ -9,6 +9,7 @@ import type {
   ExperienceNoteCreate,
   ProposalLogsResponse,
 } from './types'
+import { getToken } from '../auth'
 
 const BASE = '/api'
 
@@ -28,8 +29,13 @@ export interface ApiError extends Error {
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const token = getToken()
   const res = await fetch(`${BASE}${path}`, {
-    headers: { 'Content-Type': 'application/json', ...init?.headers },
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...init?.headers,
+    },
     ...init,
   })
   if (!res.ok) {
