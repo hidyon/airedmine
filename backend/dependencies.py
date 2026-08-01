@@ -1,23 +1,20 @@
-from fastapi import Header
-
 from services.redmine_connector import RedmineConnector, create_connector
-from services.mcp_client import current_jwt
+from services import mcp_client
+from services.mcp_connector import McpConnector
 
 _connector: RedmineConnector | None = None
 
 
-def get_connector() -> RedmineConnector:
+def get_connector():
+    """Redmine コネクタを返す。
+
+    `MCP_SERVER_URL` 設定時は、Redmine の参照・操作をすべて共有 MCP サーバー経由で
+    行う `McpConnector` を返す（本人操作）。未設定時は従来の RedmineConnector
+    （実 Redmine 直結、または未設定ならモック）。
+    """
+    if mcp_client.mcp_enabled():
+        return McpConnector()
     global _connector
     if _connector is None:
         _connector = create_connector()
     return _connector
-
-
-async def bind_jwt(authorization: str | None = Header(default=None)):
-    """リクエストの Bearer JWT を contextvar に載せる。MCP 経由の本人操作に使う。"""
-    token = authorization[7:] if authorization and authorization.startswith("Bearer ") else None
-    reset = current_jwt.set(token)
-    try:
-        yield
-    finally:
-        current_jwt.reset(reset)

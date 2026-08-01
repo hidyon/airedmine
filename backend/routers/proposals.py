@@ -9,61 +9,16 @@ from models import (
     UpdateProposalRequest,
 )
 from services.redmine_connector import RedmineConnector, RedmineApiError
-from services import mcp_client
-from dependencies import bind_jwt, get_connector
+from dependencies import get_connector
 from routers.issues import _redmine_error_payload
 
-# MCP_SERVER_URL 設定時は、承認された更新の「実行」を共有 MCP サーバー経由に一本化する。
-# bind_jwt でユーザー JWT を載せ、MCP 側が X-Redmine-Switch-User で本人として書き込む。
-router = APIRouter(dependencies=[Depends(bind_jwt)])
+# connector は MCP_SERVER_URL 設定時に McpConnector（共有 MCP サーバー経由）になる。
+# 承認された更新の実行はこの connector 経由で行われ、MCP モードでは本人操作になる。
+router = APIRouter()
 ConnectorDep = Annotated[RedmineConnector, Depends(get_connector)]
 
 _update_logs: list[dict] = []
 _log_seq = 0
-
-# フィールド名 → MCP 書き込みツールのマッピング（update_issue 相当）。
-_MCP_UPDATE_TOOL = {
-    "status_id": ("change_status", "status_id"),
-    "assigned_to_id": ("change_assignee", "assigned_to_id"),
-    "due_date": ("update_due_date", "due_date"),
-    "priority_id": ("update_priority", "priority_id"),
-    "done_ratio": ("update_done_ratio", "done_ratio"),
-    "fixed_version_id": ("assign_version", "version_id"),
-}
-
-
-async def _do_comment(connector, issue_id: int, notes: str) -> dict:
-    if mcp_client.mcp_enabled():
-        return await mcp_client.call_tool("add_comment", {"issue_id": issue_id, "notes": notes})
-    return await connector.add_issue_comment(issue_id, notes)
-
-
-async def _do_update(connector, issue_id: int, fields: dict) -> dict:
-    if not mcp_client.mcp_enabled():
-        return await connector.update_issue(issue_id, fields)
-    result: dict = {"updated": True, "issue_id": issue_id, "fields": fields}
-    for key, value in fields.items():
-        tool, arg = _MCP_UPDATE_TOOL.get(key, (None, None))
-        if tool is None:
-            raise RedmineApiError(f"MCP に未対応のフィールド: {key}", 400)
-        result = await mcp_client.call_tool(tool, {"issue_id": issue_id, arg: value})
-    return result
-
-
-async def _do_create(connector, fields: dict) -> dict:
-    if mcp_client.mcp_enabled():
-        args = {k: v for k, v in fields.items() if v is not None}
-        return await mcp_client.call_tool("create_issue", args)
-    return await connector.create_issue(fields)
-
-
-async def _do_relation(connector, issue_id: int, related_issue_id: int, relation_type: str) -> dict:
-    if mcp_client.mcp_enabled():
-        return await mcp_client.call_tool(
-            "add_relation",
-            {"issue_id": issue_id, "related_issue_id": related_issue_id, "relation_type": relation_type},
-        )
-    return await connector.add_relation(issue_id, related_issue_id, relation_type)
 
 
 @router.post("/api/proposals/comment")
@@ -93,7 +48,7 @@ async def execute_comment(request: CommentProposalRequest, connector: ConnectorD
     _log_seq += 1
 
     try:
-        result = await _do_comment(connector, issue_id, notes)
+        result = await connector.add_issue_comment(issue_id, notes)
         log = _record_log({**log_base, "result": "success", "message": "Redmine コメントを追加しました。"})
         return {**result, "message": "Redmine コメントを追加しました。", "log": log}
     except RedmineApiError as exc:
@@ -142,7 +97,7 @@ async def execute_update(request: UpdateProposalRequest, connector: ConnectorDep
     _log_seq += 1
 
     try:
-        result = await _do_update(connector, request.issue_id, fields)
+        result = await connector.update_issue(request.issue_id, fields)
         log = _record_log({**log_base, "result": "success", "message": f"Redmine issue #{request.issue_id} を更新しました。"})
         return {**result, "message": f"Redmine issue #{request.issue_id} を更新しました。", "log": log}
     except RedmineApiError as exc:
@@ -184,7 +139,7 @@ async def execute_create_issue(request: CreateIssueRequest, connector: Connector
     _log_seq += 1
 
     try:
-        result = await _do_create(connector, fields)
+        result = await connector.create_issue(fields)
         new_id = (result.get("issue") or {}).get("id", 0)
         message = f"Redmine issue #{new_id} を作成しました。" if new_id else "Redmine issue を作成しました（mock）。"
         log = _record_log({**log_base, "issue_id": new_id, "result": "success", "message": message})
@@ -211,7 +166,7 @@ async def execute_add_relation(request: AddRelationRequest, connector: Connector
     _log_seq += 1
 
     try:
-        result = await _do_relation(connector, request.issue_id, request.related_issue_id, request.relation_type)
+        result = await connector.add_relation(request.issue_id, request.related_issue_id, request.relation_type)
         message = f"#{request.issue_id} と #{request.related_issue_id} を関連付けました。"
         log = _record_log({**log_base, "result": "success", "message": message})
         return {**result, "message": message, "log": log}
@@ -254,7 +209,7 @@ async def execute_bulk_update(request: BulkUpdateRequest, connector: ConnectorDe
     results = []
     try:
         for issue_id in issue_ids:
-            results.append(await _do_update(connector, issue_id, fields))
+            results.append(await connector.update_issue(issue_id, fields))
         message = f"{len(issue_ids)} 件の Redmine issue を一括更新しました。"
         log = _record_log({**log_base, "result": "success", "message": message})
         return {

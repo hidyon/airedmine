@@ -69,14 +69,18 @@ class RedmineClient:
         status_id: str = "open",
         assigned_to_id: str | None = None,
         limit: int = 25,
+        offset: int = 0,
+        sort: str = "updated_on:desc",
     ) -> dict:
         params: dict[str, str] = {
             "status_id": status_id,
             "limit": str(limit),
-            "sort": "updated_on:desc",
+            "sort": sort,
         }
         if assigned_to_id:
             params["assigned_to_id"] = assigned_to_id
+        if offset:
+            params["offset"] = str(offset)
         resp = await self._request("GET", "/issues.json", params=params, headers=self._headers())
         data = resp.json()
         return {
@@ -170,7 +174,12 @@ class RedmineClient:
         )
         return {
             "versions": [
-                {"id": v.get("id"), "name": v.get("name"), "status": v.get("status")}
+                {
+                    "id": v.get("id"),
+                    "name": v.get("name"),
+                    "status": v.get("status"),
+                    "due_date": v.get("due_date"),
+                }
                 for v in resp.json().get("versions", [])
             ]
         }
@@ -223,31 +232,36 @@ class RedmineClient:
         return {"updated": True, "issue_id": issue_id, "fields": clean}
 
 
+# backend/services/redmine_connector.py の _normalize_issue と同じ形状を返す
+# （生のネスト objects を保持）。これにより backend が MCP をツール源に一本化しても、
+# PM 集計・バーンダウン・issue 詳細がそのまま計算できる。
 def _summarize(i: dict) -> dict:
     return {
         "id": i.get("id"),
-        "subject": i.get("subject"),
-        "status": (i.get("status") or {}).get("name"),
-        "priority": (i.get("priority") or {}).get("name"),
-        "assigned_to": (i.get("assigned_to") or {}).get("name"),
+        "subject": i.get("subject", ""),
+        "project": i.get("project"),
+        "tracker": i.get("tracker"),
+        "status": i.get("status"),
+        "priority": i.get("priority"),
+        "assigned_to": i.get("assigned_to"),
+        "fixed_version": i.get("fixed_version"),
+        "due_date": i.get("due_date"),
         "updated_on": i.get("updated_on"),
     }
 
 
 def _detail(i: dict) -> dict:
-    journals = [
-        {
-            "user": (j.get("user") or {}).get("name"),
-            "notes": j["notes"],
-            "created_on": j.get("created_on"),
-        }
-        for j in i.get("journals", [])
-        if j.get("notes")
-    ]
     return {
         **_summarize(i),
-        "project": (i.get("project") or {}).get("name"),
-        "description": (i.get("description") or "")[:1500],
-        "due_date": i.get("due_date"),
-        "journals": journals[-10:],
+        "description": i.get("description", ""),
+        "journals": [
+            {
+                "id": j["id"],
+                "user": j.get("user"),
+                "notes": j.get("notes", ""),
+                "created_on": j.get("created_on"),
+            }
+            for j in i.get("journals", [])
+            if j.get("notes")
+        ],
     }

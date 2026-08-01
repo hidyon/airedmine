@@ -29,6 +29,24 @@ def _log_warmup_result(task: asyncio.Task) -> None:
 
 app = FastAPI(title="AIRedmine API", lifespan=lifespan)
 
+
+@app.middleware("http")
+async def bind_jwt_middleware(request, call_next):
+    """リクエストの Bearer JWT を contextvar に載せる。
+
+    MCP 経由（McpConnector）のとき、この JWT を MCP に転送して本人として Redmine を操作する。
+    """
+    from services.mcp_client import current_jwt
+
+    auth = request.headers.get("authorization", "")
+    token = auth[7:] if auth.startswith("Bearer ") else None
+    reset = current_jwt.set(token)
+    try:
+        return await call_next(request)
+    finally:
+        current_jwt.reset(reset)
+
+
 app.include_router(config.router)
 app.include_router(issues.router)
 app.include_router(chat.router)

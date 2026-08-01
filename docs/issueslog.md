@@ -1318,3 +1318,16 @@ ISS-143 の検証で、switch-user 本人操作の書き込みが 403 になっ�
 - 実装中の落とし穴: Docker サービス名で MCP に到達すると FastMCP の DNS リバインディング保護が 421 を返す → `TransportSecuritySettings` を既定オフ（`MCP_ALLOWED_HOSTS` で有効化）に。
 
 残（将来 issue 候補）: 二重実装の残り（redmine_connector と mcp-server/redmine の低レベル共通化）、OAuth 2.1、SDK v2 移行。
+
+## 2026-08-01: ISS-145 — Redmine の参照/操作を完全に MCP 経由へ一本化
+
+ISS-144 の残り（PM 集計/バーンダウン・issue 詳細が Connector のまま）を解消。
+
+判断・要点:
+
+- ネックは「MCP の要約データに fixed_version 等が無い」ことだった → MCP の `list_issues`/`get_issue` を backend の `_normalize_issue`/`_normalize_issue_detail` と**同じリッチ形状**にし、`list_versions` に `due_date`、`list_issues` に `offset/sort` を追加。
+- これにより「connector 互換の `McpConnector` を作り、`get_connector` を差し替える」だけで全経路（PM・詳細・Agent・proposal）が MCP 経由になる。ISS-144 の個別分岐は撤去し、実装をシンプル化。
+- JWT は router 単位でなくアプリ全体の ASGI middleware で contextvar に載せ、PM/詳細も本人操作に。
+- 非破壊維持: `MCP_SERVER_URL` 未設定なら従来 Connector（モック）。テストは MCP off 固定＋ McpConnector 単体テストで担保。
+
+残: 低レベル Redmine クライアントは 2 実装（backend=モック対応 / mcp-server=実接続）残る。完全な単一化には backend のモックを別レイヤに切り出す必要があり、今回はスコープ外。

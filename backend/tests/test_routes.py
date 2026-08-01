@@ -987,45 +987,36 @@ async def test_run_agent_returns_partial_answer_on_max_tokens(monkeypatch):
     assert result["tool_calls"] == ["list_issues"]
 
 
-@pytest.mark.asyncio
-async def test_execute_tool_reads_route_through_mcp(monkeypatch):
-    from services import mcp_client, tools
-
-    monkeypatch.setattr(mcp_client, "mcp_enabled", lambda: True)
-    calls = {}
-
-    async def fake_call_tool(name, args):
-        calls["name"] = name
-        calls["args"] = args
-        return {"total_count": 1, "issues": [{"id": 7, "subject": "via mcp"}]}
-
-    monkeypatch.setattr(mcp_client, "call_tool", fake_call_tool)
-
-    out = await tools.execute_tool(
-        "list_issues", {"status_id": "open", "limit": 5}, connector=None, knowledge_base=None
-    )
-    assert calls["name"] == "list_issues"
-    assert calls["args"]["status_id"] == "open"
-    assert json.loads(out)["issues"][0]["id"] == 7
-
-
-def test_proposal_comment_routes_through_mcp(monkeypatch):
+def test_get_connector_returns_mcp_connector_when_enabled(monkeypatch):
+    import dependencies
     from services import mcp_client
+    from services.mcp_connector import McpConnector
 
     monkeypatch.setattr(mcp_client, "mcp_enabled", lambda: True)
-    calls = {}
+    assert isinstance(dependencies.get_connector(), McpConnector)
+
+
+@pytest.mark.asyncio
+async def test_mcp_connector_routes_reads_and_writes(monkeypatch):
+    from services import mcp_client
+    from services.mcp_connector import McpConnector
+
+    calls = []
 
     async def fake_call_tool(name, args):
-        calls["name"] = name
-        calls["args"] = args
-        return {"updated": True, "issue_id": args["issue_id"]}
+        calls.append((name, args))
+        if name == "list_issues":
+            return {"total_count": 1, "issues": [{"id": 7, "subject": "via mcp"}]}
+        return {"updated": True, "issue_id": args.get("issue_id")}
 
     monkeypatch.setattr(mcp_client, "call_tool", fake_call_tool)
 
-    resp = client.post(
-        "/api/proposals/comment",
-        json={"issue_id": 5, "notes": "hi", "target_issue": {"id": 5, "title": "t"}},
-    )
-    assert resp.status_code == 200
-    assert calls["name"] == "add_comment"
-    assert calls["args"] == {"issue_id": 5, "notes": "hi"}
+    conn = McpConnector()
+    issues = await conn.list_issues({"status_id": "open", "limit": 5, "offset": 0})
+    assert issues["issues"][0]["id"] == 7
+    await conn.add_issue_comment(5, "hi")
+    await conn.update_issue(9, {"status_id": 4})
+
+    names = [c[0] for c in calls]
+    assert names == ["list_issues", "add_comment", "change_status"]
+    assert conn.mode == "redmine" and conn.is_connected is True

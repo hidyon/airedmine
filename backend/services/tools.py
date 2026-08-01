@@ -2,34 +2,6 @@
 import json
 from typing import Any
 
-from services import mcp_client
-from services.redmine_connector import RedmineApiError
-
-# MCP サーバー経由に一本化できる Redmine 参照ツール（書き込みは proposal 経由）。
-_MCP_READ_TOOLS = {
-    "list_issues", "get_issue", "search_issues", "list_projects",
-    "list_issue_statuses", "list_priorities", "list_users", "list_versions",
-}
-
-
-def _mcp_read_args(name: str, tool_input: dict[str, Any]) -> dict[str, Any]:
-    if name == "list_issues":
-        args: dict[str, Any] = {
-            "status_id": tool_input.get("status_id", "open"),
-            "limit": tool_input.get("limit", 25),
-        }
-        if tool_input.get("assigned_to_id"):
-            args["assigned_to_id"] = tool_input["assigned_to_id"]
-        return args
-    if name == "get_issue":
-        return {"issue_id": tool_input["issue_id"]}
-    if name == "search_issues":
-        return {"query": tool_input["query"], "limit": tool_input.get("limit", 25)}
-    if name == "list_versions":
-        return {"project_id": tool_input["project_id"]}
-    return {}
-
-
 TOOL_SCHEMAS = [
     {
         "name": "list_issues",
@@ -406,16 +378,11 @@ async def execute_tool(
     knowledge_base: Any,
     timings: list[dict] | None = None,
 ) -> str:
-    """ツールを実行して結果を JSON 文字列で返す。add_comment は確認待ちを返す。"""
-    # MCP_SERVER_URL が設定されているとき、Redmine 参照は共有 MCP サーバー経由に一本化する。
-    # 失敗はツール結果として LLM に返す（クラッシュさせない）。書き込みは従来どおり proposal。
-    if mcp_client.mcp_enabled() and name in _MCP_READ_TOOLS:
-        try:
-            result = await mcp_client.call_tool(name, _mcp_read_args(name, tool_input))
-        except RedmineApiError as exc:
-            result = {"error": str(exc), "status": exc.status}
-        return json.dumps(result, ensure_ascii=False)
+    """ツールを実行して結果を JSON 文字列で返す。add_comment は確認待ちを返す。
 
+    connector は MCP_SERVER_URL 設定時に McpConnector（共有 MCP サーバー経由）になる。
+    参照系はそれを通じて MCP に一本化され、書き込み系は従来どおり proposal を返す。
+    """
     if name == "list_issues":
         params: dict[str, Any] = {
             "status_id": tool_input.get("status_id", "open"),

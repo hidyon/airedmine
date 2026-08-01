@@ -5017,3 +5017,43 @@ Priority: Medium
 クローズ判定:
 
 - 要求仕様・機能仕様・テスト仕様を満たすため Closed とする。既定は opt-in（MCP_SERVER_URL）で非破壊。
+
+### ISS-145: Redmine の参照・操作を完全に MCP 経由へ一本化する
+
+Status: Closed
+Priority: Medium
+
+背景:
+
+- ISS-144 では AI Agent の参照と承認後の更新を MCP 経由にしたが、PM 集計/バーンダウン・issue 詳細は「MCP の要約データに fixed_version 等が無い」ため backend の Connector に残していた。
+- 要望: Redmine の参照も操作もすべて MCP 経由に統一したい。
+
+要求仕様:
+
+- `MCP_SERVER_URL` 設定時、Redmine の参照（PM 集計/バーンダウン・issue 詳細・一覧・参照リスト）と操作（承認後の更新）を**すべて** MCP 経由にする。
+- 本人操作（switch-user）・承認フロー・非破壊（未設定時は従来 Connector＝モック）を維持。
+- 対象外: 意味検索・knowledge（Redmine 操作でない、backend 担当）。
+
+機能仕様:
+
+- `mcp-server/redmine.py`: `_summarize` / `_detail` を backend `_normalize_issue` / `_normalize_issue_detail` と同じ**リッチ形状**（生ネスト objects・fixed_version・project・tracker 等）に。`list_issues` に `offset` / `sort` を追加。`list_versions` に `due_date` を追加。
+- `backend/services/mcp_connector.py`（新規）: RedmineConnector 互換の `McpConnector`。全メソッドを MCP `tools/call` に委譲し、connector 互換の戻り値を返す。config 用プロパティ（is_connected/mode/base_url/missing）も提供。
+- `dependencies.get_connector`: `MCP_SERVER_URL` 設定時は `McpConnector` を返す。
+- `main.py`: 全リクエストの Bearer JWT を contextvar に載せる ASGI middleware（PM/詳細も本人操作に）。
+- ISS-144 の個別分岐（execute_tool / proposals の MCP 分岐、router 単位の bind_jwt）を撤去し、connector 差し替えに一本化。
+
+テスト仕様:
+
+- 未設定時に既存テストが通ること（テストは MCP off に固定）。
+- `get_connector` が McpConnector を返すこと、McpConnector が read/write を MCP に委譲すること。
+- 実機で PM バーンダウン/stats・issue 詳細・Chat・proposal が MCP 経由・本人操作で動くこと。
+
+実装結果・確認結果:
+
+- 上記を実装。テストを McpConnector 向けに更新（`test_get_connector_returns_mcp_connector_when_enabled` / `test_mcp_connector_routes_reads_and_writes`）。
+- 既定（MCP off）: backend 40 テスト pass、smoke 成功、モック維持。
+- MCP 有効: `/api/config` mode=redmine、`/api/pm/burndown` が sprint「Sprint 3」baseline 82→37（MCP 経由でスプリント絞り込みが機能）、`/api/pm/stats`（overdue 10/stalled 20/closed 39）、`/api/issues/1327`（fixed_version・journals 付き）、Chat の参照、proposal 実行（著者=本人）すべて MCP 経由で確認。
+
+クローズ判定:
+
+- 要求仕様・機能仕様・テスト仕様を満たすため Closed とする。低レベル Redmine クライアントは backend（モック用）と mcp-server（実接続）に残るが、MCP モードの実行時経路は単一化された。

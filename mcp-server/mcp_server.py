@@ -49,6 +49,8 @@ async def list_issues(
     status_id: str = "open",
     assigned_to_id: str | None = None,
     limit: int = 25,
+    offset: int = 0,
+    sort: str = "updated_on:desc",
 ) -> Any:
     """Redmine の issue 一覧を取得する。
 
@@ -56,8 +58,10 @@ async def list_issues(
         status_id: ステータスフィルタ。"open"（未完了）、"closed"（完了）、"*"（全て）、または数値 ID。
         assigned_to_id: 担当者で絞り込む場合の数値 user_id。自分の場合は "me"。
         limit: 取得件数の上限（既定 25）。
+        offset: 取得開始位置（ページング用、既定 0）。
+        sort: 並び順（既定 updated_on:desc）。
     """
-    return await _safe(client.list_issues(status_id, assigned_to_id, limit))
+    return await _safe(client.list_issues(status_id, assigned_to_id, limit, offset, sort))
 
 
 @mcp.tool()
