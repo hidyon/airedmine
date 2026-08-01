@@ -99,57 +99,24 @@ AI は情報収集・要約・更新案の作成を支援し、人間は判断�
 
 ## アーキテクチャ
 
-Redmine への入口は 2 経路あり、互いに独立している。**経路A: web アプリ**（ブラウザ体験）と、**経路B: MCP 連携**（Claude Code などの MCP クライアントから利用）。どちらも上から下へ読み、最終的に同じ Redmine を操作する。
+Redmine への入口は独立した 2 経路。どちらも最終的に同じ Redmine を操作する。
 
 ```text
-=== 経路A: web アプリ（ブラウザ体験）===
+経路A: web アプリ
+  ブラウザ (React/Vite, :5173) --/api/*--> FastAPI backend (:8000) --> Redmine (:3000)
+      backend: AI Agent (Claude Haiku, tool_use・20 ツール) / Semantic Index /
+               Knowledge (docs/) / PM Analytics / Proposal & Audit / Chat Sessions (SQLite)
 
-ブラウザ (React + TypeScript + Vite, :5173)
-      | /api/* proxy
-      v
-FastAPI バックエンド (:8000)
-      +-- Auth Layer      (JWT / SQLite users テーブル)
-      +-- AI Agent        (Anthropic API / Claude Haiku, tool_use ループ・20 ツール)
-      |      参照系: list_issues / get_issue / search_issues / search_issues_semantic /
-      |              list_projects / list_issue_statuses / list_priorities / list_users /
-      |              list_versions / search_knowledge
-      |      更新系(確認待ち proposal): add_comment / change_status / change_assignee /
-      |              bulk_update / create_issue / update_due_date / update_priority /
-      |              update_done_ratio / assign_version / add_relation
-      +-- Redmine Connector (httpx) / Knowledge Base (docs/) / Semantic Index (SQLite + ST)
-      +-- PM Analytics    (バーンダウン=進行中スプリントに絞る / 停滞・期限切れ・担当者負荷)
-      +-- Proposal & Audit Layer / Chat Sessions / Experience Notes (SQLite)
-      |
-      v
-OSS 版 Redmine (:3000)
-
-
-=== 経路B: MCP 連携（web アプリとは独立）===
-
-MCP クライアント
-   = Claude Code / Claude デスクトップ / 自作エージェントなど「MCP 対応ホスト」。
-     開発者や自動処理が、この中から MCP サーバーのツールを呼んで Redmine を操作する。
-      | MCP プロトコル（stdio または HTTP）
-      v
-MCP サーバー (mcp-server/)
-      ・stdio モード : ローカル単一ユーザー / 単一 API キー（従来）
-      ・http  モード : ステートレス Streamable HTTP + JWT(Bearer) 認証の共有エンドポイント (:8848)
-      |
-      | Redmine REST API（http モードは X-Redmine-Switch-User で認証ユーザー本人として操作）
-      v
-OSS 版 Redmine (:3000)
+経路B: MCP 連携（web アプリとは独立）
+  MCP クライアント (Claude Code 等) --MCP(stdio/HTTP)--> MCP サーバー (:8848) --> Redmine (:3000)
+      stdio: ローカル単一ユーザー / http: ステートレス HTTP + JWT 認証（本人操作）
 ```
 
-- **frontend/**: React + TypeScript + Vite。Tailwind CSS v4 でスタイリング。
-- **backend/**: Python + FastAPI。AI Agent は Anthropic API の tool_use ループで動作する。
-- **PM Analytics**: PM Dashboard のバーンダウンは進行中スプリント（status open で期日が最も近い version）に絞って表示する。停滞・期限切れ・担当者別負荷・優先度サマリー・今週のクローズ数も集計する。
-- **Proposal & Audit Layer**: Redmine への書き込みは proposal として表示し、人間が確認してから実行する。Closed / Urgent / 過去日期日などの危険操作は二段階確認にする。
-- **Chat Sessions**: 会話は相談トピック単位で保存する。同じ `session_id` の直近 10 messages / 6000 文字を AI 文脈に渡し、別セッションの履歴は混ぜない。`chat_sessions.archived_at` で通常一覧から隠し、全履歴表示や通常一覧への復帰で履歴を消さずに整理できる。
-- **参照ツール**: Chat は project/status/priority/user/version の ID を推測せず、Redmine から取得した一覧に基づいて更新案を作る。
-- **mcp-server/**: Redmine MCP サーバー（web アプリとは独立）。2 モード — **stdio**（ローカル単一ユーザー・単一 API キー）と、**ステートレス Streamable HTTP + JWT 認証**の共有エンドポイント（`docker compose --profile mcp`、admin キー時は `X-Redmine-Switch-User` で認証ユーザー本人として操作）。詳細は [`docs/mcp.md`](docs/mcp.md)。
-- **MCP への一本化（任意）**: backend に `MCP_SERVER_URL` を設定すると、`get_connector()` が MCP バックエンドの `McpConnector` になり、**Redmine の参照・操作をすべて**経路B の MCP サーバー経由で行う（AI Agent・PM 集計/バーンダウン・issue 詳細・proposal 実行）。本人の JWT を転送し switch-user で本人操作。承認フロー（proposal → 人間が承認 → 実行）は不変。意味検索・knowledge は Redmine 操作でないため backend が担当。モックは `MCP_SERVER_URL` 未設定時のみ。
-- **Redmine**: `REDMINE_BASE_URL` / `REDMINE_API_KEY` が未設定の場合、モックデータで動作する。
-- **AI**: `ANTHROPIC_API_KEY` が未設定の場合、Chat はエラーを返す。
+- **frontend/**: React + TypeScript + Vite（Tailwind CSS v4）。
+- **backend/**: Python + FastAPI。AI Agent は Anthropic の tool_use ループで動く。書き込みは proposal として提示し、人間が承認してから実行する（Closed / Urgent / 過去日期日は二段階確認）。PM バーンダウンは進行中スプリントに絞って表示する。
+- **mcp-server/**: Redmine MCP サーバー（独立）。stdio と、JWT 認証つきステートレス HTTP の共有エンドポイント（`X-Redmine-Switch-User` で本人操作）。詳細は [`docs/mcp.md`](docs/mcp.md)。
+- **MCP 一本化（任意）**: backend に `MCP_SERVER_URL` を設定すると、Redmine の参照・操作をすべて経路B の MCP サーバー経由にできる（本人操作、承認フローは不変）。未設定なら backend 内 Connector（`REDMINE_*` 未設定でモック）。
+- **AI**: `ANTHROPIC_API_KEY` が未設定なら Chat はエラー。
 
 ## クイックスタート
 
