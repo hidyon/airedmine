@@ -48,11 +48,7 @@ PM は、Redmine の一覧やガントチャートをPM自ら細かく巡回す�
 
 ![PM Dashboard](docs/screenshots/pm-dashboard.png)
 
-確認観点: PM Dashboard ではバーンダウン、停滞 issue、担当者別負荷、優先度サマリー、issue 詳細パネル、リスクから Chat で定例アジェンダを作る導線を確認します。
-
-![PM Dashboard 統計](docs/screenshots/pm-dashboard-stats.png)
-
-確認観点: 統計部では停滞 issue、期限切れ issue、担当者別 Open Issue 数、優先度サマリー、今週のクローズ数を確認します。
+確認観点: PM Dashboard ではバーンダウン、定例アジェンダ導線、停滞 issue、期限切れ issue、担当者別 Open Issue 数、優先度サマリー、今週のクローズ数、issue 詳細パネルを 1 画面で確認します。
 
 ![PM Chat](docs/screenshots/pm-chat-empty.png)
 

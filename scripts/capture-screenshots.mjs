@@ -18,7 +18,6 @@ try {
   await captureDeveloperDashboard(browser);
   await captureDeveloperSemantic(browser);
   await capturePmDashboard(browser);
-  await capturePmDashboardStats(browser);
   await capturePmChatEmpty(browser);
   await captureAgendaResult(browser);
   await captureAudit(browser);
@@ -62,28 +61,14 @@ async function captureDeveloperSemantic(browser) {
 
 async function capturePmDashboard(browser) {
   const page = await newPage(browser, pmUser);
+  // 縦長ビューポートで、バーンダウン・アジェンダ導線・統計・issue 詳細を 1 枚に収める。
+  await page.setViewportSize({ width: 1440, height: 1400 });
   await page.goto(`${appUrl}/pm/dashboard`, { waitUntil: "networkidle" });
   await page.getByText(issue1327.subject).first().click();
   await page.getByText("#1327 詳細").waitFor();
+  await page.getByText("優先度サマリー").waitFor();
   await page.waitForTimeout(1800); // recharts のバーンダウン描画アニメーション完了を待つ
   await page.screenshot({ path: `${outDir}/pm-dashboard.png` });
-  await page.close();
-}
-
-async function capturePmDashboardStats(browser) {
-  const page = await newPage(browser, pmUser);
-  await page.goto(`${appUrl}/pm/dashboard`, { waitUntil: "networkidle" });
-  await page.getByText("優先度サマリー").waitFor();
-  // 統計部にフォーカスするため、メインのスクロールコンテナを最下部まで送る。
-  await page.evaluate(() => {
-    for (const el of document.querySelectorAll(".overflow-y-auto")) {
-      if (el.clientHeight > 400 && el.scrollHeight > el.clientHeight) {
-        el.scrollTop = el.scrollHeight;
-      }
-    }
-  });
-  await page.waitForTimeout(300);
-  await page.screenshot({ path: `${outDir}/pm-dashboard-stats.png` });
   await page.close();
 }
 
