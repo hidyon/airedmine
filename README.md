@@ -96,40 +96,45 @@ AI は情報収集・要約・更新案の作成を支援し、人間は判断�
 
 ## アーキテクチャ
 
-2 つの入口が同じ Redmine を操作する。web アプリ（ブラウザ体験）と MCP サーバー（Claude Code などの MCP クライアント）は独立している。
+Redmine への入口は 2 経路あり、互いに独立している。**経路A: web アプリ**（ブラウザ体験）と、**経路B: MCP 連携**（Claude Code などの MCP クライアントから利用）。どちらも上から下へ読み、最終的に同じ Redmine を操作する。
 
 ```text
-[ web アプリ ]
+=== 経路A: web アプリ（ブラウザ体験）===
+
 ブラウザ (React + TypeScript + Vite, :5173)
-        | /api/* proxy
-        v
+      | /api/* proxy
+      v
 FastAPI バックエンド (:8000)
-        +--> Auth Layer            (JWT / SQLite users テーブル)
-        +--> AI Agent              (Anthropic API / Claude Haiku, tool_use ループ・20 ツール)
-        |       参照系: list_issues / get_issue / search_issues / search_issues_semantic /
-        |               list_projects / list_issue_statuses / list_priorities / list_users /
-        |               list_versions / search_knowledge
-        |       更新系(確認待ち proposal): add_comment / change_status / change_assignee /
-        |               bulk_update / create_issue / update_due_date / update_priority /
-        |               update_done_ratio / assign_version / add_relation
-        +--> Redmine Connector     (httpx)
-        +--> Knowledge Base        (docs/ 読み込み)
-        +--> Semantic Index        (SQLite + sentence-transformers)
-        +--> PM Analytics          (バーンダウン=進行中スプリントに絞る / 停滞・期限切れ・担当者負荷)
-        +--> Proposal & Audit Layer(差分表示 / 二段階確認 / 実行ログ / 再試行判断)
-        +--> Chat Sessions         (SQLite) / Experience Notes (SQLite)
-        |
-        v
-   OSS 版 Redmine (:3000)  <--- REST API (http モードは X-Redmine-Switch-User で本人操作)
-        ^
-        |
-[ MCP サーバー (mcp-server/) ]  ※web アプリとは独立
-   stdio モード : ローカル単一ユーザー / 単一 API キー（従来）
-   http  モード : ステートレス Streamable HTTP + JWT(Bearer) 認証の共有エンドポイント (:8848)
-        ^
-        | MCP (stdio / HTTP)
-        |
-   MCP クライアント (Claude Code / Claude / 自作エージェント)
+      +-- Auth Layer      (JWT / SQLite users テーブル)
+      +-- AI Agent        (Anthropic API / Claude Haiku, tool_use ループ・20 ツール)
+      |      参照系: list_issues / get_issue / search_issues / search_issues_semantic /
+      |              list_projects / list_issue_statuses / list_priorities / list_users /
+      |              list_versions / search_knowledge
+      |      更新系(確認待ち proposal): add_comment / change_status / change_assignee /
+      |              bulk_update / create_issue / update_due_date / update_priority /
+      |              update_done_ratio / assign_version / add_relation
+      +-- Redmine Connector (httpx) / Knowledge Base (docs/) / Semantic Index (SQLite + ST)
+      +-- PM Analytics    (バーンダウン=進行中スプリントに絞る / 停滞・期限切れ・担当者負荷)
+      +-- Proposal & Audit Layer / Chat Sessions / Experience Notes (SQLite)
+      |
+      v
+OSS 版 Redmine (:3000)
+
+
+=== 経路B: MCP 連携（web アプリとは独立）===
+
+MCP クライアント
+   = Claude Code / Claude デスクトップ / 自作エージェントなど「MCP 対応ホスト」。
+     開発者や自動処理が、この中から MCP サーバーのツールを呼んで Redmine を操作する。
+      | MCP プロトコル（stdio または HTTP）
+      v
+MCP サーバー (mcp-server/)
+      ・stdio モード : ローカル単一ユーザー / 単一 API キー（従来）
+      ・http  モード : ステートレス Streamable HTTP + JWT(Bearer) 認証の共有エンドポイント (:8848)
+      |
+      | Redmine REST API（http モードは X-Redmine-Switch-User で認証ユーザー本人として操作）
+      v
+OSS 版 Redmine (:3000)
 ```
 
 - **frontend/**: React + TypeScript + Vite。Tailwind CSS v4 でスタイリング。
