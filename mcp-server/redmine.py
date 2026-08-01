@@ -8,6 +8,12 @@ from typing import Any
 
 import httpx
 
+from identity import current_switch_user
+
+
+def _switch_user_enabled() -> bool:
+    return os.getenv("REDMINE_SWITCH_USER", "").lower() in ("1", "true", "yes")
+
 
 class RedmineError(Exception):
     def __init__(self, message: str, status: int = 0):
@@ -33,6 +39,12 @@ class RedmineClient:
         headers = {"Accept": "application/json", "X-Redmine-API-Key": self.api_key}
         if write:
             headers["Content-Type"] = "application/json"
+        # HTTP モード: 認証ユーザーとして操作する（API キーは admin 権限が前提）。
+        # stdio モードでは解決結果が None なので従来どおり単一キーで動く。
+        if _switch_user_enabled():
+            login = current_switch_user()
+            if login:
+                headers["X-Redmine-Switch-User"] = login
         return headers
 
     async def _request(self, method: str, path: str, **kwargs) -> httpx.Response:

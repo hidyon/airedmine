@@ -1,19 +1,29 @@
 """Redmine MCP サーバー。
 
 Claude Code などの MCP クライアントから Redmine を直接操作するためのツールを公開する。
-stdio トランスポートで動作する。
+2 つのトランスポートを選べる（`MCP_TRANSPORT` で切替、既定 stdio）。
+
+  stdio: ローカルの単一ユーザー利用（従来どおり）。単一 API キーで動作。
+  http : ステートレスな Streamable HTTP + JWT(Bearer) 認証の共有エンドポイント。
+         認証ユーザーとして Redmine を操作する（要 admin キー + REDMINE_SWITCH_USER=1）。
 
 環境変数:
-  REDMINE_BASE_URL  接続先 Redmine の URL（例: http://localhost:3000）
-  REDMINE_API_KEY   Redmine の API キー
+  REDMINE_BASE_URL     接続先 Redmine の URL（例: http://localhost:3000）
+  REDMINE_API_KEY      Redmine の API キー（http 共有時は admin 権限が前提）
+  MCP_TRANSPORT        "stdio"（既定）または "http"
+  MCP_HTTP_HOST        http 時の bind ホスト（既定 0.0.0.0）
+  MCP_HTTP_PORT        http 時のポート（既定 8848）
+  REDMINE_SWITCH_USER  http 時に "1" で X-Redmine-Switch-User による本人操作を有効化
+  JWT_SECRET           http 時の Bearer JWT 検証鍵（backend と共有）
 """
+import os
 from typing import Any
 
 from mcp.server.fastmcp import FastMCP
 
 from redmine import RedmineClient, RedmineError
 
-mcp = FastMCP("redmine")
+mcp = FastMCP("redmine", stateless_http=True)
 client = RedmineClient()
 
 
@@ -237,7 +247,19 @@ async def add_relation(
 
 
 def main() -> None:
-    mcp.run()
+    if os.getenv("MCP_TRANSPORT", "stdio").lower() == "http":
+        import uvicorn
+
+        from auth import BearerAuthMiddleware
+
+        app = BearerAuthMiddleware(mcp.streamable_http_app())
+        uvicorn.run(
+            app,
+            host=os.getenv("MCP_HTTP_HOST", "0.0.0.0"),
+            port=int(os.getenv("MCP_HTTP_PORT", "8848")),
+        )
+    else:
+        mcp.run()
 
 
 if __name__ == "__main__":

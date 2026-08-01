@@ -4916,3 +4916,52 @@ Priority: Medium
 クローズ判定:
 
 - 要求仕様・機能仕様・テスト仕様を満たすため Closed とする。
+
+### ISS-143: Redmine MCP サーバーをステートレス HTTP + 認証の共有エンドポイントにする
+
+Status: Closed
+Priority: Medium
+
+背景:
+
+- MCP 仕様が 2026-07-28 で大改訂され、ステートレス化と認証が中心になった（調査は issueslog 参照）。
+- 既存の MCP サーバーは stdio 専用・単一 API キーで、ローカル単一ユーザー向けだった。チームで共有し「本人として」Redmine を操作できるようにする。
+
+要求仕様:
+
+- 1 つの MCP エンドポイントをチームで共有でき、リクエストは認証で保護される。
+- 認証ユーザー本人として Redmine を操作でき、監査ログも本人に記録される。
+- 既存の stdio モード（ローカル単一ユーザー）は従来どおり動く。
+- 対象外: OAuth 2.1 正式対応（将来）、SDK v2(2026-07-28) への移行（beta のため見送り）。
+
+機能仕様:
+
+- `MCP_TRANSPORT=http` で Streamable HTTP（`stateless_http=True`）起動。既定は stdio。
+- ASGI ミドルウェアで Bearer JWT を検証（backend と同じ `JWT_SECRET`/HS256）。無効・欠落は 401 でツールに到達させない。
+- ツール実行時に MCP SDK の `request_ctx` から HTTP リクエストを取り出し、JWT の `username` を解決。`REDMINE_SWITCH_USER=1` かつ admin キー時に `X-Redmine-Switch-User` を付与して本人操作。空なら単一キー動作。
+- `docker compose --profile mcp` で共有サーバーを opt-in 起動（既定の up には含めない）。
+- 依存に PyJWT / uvicorn を追加、`mcp>=1.10.0,<2` に上限固定。
+
+テスト仕様:
+
+- トークン無し / 無効トークンで 401 になることを確認する。
+- 有効な JWT で tools/list・tools/call が通ることを確認する。
+- switch-user が本人として適用されることを end-to-end で確認する。
+- stdio モードが従来どおり動くこと（switch-user が無効）を確認する。
+
+実装結果:
+
+- `mcp-server/` に `identity.py`（JWT 解決）、`auth.py`（401 ゲート）を追加。`mcp_server.py` に transport 切替、`redmine.py` に `X-Redmine-Switch-User` 付与を実装。
+- `Dockerfile` / `requirements.txt` / `docker-compose.yml`（mcp サービス, profile=mcp）/ `.env.example` / `docs/mcp.md` を更新。
+
+確認結果:
+
+- `docker compose --profile mcp up` で `http://0.0.0.0:8848/mcp` 起動を確認。
+- 認証ゲート: トークン無し・無効いずれも HTTP 401。
+- 有効 JWT(tanaka): tools/list が tool 一覧を返し、tools/call(list_issues) が Redmine データを返す。
+- switch-user 確定: MCP 経由 tanaka の add_comment が 403。Redmine 直叩きで `admin`→204 / `admin+switch-user tanaka`→403 と一致（＝ admin ではなく tanaka として実行されている）。`/my/account.json` の switch-user 切替も確認済み。
+- 403 は seed の Redmine ロールにコメント権限が無いためで、MCP の不具合ではない（読み取りは本人として成功）。共有運用では対象ロールに権限付与が必要。
+
+クローズ判定:
+
+- 要求仕様・機能仕様・テスト仕様を満たすため Closed とする。OAuth 2.1 正式対応と SDK v2 移行は将来 issue とする。

@@ -1269,3 +1269,23 @@ PM Dashboard の「今週のクローズ数」が常に 0 件だった。Closed 
 派生メモ:
 
 - burndown は Redmine issue の open/closed を全ページ取得して Python 側でスプリント絞り込みしている。将来 issue 数が大幅に増えたら `fixed_version_id` での API 側フィルタを検討。
+
+## 2026-08-01: MCP 仕様 2026-07-28 の調査と ISS-143
+
+背景: 「MCP の規格が最近最新化された」ため調査。
+
+調査結果（一次情報 modelcontextprotocol.io）:
+
+- 最新は **2026-07-28**（前版 2025-11-25）。大改訂: プロトコルの**ステートレス化**（initialize ハンドシェイク廃止、`Mcp-Session-Id` 廃止、`server/discover` 追加）、Tasks の拡張分離、MRTR パターン、`resultType` 必須、Roots/Sampling/Logging と HTTP+SSE の非推奨化。
+- 公式 Python SDK は v2.0.0b1（beta）が 2026-07-28 対応（`FastMCP`→`MCPServer` 等の破壊的変更）。
+- 当アプリの MCP サーバーは薄い stdio ツールサーバーで、プロトコル層は SDK 任せ・廃止機能は未使用 → **後方互換で現状維持でも動作**。適用は必須でない、と結論。
+
+判断:
+
+- 当初「このアプリには不要」だったが、ユーザーが**共有サービス志向**を選択。ステートレス HTTP + 認証化の価値は「AI から Redmine を触る面を個人の手元から組織の共有基盤へ引き上げる」点にある。
+- SDK v2 は beta のため見送り、**安定版 mcp 1.x の Streamable HTTP + `stateless_http=True`** で実装（`ISS-143`）。認証は**既存アプリの JWT を再利用**（新規 IdP 不要で最短）。identity は **admin キー + `X-Redmine-Switch-User`** で本人操作。
+- contextvar は ASGI ミドルウェア→ツール実行タスクへ伝播しないため、ツール実行時に SDK の `request_ctx` から HTTP リクエストを取り出して JWT を解決する方式にした（実装上の要点）。
+
+残（将来 issue 候補）:
+
+- OAuth 2.1 正式対応（Client ID Metadata Documents）。SDK v2(2026-07-28) 移行。共有ロールの Redmine 権限設計（書き込み 403 対策）。

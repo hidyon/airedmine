@@ -6,7 +6,10 @@ AIRedmine の web アプリ（ブラウザ体験）とは独立して動作し�
 - web アプリ: ブラウザ → AIRedmine（React + FastAPI）→ Redmine
 - MCP サーバー: Claude Code → Redmine MCP Server → Redmine
 
-実装は [`mcp-server/`](../mcp-server/) にあります。トランスポートは stdio です。
+実装は [`mcp-server/`](../mcp-server/) にあります。トランスポートは 2 つから選べます（`MCP_TRANSPORT`）。
+
+- **stdio**（既定）: ローカルの単一ユーザー利用。単一 API キーで動作（従来どおり）。
+- **http**: ステートレスな Streamable HTTP ＋ JWT(Bearer) 認証の**共有エンドポイント**。認証ユーザーとして Redmine を操作する（後述）。
 
 ## 公開ツール
 
@@ -116,6 +119,52 @@ pip install -r mcp-server/requirements.txt
   }
 }
 ```
+
+## 共有サーバー（HTTP + 認証）
+
+チームで1つの MCP エンドポイントを共有する場合は http モードで起動します。ステートレスな
+Streamable HTTP で動き、リクエストは **JWT(Bearer) 認証**で保護されます。トークンは
+AIRedmine backend が発行する JWT をそのまま使えます（同じ `JWT_SECRET`）。
+
+```bash
+docker compose --profile mcp up -d --build mcp
+# → http://localhost:8848/mcp で待ち受け
+```
+
+追加の環境変数:
+
+| 変数 | 説明 |
+| --- | --- |
+| `MCP_TRANSPORT` | `http` で HTTP モード（既定 `stdio`） |
+| `MCP_HTTP_PORT` | 待受ポート（既定 `8848`） |
+| `JWT_SECRET` | Bearer JWT の検証鍵（backend と共有） |
+| `REDMINE_SWITCH_USER` | `1` で `X-Redmine-Switch-User` による本人操作を有効化 |
+
+### 認証と identity
+
+- リクエストは `Authorization: Bearer <JWT>` が必須。無効・欠落なら **401**（ツールに到達しない）。
+- `REDMINE_SWITCH_USER=1` かつ `REDMINE_API_KEY` が **admin 権限**のとき、ツールは JWT の `username` を
+  `X-Redmine-Switch-User` に載せて**認証ユーザー本人として** Redmine を操作する。監査ログも本人に記録される。
+- `REDMINE_SWITCH_USER` を空にすると、全リクエストが単一 API キーのユーザーとして動作する。
+- 書き込み（コメント・更新等）は Redmine 側で**その本人のロール権限**が必要。権限が無いと 403 になる
+  （読み取りは本人として成功する）。共有運用では対象ロールに必要な権限を付与する。
+
+### クライアント登録例
+
+```json
+{
+  "mcpServers": {
+    "redmine": {
+      "type": "http",
+      "url": "http://localhost:8848/mcp",
+      "headers": { "Authorization": "Bearer <JWT>" }
+    }
+  }
+}
+```
+
+> セキュリティ: 認証を有効にする HTTP モードは、公開時は必ず TLS（リバースプロキシ）越しにする。
+> `REDMINE_API_KEY` に admin キーを使うため、エンドポイントとキーの保護が前提。
 
 ## 動作確認
 

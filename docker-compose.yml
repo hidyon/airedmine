@@ -34,6 +34,23 @@ services:
     depends_on:
       - redmine
 
+  mcp:
+    # 共有 MCP サーバー（http モード）。既定の up には含めず、`--profile mcp` で起動する。
+    profiles: ["mcp"]
+    build:
+      context: ./mcp-server
+    environment:
+      MCP_TRANSPORT: http
+      MCP_HTTP_PORT: "8848"
+      REDMINE_BASE_URL: http://redmine:3000
+      REDMINE_API_KEY: ${REDMINE_API_KEY:-}
+      REDMINE_SWITCH_USER: ${REDMINE_SWITCH_USER:-}
+      JWT_SECRET: ${JWT_SECRET}
+    ports:
+      - "8848:8848"
+    depends_on:
+      - redmine
+
   redmine:
     image: redmine:6.0.9-bookworm
     environment:
